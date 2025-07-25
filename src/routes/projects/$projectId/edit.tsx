@@ -228,15 +228,35 @@ function ProjectEdit() {
           })
         );
 
-        ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
+        console.log("💾 자동저장할 전략 블록들:", strategyBlocks);
 
-        // 저장 확인
-        const savedProject = ProjectStore.getProjectById(projectId);
-        if (
-          !savedProject?.versions[0]?.strategy ||
-          savedProject.versions[0].strategy.length !== strategyBlocks.length
-        ) {
-          throw new Error("전략 저장에 실패했습니다.");
+        try {
+          ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
+          console.log(
+            "✅ 자동저장 ProjectStore.updateProjectStrategy 호출 완료"
+          );
+
+          // 저장 확인
+          const savedProject = ProjectStore.getProjectById(projectId);
+          console.log(
+            "🔍 자동저장 후 프로젝트 확인:",
+            savedProject?.versions[0]?.strategy
+          );
+
+          if (
+            !savedProject?.versions[0]?.strategy ||
+            savedProject.versions[0].strategy.length !== strategyBlocks.length
+          ) {
+            console.error("❌ 자동저장 검증 실패:", {
+              expected: strategyBlocks.length,
+              actual: savedProject?.versions[0]?.strategy?.length || 0,
+            });
+            throw new Error("전략 저장에 실패했습니다.");
+          }
+          console.log("✅ 자동저장 검증 성공");
+        } catch (error) {
+          console.error("❌ 자동저장 중 오류:", error);
+          throw error;
         }
       }
 
@@ -309,15 +329,33 @@ function ProjectEdit() {
           })
         );
 
-        ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
+        console.log("💾 저장할 전략 블록들:", strategyBlocks);
 
-        // 저장 확인
-        const savedProject = ProjectStore.getProjectById(projectId);
-        if (
-          !savedProject?.versions[0]?.strategy ||
-          savedProject.versions[0].strategy.length !== strategyBlocks.length
-        ) {
-          throw new Error("전략 저장에 실패했습니다.");
+        try {
+          ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
+          console.log("✅ ProjectStore.updateProjectStrategy 호출 완료");
+
+          // 저장 확인
+          const savedProject = ProjectStore.getProjectById(projectId);
+          console.log(
+            "🔍 저장 후 프로젝트 확인:",
+            savedProject?.versions[0]?.strategy
+          );
+
+          if (
+            !savedProject?.versions[0]?.strategy ||
+            savedProject.versions[0].strategy.length !== strategyBlocks.length
+          ) {
+            console.error("❌ 저장 검증 실패:", {
+              expected: strategyBlocks.length,
+              actual: savedProject?.versions[0]?.strategy?.length || 0,
+            });
+            throw new Error("전략 저장에 실패했습니다.");
+          }
+          console.log("✅ 저장 검증 성공");
+        } catch (error) {
+          console.error("❌ 전략 저장 중 오류:", error);
+          throw error;
         }
       }
 
