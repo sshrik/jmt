@@ -10,16 +10,11 @@ import {
   Tooltip,
   LoadingOverlay,
   Card,
-  Alert,
   Breadcrumbs,
   Anchor,
+  Select,
 } from "@mantine/core";
-import {
-  IconArrowLeft,
-  IconInfoCircle,
-  IconChartLine,
-  IconSettings,
-} from "@tabler/icons-react";
+import { IconArrowLeft, IconChartLine, IconEdit } from "@tabler/icons-react";
 import { useProjectStore } from "../../hooks/useProjectStore";
 import { ProjectStore } from "../../stores/projectStore";
 import { StrategyEditor } from "../../components/strategy/StrategyEditor";
@@ -142,50 +137,40 @@ function ProjectDetail() {
         <div>
           <Title order={1}>{project.name}</Title>
           <Text c="dimmed" size="lg" mt="xs">
-            {project.description}
+            {project.description} • 최근 수정:{" "}
+            {project.updatedAt.toLocaleDateString("ko-KR")}
           </Text>
         </div>
 
-        <Group>
-          <Button variant="light" onClick={() => navigate({ to: "/" })}>
-            목록으로
-          </Button>
-          <Button
-            leftSection={<IconSettings size={16} />}
-            onClick={() => navigate({ to: `/projects/${projectId}/edit` })}
-          >
-            수정하기
-          </Button>
-        </Group>
+        <Button
+          leftSection={<IconEdit size={16} />}
+          onClick={() => navigate({ to: `/projects/${projectId}/edit` })}
+        >
+          수정하기
+        </Button>
       </Group>
 
-      {/* 프로젝트 정보 카드 */}
+      {/* 버전 선택 및 수익률 */}
       <Card withBorder mb="xl" p="md">
         <Group justify="space-between">
           <div>
-            <Text size="sm" c="dimmed">
-              현재 버전
+            <Text size="sm" c="dimmed" mb="xs">
+              버전 선택
             </Text>
-            <Text fw={500}>{project.versions[0]?.versionName || "v1.0"}</Text>
-          </div>
-          <div>
-            <Text size="sm" c="dimmed">
-              전체 버전
-            </Text>
-            <Text fw={500}>{project.versions.length}개</Text>
-          </div>
-          <div>
-            <Text size="sm" c="dimmed">
-              최근 수정
-            </Text>
-            <Text fw={500}>
-              {project.updatedAt.toLocaleDateString("ko-KR")}
-            </Text>
+            <Select
+              placeholder="버전을 선택하세요"
+              data={project.versions.map((version, index) => ({
+                value: version.versionName,
+                label: `${version.versionName}${index === 0 ? " (최신)" : ""}`,
+              }))}
+              value={project.versions[0]?.versionName || "v1.0"}
+              disabled // TODO: 버전 선택 기능 구현 시 제거
+            />
           </div>
           {project.versions[0]?.backtestResults?.totalReturn !== undefined && (
             <div>
               <Text size="sm" c="dimmed">
-                최근 수익률
+                수익률
               </Text>
               <Text
                 fw={500}
@@ -203,21 +188,7 @@ function ProjectDetail() {
         </Group>
       </Card>
 
-      {/* 투자 전략 조회 */}
-      <Alert
-        icon={<IconInfoCircle size={16} />}
-        color="blue"
-        variant="light"
-        mb="lg"
-      >
-        <Text size="sm">
-          <strong>투자 전략 조회:</strong> 현재 설정된 투자 전략을 확인하실 수
-          있습니다. 전략을 수정하시려면 우측 상단의 "수정하기" 버튼을
-          클릭하세요.
-        </Text>
-      </Alert>
-
-      {/* 전략 에디터 (읽기 전용) */}
+      {/* 투자 전략 (읽기 전용) */}
       <StrategyEditor
         strategy={strategy}
         onStrategyUpdate={() => {}} // 읽기 전용이므로 빈 함수

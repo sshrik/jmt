@@ -1,6 +1,5 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import {
-  Container,
   Title,
   Text,
   Stack,
@@ -11,6 +10,7 @@ import {
   Badge,
   ActionIcon,
   Tooltip,
+  Card,
 } from "@mantine/core";
 import {
   IconPlus,
@@ -37,8 +37,6 @@ export const StrategyEditor = ({
   onBacktest,
   readOnly = false,
 }: StrategyEditorProps) => {
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-
   // 블록 생성 함수
   const createBlock = useCallback(
     (type: "condition" | "action"): StrategyBlock => {
@@ -155,46 +153,36 @@ export const StrategyEditor = ({
   const isValidStrategy = conditionBlocks.length > 0 && actionBlocks.length > 0;
 
   return (
-    <Container size="lg">
+    <Card withBorder p="md">
       <Stack gap="lg">
-        {/* 헤더 */}
-        <Group justify="space-between">
-          <div>
-            <Title order={2}>{strategy.name}</Title>
-            <Text c="dimmed" size="sm">
-              {strategy.description || "투자 전략을 구성하세요"}
-            </Text>
-          </div>
-
-          <Group>
-            {isValidStrategy && onBacktest && (
-              <Button
-                leftSection={<IconPlayerPlay size={16} />}
-                color="green"
-                onClick={onBacktest}
-                disabled={readOnly}
-              >
-                백테스트 실행
-              </Button>
-            )}
-
+        {/* 헤더 (편집 모드에서만 백테스트 버튼 표시) */}
+        {!readOnly && isValidStrategy && onBacktest && (
+          <Group justify="flex-end">
             <Button
-              variant="subtle"
-              onClick={() => setIsPreviewMode(!isPreviewMode)}
+              leftSection={<IconPlayerPlay size={16} />}
+              color="green"
+              onClick={onBacktest}
             >
-              {isPreviewMode ? "편집 모드" : "미리보기"}
+              백테스트 실행
             </Button>
           </Group>
-        </Group>
+        )}
 
-        {/* 전략 설명 */}
-        <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
-          <Text size="sm">
-            <strong>전략 구성 방법:</strong> 조건 블록에서 매매 조건을 설정하고,
-            액션 블록에서 실행할 매매 행동을 정의하세요. 조건은 위에서부터
-            순차적으로 평가되며, 만족하는 조건이 있으면 해당 액션을 실행합니다.
-          </Text>
-        </Alert>
+        {/* 전략 설명 (편집 모드에서만 표시) */}
+        {!readOnly && (
+          <Alert
+            icon={<IconInfoCircle size={16} />}
+            color="blue"
+            variant="light"
+          >
+            <Text size="sm">
+              <strong>전략 구성 방법:</strong> 조건 블록에서 매매 조건을
+              설정하고, 액션 블록에서 실행할 매매 행동을 정의하세요. 조건은
+              위에서부터 순차적으로 평가되며, 만족하는 조건이 있으면 해당 액션을
+              실행합니다.
+            </Text>
+          </Alert>
+        )}
 
         {/* 통계 정보 */}
         <Paper p="md" withBorder>
@@ -377,8 +365,8 @@ export const StrategyEditor = ({
           </Stack>
         </div>
 
-        {/* 전략 유효성 알림 */}
-        {!isValidStrategy && (
+        {/* 전략 유효성 알림 (편집 모드에서만 표시) */}
+        {!isValidStrategy && !readOnly && (
           <Alert color="orange" variant="light">
             <Text size="sm">
               <strong>불완전한 전략:</strong> 백테스트를 실행하려면 최소 1개의
@@ -387,6 +375,6 @@ export const StrategyEditor = ({
           </Alert>
         )}
       </Stack>
-    </Container>
+    </Card>
   );
 };
