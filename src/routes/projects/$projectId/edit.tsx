@@ -166,17 +166,19 @@ function ProjectEdit() {
         try {
           // strategy.ts의 StrategyBlock 타입을 project.ts의 StrategyBlock 타입으로 변환
           const strategyBlocks = strategy.blocks.map((block) => ({
-            id: block.id,
-            type: block.type,
+            ...block,
             position: { x: 0, y: 0 }, // 기본 위치
             connections: [],
-            // 기존 block 데이터를 그대로 포함
-            ...block,
           }));
+
+          const currentProject = project; // null check를 위한 변수
+          if (!currentProject) {
+            throw new Error("프로젝트를 찾을 수 없습니다.");
+          }
 
           ProjectStore.updateProjectStrategy(
             projectId,
-            project.versions[0]?.versionName || "v1.0",
+            currentProject.versions[0]?.versionName || "v1.0",
             strategyBlocks
           );
 

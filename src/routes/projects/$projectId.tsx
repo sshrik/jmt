@@ -13,6 +13,7 @@ import {
   Breadcrumbs,
   Anchor,
   Select,
+  Alert,
 } from "@mantine/core";
 import { IconArrowLeft, IconChartLine, IconEdit } from "@tabler/icons-react";
 import { useProjectStore } from "../../hooks/useProjectStore";
@@ -145,7 +146,10 @@ function ProjectDetail() {
 
         <Button
           leftSection={<IconEdit size={16} />}
-          onClick={() => navigate({ to: `/projects/${projectId}/edit` })}
+          onClick={() => {
+            console.log("수정하기 버튼 클릭됨:", projectId);
+            navigate({ to: `/projects/${projectId}/edit` });
+          }}
         >
           수정하기
         </Button>

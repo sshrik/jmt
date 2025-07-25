@@ -192,7 +192,6 @@ export class ProjectStore {
     }
 
     // 전략 데이터를 Version의 strategy 필드에 저장
-    // @ts-expect-error - 타입 불일치 임시 해결
     projects[projectIndex].versions[versionIndex].strategy = strategyBlocks;
     projects[projectIndex].updatedAt = new Date();
 
