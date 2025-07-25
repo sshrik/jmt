@@ -21,7 +21,7 @@ import { ProjectStore } from "../../stores/projectStore";
 import { StrategyEditor } from "../../components/strategy/StrategyEditor";
 import type { Strategy } from "../../types/strategy";
 
-export const Route = createFileRoute("/projects/$projectId")({
+export const Route = createFileRoute("/projects/$projectId/")({
   component: ProjectDetail,
 });
 

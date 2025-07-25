@@ -71,6 +71,7 @@ export const StrategyEditor = ({
   // 블록 추가
   const addBlock = useCallback(
     (type: "condition" | "action") => {
+      console.log(`${type} 블록 추가 시작`);
       const newBlock = createBlock(type);
       const updatedStrategy = {
         ...strategy,
@@ -78,6 +79,8 @@ export const StrategyEditor = ({
         blockOrder: [...strategy.blockOrder, newBlock.id],
         updatedAt: new Date(),
       };
+      console.log("새 블록 생성됨:", newBlock);
+      console.log("업데이트된 전략:", updatedStrategy);
       onStrategyUpdate(updatedStrategy);
     },
     [strategy, createBlock, onStrategyUpdate]

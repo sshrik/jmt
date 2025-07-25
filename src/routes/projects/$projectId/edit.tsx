@@ -62,6 +62,7 @@ function ProjectEdit() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>("basic");
+  const [currentStrategy, setCurrentStrategy] = useState<Strategy | null>(null);
 
   // 모달 상태
   const [previewOpened, { open: openPreview, close: closePreview }] =
@@ -137,7 +138,7 @@ function ProjectEdit() {
   }, [autoSaveEnabled]);
 
   // 기본 전략 생성 (현재 버전)
-  const strategy = useMemo((): Strategy => {
+  const baseStrategy = useMemo((): Strategy => {
     if (!project) {
       return {
         id: "temp-strategy",
@@ -168,9 +169,20 @@ function ProjectEdit() {
     };
   }, [project, projectId]);
 
+  // 현재 사용할 전략 (수정된 전략이 있으면 그것을, 없으면 기본 전략)
+  const strategy = currentStrategy || baseStrategy;
+
+  // 기본 전략이 로드되면 현재 전략으로 설정
+  useEffect(() => {
+    if (!currentStrategy && baseStrategy) {
+      setCurrentStrategy(baseStrategy);
+    }
+  }, [baseStrategy, currentStrategy]);
+
   // 전략 업데이트
   const handleStrategyUpdate = useCallback((updatedStrategy: Strategy) => {
     console.log("전략 업데이트:", updatedStrategy);
+    setCurrentStrategy(updatedStrategy);
     setIsStrategyModified(true);
     setHasUnsavedChanges(true);
   }, []);
@@ -212,17 +224,15 @@ function ProjectEdit() {
           throw new Error("프로젝트를 찾을 수 없습니다.");
         }
 
-        const strategyBlocks = strategy.blocks.map((block) => ({
-          ...block,
-          position: { x: 0, y: 0 },
-          connections: [],
-        }));
-
-        ProjectStore.updateProjectStrategy(
-          projectId,
-          currentProject.versions[0]?.versionName || "v1.0",
-          strategyBlocks
+        const strategyBlocks = (currentStrategy || strategy).blocks.map(
+          (block) => ({
+            ...block,
+            position: { x: 0, y: 0 },
+            connections: [],
+          })
         );
+
+        ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
       }
 
       setSaveProgress(100);
@@ -424,7 +434,7 @@ function ProjectEdit() {
       <Group justify="space-between" mb="xl">
         <div>
           <Group>
-            <Title order={1}>프로젝트 편집</Title>
+            <Title order={1}>프로젝트 저장</Title>
             {hasUnsavedChanges && (
               <Badge color="orange" variant="light" size="sm">
                 저장되지 않음
@@ -471,13 +481,13 @@ function ProjectEdit() {
               취소
             </Button>
           </Tooltip>
-          <Tooltip label="저장 (⌘+S)">
+          <Tooltip label="저장하기 (⌘+S)">
             <Button
               leftSection={<IconDeviceFloppy size={16} />}
               onClick={handleSaveAll}
               loading={isSaving}
             >
-              저장
+              저장하기
             </Button>
           </Tooltip>
         </Group>
@@ -559,11 +569,24 @@ function ProjectEdit() {
                 icon={<IconInfoCircle size={16} />}
               >
                 <Text size="sm">
-                  전략이 수정되었습니다. 변경사항을 저장하려면 "저장" 버튼을
+                  전략이 수정되었습니다. 변경사항을 저장하려면 "저장하기" 버튼을
                   클릭하세요.
                 </Text>
               </Alert>
             )}
+
+            <Alert
+              icon={<IconInfoCircle size={16} />}
+              color="blue"
+              variant="light"
+              mb="lg"
+            >
+              <Text size="sm">
+                <strong>블록 추가 방법:</strong> 아래 "조건 추가" 또는 "액션
+                추가" 버튼을 클릭하여 새로운 전략 블록을 추가할 수 있습니다.
+                조건 블록은 매매 조건을, 액션 블록은 실행할 행동을 정의합니다.
+              </Text>
+            </Alert>
 
             <StrategyEditor
               strategy={strategy}
