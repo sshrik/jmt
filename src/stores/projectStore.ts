@@ -14,6 +14,7 @@ const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
+/*
 const generateVersionName = (existingVersions: Version[]): string => {
   const versionNumbers = existingVersions
     .map((v) => v.versionName.replace("v", ""))
@@ -25,6 +26,7 @@ const generateVersionName = (existingVersions: Version[]): string => {
   const newVersion = (latestVersion + 0.1).toFixed(1);
   return `v${newVersion}`;
 };
+*/
 
 // LocalStorage 헬퍼 함수들
 const getProjectsFromStorage = (): Project[] => {

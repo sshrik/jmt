@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { ProjectStore, PROJECT_CHANGE_EVENT } from "../stores/projectStore";
-import type { Project, ProjectSummary } from "../types/project";
+import type { Project } from "../types/project";
 import { notifications } from "@mantine/notifications";
 
 export const useProjectStore = () => {
-  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,13 +14,13 @@ export const useProjectStore = () => {
       setError(null);
 
       // Mock 데이터가 없으면 생성 (첫 실행시)
-      const allProjects = ProjectStore.getAllProjects();
+      let allProjects = ProjectStore.getAllProjects();
       if (allProjects.length === 0) {
         ProjectStore.generateMockData();
+        allProjects = ProjectStore.getAllProjects();
       }
 
-      const summaries = ProjectStore.getProjectSummaries();
-      setProjects(summaries);
+      setProjects(allProjects);
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -65,7 +65,7 @@ export const useProjectStore = () => {
         throw err;
       }
     },
-    [refreshProjects]
+    []
   );
 
   const deleteProject = useCallback(
@@ -98,13 +98,12 @@ export const useProjectStore = () => {
         throw err;
       }
     },
-    [refreshProjects]
+    []
   );
 
   // 컴포넌트 마운트시 프로젝트 목록 로드
   useEffect(() => {
     refreshProjects();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 프로젝트 변경사항 감지하여 자동 새로고침
@@ -118,7 +117,7 @@ export const useProjectStore = () => {
     return () => {
       window.removeEventListener(PROJECT_CHANGE_EVENT, handleProjectsChanged);
     };
-  }, [refreshProjects]);
+  }, []);
 
   const updateProject = useCallback(
     async (
@@ -149,6 +148,7 @@ export const useProjectStore = () => {
         throw err;
       }
     },
+
     []
   );
 

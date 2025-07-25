@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Card,
   Title,
@@ -14,7 +13,7 @@ import {
   IconTrash,
   IconArrowUp,
   IconArrowDown,
-  IconPause,
+  IconPlayerPause,
   IconTarget,
   IconShield,
 } from "@tabler/icons-react";
@@ -60,7 +59,7 @@ const ACTION_CONFIG = {
   hold: {
     label: "대기",
     description: "매매하지 않고 대기",
-    icon: IconPause,
+    icon: IconPlayerPause,
     color: "gray",
   },
   stop_loss: {
