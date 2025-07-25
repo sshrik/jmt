@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Container,
@@ -15,14 +15,13 @@ import {
   Anchor,
 } from "@mantine/core";
 import {
-  IconEdit,
   IconArrowLeft,
   IconInfoCircle,
   IconChartLine,
+  IconSettings,
 } from "@tabler/icons-react";
 import { useProjectStore } from "../../hooks/useProjectStore";
 import { ProjectStore } from "../../stores/projectStore";
-import { EditProjectModal } from "../../components/EditProjectModal";
 import { StrategyEditor } from "../../components/strategy/StrategyEditor";
 import type { Strategy } from "../../types/strategy";
 
@@ -33,12 +32,9 @@ export const Route = createFileRoute("/projects/$projectId")({
 function ProjectDetail() {
   const { projectId } = Route.useParams();
   const navigate = useNavigate();
-  const { loading, error, updateProject } = useProjectStore();
+  const { loading, error } = useProjectStore();
 
-  const [editModalOpened, setEditModalOpened] = useState(false);
-  const [isStrategyModified, setIsStrategyModified] = useState(false);
-
-  // 현재 프로젝트 찾기 (전체 Project 정보 필요)
+  // 현재 프로젝트 찾기
   const project = useMemo(() => {
     try {
       return ProjectStore.getProjectById(projectId);
@@ -47,7 +43,7 @@ function ProjectDetail() {
     }
   }, [projectId]);
 
-  // 기본 전략 생성 (프로젝트당 하나의 전략)
+  // 기본 전략 생성 (읽기 전용)
   const strategy = useMemo((): Strategy => {
     if (!project) {
       return {
@@ -70,38 +66,13 @@ function ProjectDetail() {
       versionId: project.versions[0]?.versionName || "v1.0",
       name: `${project.name} 전략`,
       description: project.description,
-      blocks: [], // 나중에 프로젝트에 전략 데이터 저장 필드 추가 예정
+      blocks: [], // 나중에 실제 전략 데이터 로드
       blockOrder: [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
       isActive: true,
     };
   }, [project, projectId]);
-
-  // 프로젝트 기본 정보 편집
-  const handleEditProject = useCallback(
-    async (name: string, description: string) => {
-      if (project) {
-        await updateProject(project.id, name, description);
-        setEditModalOpened(false);
-      }
-    },
-    [project, updateProject]
-  );
-
-  // 전략 업데이트
-  const handleStrategyUpdate = useCallback((updatedStrategy: Strategy) => {
-    // TODO: 실제로 전략 데이터를 프로젝트에 저장하는 로직 추가
-    console.log("전략 업데이트:", updatedStrategy);
-    setIsStrategyModified(true);
-  }, []);
-
-  // 백테스트 실행
-  const handleBacktest = useCallback(() => {
-    // TODO: 백테스트 엔진 연동
-    console.log("백테스트 실행:", strategy);
-    alert("백테스트 기능은 곧 구현 예정입니다!");
-  }, [strategy]);
 
   // 로딩 상태
   if (loading) {
@@ -168,28 +139,22 @@ function ProjectDetail() {
 
       {/* 프로젝트 헤더 */}
       <Group justify="space-between" mb="xl">
-        <Group>
-          <div>
-            <Group>
-              <Title order={1}>{project.name}</Title>
-              <Tooltip label="프로젝트 정보 편집">
-                <ActionIcon
-                  variant="subtle"
-                  onClick={() => setEditModalOpened(true)}
-                >
-                  <IconEdit size={20} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-            <Text c="dimmed" size="lg" mt="xs">
-              {project.description}
-            </Text>
-          </div>
-        </Group>
+        <div>
+          <Title order={1}>{project.name}</Title>
+          <Text c="dimmed" size="lg" mt="xs">
+            {project.description}
+          </Text>
+        </div>
 
         <Group>
           <Button variant="light" onClick={() => navigate({ to: "/" })}>
             목록으로
+          </Button>
+          <Button
+            leftSection={<IconSettings size={16} />}
+            onClick={() => navigate({ to: `/projects/${projectId}/edit` })}
+          >
+            수정하기
           </Button>
         </Group>
       </Group>
@@ -238,7 +203,7 @@ function ProjectDetail() {
         </Group>
       </Card>
 
-      {/* 전략 편집 안내 */}
+      {/* 투자 전략 조회 */}
       <Alert
         icon={<IconInfoCircle size={16} />}
         color="blue"
@@ -246,41 +211,17 @@ function ProjectDetail() {
         mb="lg"
       >
         <Text size="sm">
-          <strong>투자 전략 편집:</strong> 아래에서 매매 조건과 액션을 설정하여
-          나만의 투자 전략을 구성하세요. 모든 변경사항은 자동으로 저장됩니다.
+          <strong>투자 전략 조회:</strong> 현재 설정된 투자 전략을 확인하실 수
+          있습니다. 전략을 수정하시려면 우측 상단의 "수정하기" 버튼을
+          클릭하세요.
         </Text>
       </Alert>
 
-      {/* 전략 에디터 */}
+      {/* 전략 에디터 (읽기 전용) */}
       <StrategyEditor
         strategy={strategy}
-        onStrategyUpdate={handleStrategyUpdate}
-        onBacktest={handleBacktest}
-      />
-
-      {/* 수정 상태 알림 */}
-      {isStrategyModified && (
-        <Alert color="orange" mt="lg">
-          <Text size="sm">
-            전략이 수정되었습니다. 변경사항이 자동으로 저장됩니다.
-          </Text>
-        </Alert>
-      )}
-
-      {/* 프로젝트 기본 정보 편집 모달 */}
-      <EditProjectModal
-        opened={editModalOpened}
-        onClose={() => setEditModalOpened(false)}
-        onSubmit={handleEditProject}
-        project={
-          project
-            ? {
-                id: project.id,
-                name: project.name,
-                description: project.description,
-              }
-            : null
-        }
+        onStrategyUpdate={() => {}} // 읽기 전용이므로 빈 함수
+        readOnly={true}
       />
     </Container>
   );
