@@ -175,50 +175,23 @@ export class ProjectStore {
     projectId: string,
     strategyBlocks: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
   ): void {
-    console.log("🏪 ProjectStore.updateProjectStrategy 시작:", {
-      projectId,
-      blocksCount: strategyBlocks.length,
-    });
-
     const projects = this.getAllProjects();
-    console.log("📂 현재 프로젝트 목록:", projects.length, "개");
-
     const projectIndex = projects.findIndex((p) => p.id === projectId);
-    console.log("🔍 프로젝트 찾기 결과:", { projectIndex, projectId });
 
     if (projectIndex === -1) {
-      console.error("❌ 프로젝트를 찾을 수 없음:", projectId);
       throw new Error("프로젝트를 찾을 수 없습니다.");
     }
 
     // 항상 가장 최신 버전(첫 번째 버전)에 저장
     if (projects[projectIndex].versions.length === 0) {
-      console.error("❌ 프로젝트에 버전이 없음:", projectId);
       throw new Error("프로젝트에 버전이 없습니다.");
     }
-
-    console.log("📝 저장 전 버전 정보:", {
-      versionName: projects[projectIndex].versions[0].versionName,
-      existingStrategy:
-        projects[projectIndex].versions[0].strategy?.length || 0,
-    });
 
     // 전략 데이터를 가장 최신 버전에 저장
     projects[projectIndex].versions[0].strategy = strategyBlocks;
     projects[projectIndex].updatedAt = new Date();
 
-    console.log("💾 localStorage 저장 시도...");
     saveProjectsToStorage(projects);
-    console.log("✅ localStorage 저장 완료");
-
-    // 저장 검증
-    const verifyProjects = this.getAllProjects();
-    const verifyProject = verifyProjects.find((p) => p.id === projectId);
-    console.log("🔍 저장 검증:", {
-      found: !!verifyProject,
-      strategyLength: verifyProject?.versions[0]?.strategy?.length || 0,
-      expected: strategyBlocks.length,
-    });
   }
 
   static deleteProject(projectId: string): void {
