@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Container,
@@ -9,8 +10,17 @@ import {
   Group,
   Badge,
   LoadingOverlay,
+  Menu,
+  ActionIcon,
+  Modal,
 } from "@mantine/core";
-import { IconPlus, IconChartLine } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconChartLine,
+  IconDots,
+  IconEdit,
+  IconTrash,
+} from "@tabler/icons-react";
 import { useProjectStore } from "../hooks/useProjectStore";
 
 export const Route = createFileRoute("/")({
@@ -18,7 +28,30 @@ export const Route = createFileRoute("/")({
 });
 
 function ProjectList() {
-  const { projects, loading, error } = useProjectStore();
+  const { projects, loading, error, deleteProject } = useProjectStore();
+  const [deleteModalOpened, setDeleteModalOpened] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const handleDeleteClick = (projectId: string, projectName: string) => {
+    setProjectToDelete({ id: projectId, name: projectName });
+    setDeleteModalOpened(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (projectToDelete) {
+      await deleteProject(projectToDelete.id);
+      setDeleteModalOpened(false);
+      setProjectToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpened(false);
+    setProjectToDelete(null);
+  };
 
   if (error) {
     return (
@@ -65,16 +98,42 @@ function ProjectList() {
           {projects.map((project) => (
             <Card key={project.id} padding="lg" withBorder>
               <Group justify="space-between" mb="xs">
-                <Title order={4}>{project.name}</Title>
-                {project.latestReturn !== undefined && (
-                  <Badge
-                    color={project.latestReturn > 0 ? "green" : "red"}
-                    variant="filled"
-                  >
-                    {project.latestReturn > 0 ? "+" : ""}
-                    {project.latestReturn.toFixed(1)}%
-                  </Badge>
-                )}
+                <Group>
+                  <Title order={4}>{project.name}</Title>
+                  {project.latestReturn !== undefined && (
+                    <Badge
+                      color={project.latestReturn > 0 ? "green" : "red"}
+                      variant="filled"
+                    >
+                      {project.latestReturn > 0 ? "+" : ""}
+                      {project.latestReturn.toFixed(1)}%
+                    </Badge>
+                  )}
+                </Group>
+
+                <Menu shadow="md" width={200}>
+                  <Menu.Target>
+                    <ActionIcon variant="subtle" color="gray">
+                      <IconDots size={16} />
+                    </ActionIcon>
+                  </Menu.Target>
+
+                  <Menu.Dropdown>
+                    <Menu.Item leftSection={<IconEdit size={14} />}>
+                      프로젝트 편집
+                    </Menu.Item>
+                    <Menu.Divider />
+                    <Menu.Item
+                      leftSection={<IconTrash size={14} />}
+                      color="red"
+                      onClick={() =>
+                        handleDeleteClick(project.id, project.name)
+                      }
+                    >
+                      프로젝트 삭제
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
               </Group>
 
               <Text c="dimmed" size="sm" mb="md">
@@ -97,6 +156,31 @@ function ProjectList() {
           ))}
         </SimpleGrid>
       )}
+
+      <Modal
+        opened={deleteModalOpened}
+        onClose={handleCancelDelete}
+        title="프로젝트 삭제"
+        centered
+      >
+        <Text mb="md">
+          <strong>{projectToDelete?.name}</strong> 프로젝트를 정말
+          삭제하시겠습니까?
+        </Text>
+        <Text size="sm" c="dimmed" mb="lg">
+          이 작업은 되돌릴 수 없으며, 모든 버전과 백테스트 결과가 함께
+          삭제됩니다.
+        </Text>
+
+        <Group justify="flex-end">
+          <Button variant="subtle" onClick={handleCancelDelete}>
+            취소
+          </Button>
+          <Button color="red" onClick={handleConfirmDelete}>
+            삭제
+          </Button>
+        </Group>
+      </Modal>
     </Container>
   );
 }
