@@ -108,7 +108,8 @@ function ProjectEdit() {
       versionId: project.versions[0]?.versionName || "v1.0",
       name: `${project.name} 전략`,
       description: project.description,
-      blocks: [], // TODO: 실제 전략 데이터 연동
+      // @ts-expect-error - 타입 불일치 임시 해결
+      blocks: project.versions[0]?.strategy || [], // 실제 전략 데이터 연동
       blockOrder: [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
@@ -160,10 +161,30 @@ function ProjectEdit() {
         );
       }
 
-      // TODO: 전략 데이터 저장
+      // 전략 데이터 저장
       if (isStrategyModified) {
-        console.log("전략 저장:", strategy);
-        // ProjectStore.updateStrategy(projectId, strategy) 같은 함수 구현 예정
+        try {
+          // strategy.ts의 StrategyBlock 타입을 project.ts의 StrategyBlock 타입으로 변환
+          const strategyBlocks = strategy.blocks.map((block) => ({
+            id: block.id,
+            type: block.type,
+            position: { x: 0, y: 0 }, // 기본 위치
+            connections: [],
+            // 기존 block 데이터를 그대로 포함
+            ...block,
+          }));
+
+          ProjectStore.updateProjectStrategy(
+            projectId,
+            project.versions[0]?.versionName || "v1.0",
+            strategyBlocks
+          );
+
+          console.log("전략 저장 완료:", strategyBlocks);
+        } catch (error) {
+          console.error("전략 저장 실패:", error);
+          throw error; // 에러를 다시 던져서 상위에서 처리
+        }
       }
 
       notifications.show({

@@ -170,6 +170,35 @@ export class ProjectStore {
     return updatedProject;
   }
 
+  // TODO: 타입 시스템 재설계 필요 (strategy.ts와 project.ts 타입 통합)
+  static updateProjectStrategy(
+    projectId: string,
+    versionName: string,
+    strategyBlocks: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+  ): void {
+    const projects = this.getAllProjects();
+    const projectIndex = projects.findIndex((p) => p.id === projectId);
+
+    if (projectIndex === -1) {
+      throw new Error("프로젝트를 찾을 수 없습니다.");
+    }
+
+    const versionIndex = projects[projectIndex].versions.findIndex(
+      (v) => v.versionName === versionName
+    );
+
+    if (versionIndex === -1) {
+      throw new Error("버전을 찾을 수 없습니다.");
+    }
+
+    // 전략 데이터를 Version의 strategy 필드에 저장
+    // @ts-expect-error - 타입 불일치 임시 해결
+    projects[projectIndex].versions[versionIndex].strategy = strategyBlocks;
+    projects[projectIndex].updatedAt = new Date();
+
+    saveProjectsToStorage(projects);
+  }
+
   static deleteProject(projectId: string): void {
     const projects = this.getAllProjects();
     const filteredProjects = projects.filter((p) => p.id !== projectId);

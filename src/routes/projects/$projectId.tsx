@@ -61,7 +61,8 @@ function ProjectDetail() {
       versionId: project.versions[0]?.versionName || "v1.0",
       name: `${project.name} 전략`,
       description: project.description,
-      blocks: [], // 나중에 실제 전략 데이터 로드
+      // @ts-expect-error - 타입 불일치 임시 해결
+      blocks: project.versions[0]?.strategy || [], // 실제 저장된 전략 데이터 로드
       blockOrder: [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
