@@ -38,17 +38,12 @@ function ProjectList() {
 
   return (
     <Container size="xl">
-      <Group justify="space-between" mb="xl">
-        <div>
-          <Title order={1}>투자 전략 프로젝트</Title>
-          <Text c="dimmed" size="lg" mt="xs">
-            나만의 투자 전략을 설계하고 백테스트 결과를 확인하세요
-          </Text>
-        </div>
-        <Button leftSection={<IconPlus size={16} />} size="lg">
-          새 프로젝트 만들기
-        </Button>
-      </Group>
+      <div style={{ marginBottom: "2rem" }}>
+        <Title order={1}>투자 전략 프로젝트</Title>
+        <Text c="dimmed" size="lg" mt="xs">
+          나만의 투자 전략을 설계하고 백테스트 결과를 확인하세요
+        </Text>
+      </div>
 
       {mockProjects.length === 0 ? (
         <Card padding="xl" withBorder style={{ textAlign: "center" }}>

@@ -1,7 +1,7 @@
-import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { AppShell, Title, Group, Button } from "@mantine/core";
-import { IconChartLine } from "@tabler/icons-react";
+import { IconChartLine, IconPlus } from "@tabler/icons-react";
 
 export const Route = createRootRoute({
   component: () => (
@@ -13,8 +13,8 @@ export const Route = createRootRoute({
             <Title order={3}>JMT</Title>
           </Group>
           <Group>
-            <Button component={Link} to="/" variant="subtle">
-              프로젝트 목록
+            <Button leftSection={<IconPlus size={16} />} variant="filled">
+              새 프로젝트 만들기
             </Button>
           </Group>
         </Group>
