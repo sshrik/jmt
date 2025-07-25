@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { ProjectStore, PROJECT_CHANGE_EVENT } from "../stores/projectStore";
-import type { Project } from "../types/project";
+import type { Project, ProjectSummary } from "../types/project";
 import { notifications } from "@mantine/notifications";
 
 export const useProjectStore = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +20,17 @@ export const useProjectStore = () => {
         allProjects = ProjectStore.getAllProjects();
       }
 
-      setProjects(allProjects);
+      // Project를 ProjectSummary로 변환
+      const projectSummaries = allProjects.map((project) => ({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        lastModified: project.updatedAt,
+        totalVersions: project.versions.length,
+        latestReturn: project.versions[0]?.backtestResults?.totalReturn,
+      }));
+
+      setProjects(projectSummaries);
     } catch (err) {
       const errorMessage =
         err instanceof Error

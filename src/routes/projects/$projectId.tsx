@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Container,
@@ -21,6 +21,7 @@ import {
   IconChartLine,
 } from "@tabler/icons-react";
 import { useProjectStore } from "../../hooks/useProjectStore";
+import { ProjectStore } from "../../stores/projectStore";
 import { EditProjectModal } from "../../components/EditProjectModal";
 import { StrategyEditor } from "../../components/strategy/StrategyEditor";
 import type { Strategy } from "../../types/strategy";
@@ -32,16 +33,19 @@ export const Route = createFileRoute("/projects/$projectId")({
 function ProjectDetail() {
   const { projectId } = Route.useParams();
   const navigate = useNavigate();
-  const { projects, loading, error, updateProject } = useProjectStore();
+  const { loading, error, updateProject } = useProjectStore();
 
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [isStrategyModified, setIsStrategyModified] = useState(false);
 
-  // 현재 프로젝트 찾기
-  const project = useMemo(
-    () => projects.find((p) => p.id === projectId),
-    [projects, projectId]
-  );
+  // 현재 프로젝트 찾기 (전체 Project 정보 필요)
+  const project = useMemo(() => {
+    try {
+      return ProjectStore.getProjectById(projectId);
+    } catch {
+      return null;
+    }
+  }, [projectId]);
 
   // 기본 전략 생성 (프로젝트당 하나의 전략)
   const strategy = useMemo((): Strategy => {
@@ -63,7 +67,7 @@ function ProjectDetail() {
     return {
       id: `strategy-${project.id}`,
       projectId: project.id,
-      versionId: project.currentVersion,
+      versionId: project.versions[0]?.versionName || "v1.0",
       name: `${project.name} 전략`,
       description: project.description,
       blocks: [], // 나중에 프로젝트에 전략 데이터 저장 필드 추가 예정
@@ -197,30 +201,37 @@ function ProjectDetail() {
             <Text size="sm" c="dimmed">
               현재 버전
             </Text>
-            <Text fw={500}>{project.currentVersion}</Text>
+            <Text fw={500}>{project.versions[0]?.versionName || "v1.0"}</Text>
           </div>
           <div>
             <Text size="sm" c="dimmed">
               전체 버전
             </Text>
-            <Text fw={500}>{project.totalVersions}개</Text>
+            <Text fw={500}>{project.versions.length}개</Text>
           </div>
           <div>
             <Text size="sm" c="dimmed">
               최근 수정
             </Text>
             <Text fw={500}>
-              {project.lastModified.toLocaleDateString("ko-KR")}
+              {project.updatedAt.toLocaleDateString("ko-KR")}
             </Text>
           </div>
-          {project.latestReturn !== undefined && (
+          {project.versions[0]?.backtestResults?.totalReturn !== undefined && (
             <div>
               <Text size="sm" c="dimmed">
                 최근 수익률
               </Text>
-              <Text fw={500} c={project.latestReturn > 0 ? "green" : "red"}>
-                {project.latestReturn > 0 ? "+" : ""}
-                {project.latestReturn.toFixed(1)}%
+              <Text
+                fw={500}
+                c={
+                  project.versions[0].backtestResults.totalReturn > 0
+                    ? "green"
+                    : "red"
+                }
+              >
+                {project.versions[0].backtestResults.totalReturn > 0 ? "+" : ""}
+                {project.versions[0].backtestResults.totalReturn.toFixed(1)}%
               </Text>
             </div>
           )}
