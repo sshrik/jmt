@@ -104,7 +104,8 @@ export const useProjectStore = () => {
   // 컴포넌트 마운트시 프로젝트 목록 로드
   useEffect(() => {
     refreshProjects();
-  }, [refreshProjects]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 프로젝트 변경사항 감지하여 자동 새로고침
   useEffect(() => {

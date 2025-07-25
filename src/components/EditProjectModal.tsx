@@ -65,7 +65,7 @@ export const EditProjectModal = ({
         description: project.description,
       });
     }
-  }, [project]);
+  }, [project, form]);
 
   const handleSubmit = async (values: ProjectForm) => {
     try {

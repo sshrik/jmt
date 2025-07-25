@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Container,
   Title,
@@ -29,6 +29,7 @@ export const Route = createFileRoute("/")({
 });
 
 function ProjectList() {
+  const navigate = useNavigate();
   const { projects, loading, error, deleteProject, updateProject } =
     useProjectStore();
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
@@ -182,7 +183,11 @@ function ProjectList() {
                 </Text>
               </Group>
 
-              <Button fullWidth variant="light">
+              <Button
+                fullWidth
+                variant="light"
+                onClick={() => navigate({ to: `/projects/${project.id}` })}
+              >
                 상세 보기
               </Button>
             </Card>

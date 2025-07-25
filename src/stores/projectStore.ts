@@ -1,10 +1,4 @@
-import type {
-  Project,
-  Version,
-  ProjectSummary,
-  VersionSummary,
-  BacktestResult,
-} from "../types/project";
+import type { Project, Version, ProjectSummary } from "../types/project";
 
 const STORAGE_KEY = "jmt_projects";
 
