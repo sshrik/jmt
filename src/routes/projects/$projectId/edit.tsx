@@ -6,7 +6,6 @@ import {
   Text,
   Group,
   Button,
-  ActionIcon,
   Tooltip,
   LoadingOverlay,
   Card,
@@ -24,7 +23,6 @@ import {
   Affix,
 } from "@mantine/core";
 import {
-  IconArrowLeft,
   IconInfoCircle,
   IconChartLine,
   IconDeviceFloppy,
@@ -491,10 +489,15 @@ function ProjectEdit() {
 
       {/* 네비게이션 */}
       <Group mb="lg">
-        <Tooltip label="뒤로 가기 (Esc)">
-          <ActionIcon variant="subtle" size="lg" onClick={handleCancel}>
-            <IconArrowLeft size={20} />
-          </ActionIcon>
+        <Tooltip label="취소 (Esc)">
+          <Button
+            variant="light"
+            color="red"
+            leftSection={<IconX size={16} />}
+            onClick={handleCancel}
+          >
+            취소
+          </Button>
         </Tooltip>
 
         <Breadcrumbs>
@@ -608,7 +611,7 @@ function ProjectEdit() {
           </Tabs.Tab>
         </Tabs.List>
 
-        <Tabs.Panel value="basic">
+        <Tabs.Panel value="basic" pt="lg">
           <Card withBorder p="lg">
             <Stack gap="md">
               <TextInput
@@ -636,7 +639,7 @@ function ProjectEdit() {
           </Card>
         </Tabs.Panel>
 
-        <Tabs.Panel value="strategy">
+        <Tabs.Panel value="strategy" pt="lg">
           <Stack gap="lg">
             {isStrategyModified && (
               <Alert
@@ -673,7 +676,7 @@ function ProjectEdit() {
           </Stack>
         </Tabs.Panel>
 
-        <Tabs.Panel value="history">
+        <Tabs.Panel value="history" pt="lg">
           <Card withBorder p="lg">
             <Title order={4} mb="md">
               버전 히스토리

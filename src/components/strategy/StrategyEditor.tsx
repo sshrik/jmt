@@ -51,7 +51,7 @@ export const StrategyEditor = ({
         createdAt: now,
         updatedAt: now,
         ...(type === "condition" && {
-          conditionType: "price_change_percent",
+          conditionType: "close_price_change",
           conditionParams: {
             priceChangeDirection: "up",
             priceChangePercent: 5,

@@ -1,10 +1,8 @@
 // 조건 타입 정의
 export type ConditionType =
-  | "price_change_percent" // 전일가 대비 %변화
-  | "profit_loss_percent" // 수익률 달성
-  | "consecutive_days" // 연속 상승/하락
-  | "moving_average_cross" // 이동평균 교차
-  | "rsi_threshold"; // RSI 임계값
+  | "close_price_change" // 전일 종가 대비 변화
+  | "high_price_change" // 전일 고가 대비 변화
+  | "low_price_change"; // 전일 저가 대비 변화
 
 // 액션 타입 정의
 export type ActionType =

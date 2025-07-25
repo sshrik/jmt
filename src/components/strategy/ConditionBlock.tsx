@@ -11,7 +11,6 @@ import {
 } from "@mantine/core";
 import {
   IconTrash,
-  IconSettings,
   IconTrendingUp,
   IconTrendingDown,
 } from "@tabler/icons-react";
@@ -30,35 +29,23 @@ interface ConditionBlockProps {
 
 // 조건 타입별 설정
 const CONDITION_CONFIG = {
-  price_change_percent: {
-    label: "전일가 대비 변화",
+  close_price_change: {
+    label: "전일 종가 대비 변화",
     description: "전일 종가 대비 주가 변화율로 조건 설정",
     icon: IconTrendingUp,
     color: "blue",
   },
-  profit_loss_percent: {
-    label: "수익률 달성",
-    description: "보유 주식의 수익률 기준",
+  high_price_change: {
+    label: "전일 고가 대비 변화",
+    description: "전일 고가 대비 주가 변화율로 조건 설정",
     icon: IconTrendingUp,
     color: "green",
   },
-  consecutive_days: {
-    label: "연속 상승/하락",
-    description: "N일 연속 상승 또는 하락",
+  low_price_change: {
+    label: "전일 저가 대비 변화",
+    description: "전일 저가 대비 주가 변화율로 조건 설정",
     icon: IconTrendingDown,
     color: "orange",
-  },
-  moving_average_cross: {
-    label: "이동평균 교차",
-    description: "단기/장기 이동평균선 교차",
-    icon: IconSettings,
-    color: "purple",
-  },
-  rsi_threshold: {
-    label: "RSI 임계값",
-    description: "RSI 지표 기준 과매수/과매도",
-    icon: IconSettings,
-    color: "red",
   },
 } as const;
 
@@ -68,7 +55,7 @@ export const ConditionBlock = ({
   onDelete,
   readOnly = false,
 }: ConditionBlockProps) => {
-  const conditionType = block.conditionType || "price_change_percent";
+  const conditionType = block.conditionType || "close_price_change";
   const params = block.conditionParams || {};
   const config = CONDITION_CONFIG[conditionType];
   const IconComponent = config.icon;
@@ -100,7 +87,9 @@ export const ConditionBlock = ({
   // 조건별 파라미터 UI 렌더링
   const renderConditionParams = () => {
     switch (conditionType) {
-      case "price_change_percent":
+      case "close_price_change":
+      case "high_price_change":
+      case "low_price_change":
         return (
           <Stack gap="sm">
             <Group grow>
@@ -131,47 +120,11 @@ export const ConditionBlock = ({
               />
             </Group>
             <Text size="xs" c="dimmed">
-              전일 종가 대비{" "}
+              {conditionType === "close_price_change" && "전일 종가"}
+              {conditionType === "high_price_change" && "전일 고가"}
+              {conditionType === "low_price_change" && "전일 저가"} 대비{" "}
               {params.priceChangeDirection === "down" ? "하락" : "상승"}{" "}
               {params.priceChangePercent || 0}%일 때 조건 만족
-            </Text>
-          </Stack>
-        );
-
-      case "profit_loss_percent":
-        return (
-          <Stack gap="sm">
-            <Group grow>
-              <Select
-                label="타입"
-                placeholder="선택"
-                value={params.profitLossType || "profit"}
-                onChange={(value) =>
-                  updateParams({ profitLossType: value as "profit" | "loss" })
-                }
-                data={[
-                  { value: "profit", label: "수익" },
-                  { value: "loss", label: "손실" },
-                ]}
-                disabled={readOnly}
-              />
-              <NumberInput
-                label="수익률 (%)"
-                placeholder="예: 10"
-                value={params.profitLossPercent || 0}
-                onChange={(value) =>
-                  updateParams({ profitLossPercent: Number(value) || 0 })
-                }
-                min={0}
-                max={100}
-                step={0.1}
-                disabled={readOnly}
-              />
-            </Group>
-            <Text size="xs" c="dimmed">
-              보유 주식이 {params.profitLossPercent || 0}%{" "}
-              {params.profitLossType === "loss" ? "손실" : "수익"}일 때 조건
-              만족
             </Text>
           </Stack>
         );
