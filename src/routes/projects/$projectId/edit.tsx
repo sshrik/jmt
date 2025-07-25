@@ -152,14 +152,32 @@ function ProjectEdit() {
       };
     }
 
+    // 기존 블록 타입 마이그레이션
+    const rawBlocks = project.versions[0]?.strategy || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const migratedBlocks = rawBlocks.map((block: any) => {
+      // 기존 price_change_percent를 close_price_change로 마이그레이션
+      if (block.conditionType === "price_change_percent") {
+        console.log(
+          "🔄 조건 타입 마이그레이션:",
+          block.id,
+          "price_change_percent → close_price_change"
+        );
+        return {
+          ...block,
+          conditionType: "close_price_change",
+        };
+      }
+      return block;
+    });
+
     return {
       id: `strategy-${project.id}`,
       projectId: project.id,
       versionId: project.versions[0]?.versionName || "v1.0",
       name: `${project.name} 전략`,
       description: project.description,
-      // @ts-expect-error - 타입 불일치 임시 해결
-      blocks: project.versions[0]?.strategy || [], // 실제 전략 데이터 연동
+      blocks: migratedBlocks, // 마이그레이션된 전략 데이터
       blockOrder: [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
@@ -213,7 +231,16 @@ function ProjectEdit() {
       }
 
       // 전략 데이터 저장
-      if (isStrategyModified) {
+      console.log("🔍 자동저장 조건 체크:", {
+        isStrategyModified,
+        blocksLength: (currentStrategy || strategy).blocks.length,
+      });
+
+      // 임시: 블록이 있으면 무조건 자동저장 시도
+      const forceAutoSave = (currentStrategy || strategy).blocks.length > 0;
+      console.log("🚀 강제 자동저장 모드:", forceAutoSave);
+
+      if (forceAutoSave) {
         setSaveProgress(60);
         const currentProject = project;
         if (!currentProject) {
@@ -315,10 +342,18 @@ function ProjectEdit() {
       }
 
       // 전략 데이터 저장
-      if (
-        isStrategyModified &&
-        (currentStrategy || strategy).blocks.length > 0
-      ) {
+      console.log("🔍 저장 조건 체크:", {
+        isStrategyModified,
+        blocksLength: (currentStrategy || strategy).blocks.length,
+        shouldSave:
+          isStrategyModified && (currentStrategy || strategy).blocks.length > 0,
+      });
+
+      // 임시: 블록이 있으면 무조건 저장 시도
+      const forceStrategy = (currentStrategy || strategy).blocks.length > 0;
+      console.log("🚀 강제 저장 모드:", forceStrategy);
+
+      if (forceStrategy) {
         setSaveProgress(60);
 
         const strategyBlocks = (currentStrategy || strategy).blocks.map(

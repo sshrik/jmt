@@ -56,14 +56,27 @@ function ProjectDetail() {
       };
     }
 
+    // 기존 블록 타입 마이그레이션
+    const rawBlocks = project.versions[0]?.strategy || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const migratedBlocks = rawBlocks.map((block: any) => {
+      // 기존 price_change_percent를 close_price_change로 마이그레이션
+      if (block.conditionType === "price_change_percent") {
+        return {
+          ...block,
+          conditionType: "close_price_change",
+        };
+      }
+      return block;
+    });
+
     return {
       id: `strategy-${project.id}`,
       projectId: project.id,
       versionId: project.versions[0]?.versionName || "v1.0",
       name: `${project.name} 전략`,
       description: project.description,
-      // @ts-expect-error - 타입 불일치 임시 해결
-      blocks: project.versions[0]?.strategy || [], // 실제 저장된 전략 데이터 로드
+      blocks: migratedBlocks, // 마이그레이션된 전략 데이터
       blockOrder: [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
