@@ -123,7 +123,6 @@ function ProjectList() {
                     <Menu.Item
                       leftSection={<IconEdit size={14} />}
                       onClick={() => {
-                        console.log("프로젝트 편집 버튼 클릭됨:", project.id);
                         navigate({ to: `/projects/${project.id}/edit` });
                       }}
                     >

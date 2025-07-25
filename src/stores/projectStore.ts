@@ -191,12 +191,6 @@ export class ProjectStore {
     projects[projectIndex].versions[0].strategy = strategyBlocks;
     projects[projectIndex].updatedAt = new Date();
 
-    console.log("전략 저장됨:", {
-      projectId,
-      version: projects[projectIndex].versions[0].versionName,
-      blocksCount: strategyBlocks.length,
-    });
-
     saveProjectsToStorage(projects);
   }
 

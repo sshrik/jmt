@@ -147,7 +147,6 @@ function ProjectDetail() {
         <Button
           leftSection={<IconEdit size={16} />}
           onClick={() => {
-            console.log("수정하기 버튼 클릭됨:", projectId);
             navigate({ to: `/projects/${projectId}/edit` });
           }}
         >

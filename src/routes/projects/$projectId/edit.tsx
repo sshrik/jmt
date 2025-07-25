@@ -181,7 +181,6 @@ function ProjectEdit() {
 
   // 전략 업데이트
   const handleStrategyUpdate = useCallback((updatedStrategy: Strategy) => {
-    console.log("전략 업데이트:", updatedStrategy);
     setCurrentStrategy(updatedStrategy);
     setIsStrategyModified(true);
     setHasUnsavedChanges(true);
@@ -189,7 +188,6 @@ function ProjectEdit() {
 
   // 백테스트 실행
   const handleBacktest = useCallback(() => {
-    console.log("백테스트 실행:", strategy);
     notifications.show({
       title: "백테스트 실행",
       message: "백테스트 기능은 곧 구현 예정입니다!",
@@ -233,6 +231,15 @@ function ProjectEdit() {
         );
 
         ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
+
+        // 저장 확인
+        const savedProject = ProjectStore.getProjectById(projectId);
+        if (
+          !savedProject?.versions[0]?.strategy ||
+          savedProject.versions[0].strategy.length !== strategyBlocks.length
+        ) {
+          throw new Error("전략 저장에 실패했습니다.");
+        }
       }
 
       setSaveProgress(100);
@@ -275,17 +282,86 @@ function ProjectEdit() {
       return;
     }
 
-    await handleAutoSave();
+    try {
+      setIsSaving(true);
+      setSaveProgress(0);
 
-    notifications.show({
-      title: "저장 완료",
-      message: "모든 변경사항이 성공적으로 저장되었습니다.",
-      color: "green",
-      icon: <IconCheck size={16} />,
-    });
+      // 프로젝트 기본 정보 업데이트
+      if (form.isDirty() && project) {
+        setSaveProgress(30);
+        await updateProject(
+          project.id,
+          form.values.name,
+          form.values.description
+        );
+      }
 
-    navigate({ to: `/projects/${projectId}` });
-  }, [form, handleAutoSave, navigate, projectId]);
+      // 전략 데이터 저장
+      if (
+        isStrategyModified &&
+        (currentStrategy || strategy).blocks.length > 0
+      ) {
+        setSaveProgress(60);
+
+        const strategyBlocks = (currentStrategy || strategy).blocks.map(
+          (block) => ({
+            ...block,
+            position: { x: 0, y: 0 },
+            connections: [],
+          })
+        );
+
+        ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
+
+        // 저장 확인
+        const savedProject = ProjectStore.getProjectById(projectId);
+        if (
+          !savedProject?.versions[0]?.strategy ||
+          savedProject.versions[0].strategy.length !== strategyBlocks.length
+        ) {
+          throw new Error("전략 저장에 실패했습니다.");
+        }
+      }
+
+      setSaveProgress(100);
+      setIsStrategyModified(false);
+      setHasUnsavedChanges(false);
+      setLastSaved(new Date());
+      form.resetDirty();
+
+      notifications.show({
+        title: "저장 완료",
+        message: "모든 변경사항이 성공적으로 저장되었습니다.",
+        color: "green",
+        icon: <IconCheck size={16} />,
+      });
+
+      navigate({ to: `/projects/${projectId}` });
+    } catch (error) {
+      console.error("저장 실패:", error);
+      notifications.show({
+        title: "저장 실패",
+        message:
+          error instanceof Error
+            ? error.message
+            : "저장 중 오류가 발생했습니다.",
+        color: "red",
+        icon: <IconAlertTriangle size={16} />,
+      });
+    } finally {
+      setIsSaving(false);
+      setSaveProgress(0);
+    }
+  }, [
+    form,
+    project,
+    updateProject,
+    isStrategyModified,
+    currentStrategy,
+    strategy,
+    projectId,
+    navigate,
+  ]);
 
   // 취소 (변경사항 확인)
   const handleCancel = useCallback(() => {
