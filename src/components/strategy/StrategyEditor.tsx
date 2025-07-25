@@ -14,11 +14,10 @@ import {
 } from "@mantine/core";
 import {
   IconPlus,
-  IconPlayerPlay,
   IconInfoCircle,
-  IconArrowDown,
   IconChevronUp,
   IconChevronDown,
+  IconArrowDown,
 } from "@tabler/icons-react";
 import { ConditionBlock } from "./ConditionBlock";
 import { ActionBlock } from "./ActionBlock";
@@ -27,14 +26,12 @@ import type { StrategyBlock, Strategy } from "../../types/strategy";
 interface StrategyEditorProps {
   strategy: Strategy;
   onStrategyUpdate: (strategy: Strategy) => void;
-  onBacktest?: () => void;
   readOnly?: boolean;
 }
 
 export const StrategyEditor = ({
   strategy,
   onStrategyUpdate,
-  onBacktest,
   readOnly = false,
 }: StrategyEditorProps) => {
   // 블록 생성 함수
@@ -155,18 +152,7 @@ export const StrategyEditor = ({
   return (
     <Card withBorder p="md">
       <Stack gap="lg">
-        {/* 헤더 (편집 모드에서만 백테스트 버튼 표시) */}
-        {!readOnly && isValidStrategy && onBacktest && (
-          <Group justify="flex-end">
-            <Button
-              leftSection={<IconPlayerPlay size={16} />}
-              color="green"
-              onClick={onBacktest}
-            >
-              백테스트 실행
-            </Button>
-          </Group>
-        )}
+        {/* 백테스트 버튼 제거됨 - 추후 구현 예정 */}
 
         {/* 전략 설명 (편집 모드에서만 표시) */}
         {!readOnly && (

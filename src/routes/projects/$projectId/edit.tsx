@@ -188,12 +188,17 @@ function ProjectEdit() {
   // 현재 사용할 전략 (수정된 전략이 있으면 그것을, 없으면 기본 전략)
   const strategy = currentStrategy || baseStrategy;
 
-  // 기본 전략이 로드되면 현재 전략으로 설정
+  // 기본 전략이 로드되면 현재 전략으로 설정 (매번 최신 데이터로 업데이트)
   useEffect(() => {
-    if (!currentStrategy && baseStrategy) {
+    if (baseStrategy) {
+      console.log(
+        "🔄 기본 전략 업데이트:",
+        baseStrategy.blocks.length,
+        "개 블록"
+      );
       setCurrentStrategy(baseStrategy);
     }
-  }, [baseStrategy, currentStrategy]);
+  }, [baseStrategy]);
 
   // 전략 업데이트
   const handleStrategyUpdate = useCallback((updatedStrategy: Strategy) => {
@@ -292,6 +297,9 @@ function ProjectEdit() {
       setHasUnsavedChanges(false);
       setLastSaved(new Date());
       form.resetDirty();
+
+      // 자동 저장 후에도 현재 전략 상태 초기화
+      setCurrentStrategy(null);
 
       notifications.show({
         title: "자동 저장 완료",
@@ -399,6 +407,9 @@ function ProjectEdit() {
       setHasUnsavedChanges(false);
       setLastSaved(new Date());
       form.resetDirty();
+
+      // 저장 후 현재 전략 상태 초기화하여 새로 로드되도록 함
+      setCurrentStrategy(null);
 
       notifications.show({
         title: "저장 완료",
@@ -562,17 +573,6 @@ function ProjectEdit() {
 
       {/* 네비게이션 */}
       <Group mb="lg">
-        <Tooltip label="취소 (Esc)">
-          <Button
-            variant="light"
-            color="red"
-            leftSection={<IconX size={16} />}
-            onClick={handleCancel}
-          >
-            취소
-          </Button>
-        </Tooltip>
-
         <Breadcrumbs>
           <Anchor onClick={() => navigate({ to: "/" })}>프로젝트 목록</Anchor>
           <Anchor onClick={() => navigate({ to: `/projects/${projectId}` })}>
@@ -633,7 +633,15 @@ function ProjectEdit() {
               취소
             </Button>
           </Tooltip>
-          <Tooltip label="저장하기 (⌘+S)">
+          <Group gap="sm">
+            <Button
+              variant="light"
+              color="red"
+              leftSection={<IconX size={16} />}
+              onClick={handleCancel}
+            >
+              취소
+            </Button>
             <Button
               leftSection={<IconDeviceFloppy size={16} />}
               onClick={handleSaveAll}
@@ -641,7 +649,7 @@ function ProjectEdit() {
             >
               저장하기
             </Button>
-          </Tooltip>
+          </Group>
         </Group>
       </Group>
 
@@ -743,7 +751,6 @@ function ProjectEdit() {
             <StrategyEditor
               strategy={strategy}
               onStrategyUpdate={handleStrategyUpdate}
-              onBacktest={handleBacktest}
               readOnly={isSaving}
             />
           </Stack>
