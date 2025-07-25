@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ProjectStore } from "../stores/projectStore";
+import { ProjectStore, PROJECT_CHANGE_EVENT } from "../stores/projectStore";
 import type { Project, ProjectSummary } from "../types/project";
 import { notifications } from "@mantine/notifications";
 
@@ -48,7 +48,7 @@ export const useProjectStore = () => {
           color: "green",
         });
 
-        refreshProjects(); // 목록 새로고침
+        // 이벤트 시스템으로 자동 새로고침되므로 별도 처리 불필요
         return newProject;
       } catch (err) {
         const errorMessage =
@@ -104,6 +104,19 @@ export const useProjectStore = () => {
   // 컴포넌트 마운트시 프로젝트 목록 로드
   useEffect(() => {
     refreshProjects();
+  }, [refreshProjects]);
+
+  // 프로젝트 변경사항 감지하여 자동 새로고침
+  useEffect(() => {
+    const handleProjectsChanged = () => {
+      refreshProjects();
+    };
+
+    window.addEventListener(PROJECT_CHANGE_EVENT, handleProjectsChanged);
+
+    return () => {
+      window.removeEventListener(PROJECT_CHANGE_EVENT, handleProjectsChanged);
+    };
   }, [refreshProjects]);
 
   return {

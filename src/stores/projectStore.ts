@@ -8,6 +8,13 @@ import type {
 
 const STORAGE_KEY = "jmt_projects";
 
+// 이벤트 시스템 추가 - 프로젝트 변경사항을 다른 컴포넌트에 알림
+const PROJECT_CHANGE_EVENT = "jmt-projects-changed";
+
+const dispatchProjectsChanged = () => {
+  window.dispatchEvent(new CustomEvent(PROJECT_CHANGE_EVENT));
+};
+
 // 유틸리티 함수들
 const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -75,6 +82,8 @@ const getProjectsFromStorage = (): Project[] => {
 const saveProjectsToStorage = (projects: Project[]): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    // 저장 후 다른 컴포넌트들에게 변경사항 알림
+    dispatchProjectsChanged();
   } catch (error) {
     console.error("Error saving projects to storage:", error);
     throw new Error("프로젝트 저장 중 오류가 발생했습니다.");
@@ -137,7 +146,7 @@ export class ProjectStore {
 
     newProject.versions.push(initialVersion);
     projects.push(newProject);
-    saveProjectsToStorage(projects);
+    saveProjectsToStorage(projects); // 이 함수가 이벤트를 발생시킴
 
     return newProject;
   }
@@ -160,7 +169,7 @@ export class ProjectStore {
     };
 
     projects[projectIndex] = updatedProject;
-    saveProjectsToStorage(projects);
+    saveProjectsToStorage(projects); // 이 함수가 이벤트를 발생시킴
 
     return updatedProject;
   }
@@ -173,7 +182,7 @@ export class ProjectStore {
       throw new Error("프로젝트를 찾을 수 없습니다.");
     }
 
-    saveProjectsToStorage(filteredProjects);
+    saveProjectsToStorage(filteredProjects); // 이 함수가 이벤트를 발생시킴
   }
 
   // 개발용 Mock 데이터 생성
@@ -255,6 +264,9 @@ export class ProjectStore {
       },
     ];
 
-    saveProjectsToStorage(mockProjects);
+    saveProjectsToStorage(mockProjects); // 이 함수가 이벤트를 발생시킴
   }
 }
+
+// 다른 컴포넌트에서 프로젝트 변경사항을 감지할 수 있도록 이벤트 이름 export
+export { PROJECT_CHANGE_EVENT };
