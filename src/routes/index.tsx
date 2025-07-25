@@ -22,18 +22,48 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useProjectStore } from "../hooks/useProjectStore";
+import { EditProjectModal } from "../components/EditProjectModal";
 
 export const Route = createFileRoute("/")({
   component: ProjectList,
 });
 
 function ProjectList() {
-  const { projects, loading, error, deleteProject } = useProjectStore();
+  const { projects, loading, error, deleteProject, updateProject } =
+    useProjectStore();
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const [editModalOpened, setEditModalOpened] = useState(false);
+  const [projectToEdit, setProjectToEdit] = useState<{
+    id: string;
+    name: string;
+    description: string;
+  } | null>(null);
+
+  const handleEditClick = (project: (typeof projects)[0]) => {
+    setProjectToEdit({
+      id: project.id,
+      name: project.name,
+      description: project.description,
+    });
+    setEditModalOpened(true);
+  };
+
+  const handleConfirmEdit = async (name: string, description: string) => {
+    if (projectToEdit) {
+      await updateProject(projectToEdit.id, name, description);
+      setEditModalOpened(false);
+      setProjectToEdit(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditModalOpened(false);
+    setProjectToEdit(null);
+  };
 
   const handleDeleteClick = (projectId: string, projectName: string) => {
     setProjectToDelete({ id: projectId, name: projectName });
@@ -119,7 +149,10 @@ function ProjectList() {
                   </Menu.Target>
 
                   <Menu.Dropdown>
-                    <Menu.Item leftSection={<IconEdit size={14} />}>
+                    <Menu.Item
+                      leftSection={<IconEdit size={14} />}
+                      onClick={() => handleEditClick(project)}
+                    >
                       프로젝트 편집
                     </Menu.Item>
                     <Menu.Divider />
@@ -157,6 +190,7 @@ function ProjectList() {
         </SimpleGrid>
       )}
 
+      {/* 삭제 확인 Modal */}
       <Modal
         opened={deleteModalOpened}
         onClose={handleCancelDelete}
@@ -181,6 +215,14 @@ function ProjectList() {
           </Button>
         </Group>
       </Modal>
+
+      {/* 편집 Modal */}
+      <EditProjectModal
+        opened={editModalOpened}
+        onClose={handleCancelEdit}
+        onSubmit={handleConfirmEdit}
+        project={projectToEdit}
+      />
     </Container>
   );
 }

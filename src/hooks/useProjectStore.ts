@@ -119,12 +119,45 @@ export const useProjectStore = () => {
     };
   }, [refreshProjects]);
 
+  const updateProject = useCallback(
+    async (
+      projectId: string,
+      name: string,
+      description: string
+    ): Promise<void> => {
+      try {
+        ProjectStore.updateProject(projectId, { name, description });
+
+        notifications.show({
+          title: "프로젝트 수정 완료",
+          message: `${name} 프로젝트가 성공적으로 수정되었습니다.`,
+          color: "green",
+        });
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "프로젝트 수정 중 오류가 발생했습니다.";
+
+        notifications.show({
+          title: "프로젝트 수정 실패",
+          message: errorMessage,
+          color: "red",
+        });
+
+        throw err;
+      }
+    },
+    []
+  );
+
   return {
     projects,
     loading,
     error,
     refreshProjects,
     createProject,
+    updateProject,
     deleteProject,
   };
 };
