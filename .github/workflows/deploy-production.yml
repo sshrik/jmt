@@ -127,20 +127,6 @@ jobs:
             
           echo "✅ CloudFront cache invalidation completed!"
 
-      - name: 🏷️ Create deployment tag
-        if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
-        run: |
-          TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
-          TAG_NAME="deploy-${TIMESTAMP}"
-
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-          git tag -a $TAG_NAME -m "Production deployment on $TIMESTAMP"
-          git push origin $TAG_NAME
-
-          echo "🏷️ Created deployment tag: $TAG_NAME"
-
       - name: 📝 Create deployment summary
         run: |
           echo "## 🎉 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
@@ -153,7 +139,6 @@ jobs:
           echo "- ✅ Build successful" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Deployed to production S3" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ CloudFront cache invalidated" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Deployment tag created" >> $GITHUB_STEP_SUMMARY
 
   health-check:
     name: 🏥 Health Check
