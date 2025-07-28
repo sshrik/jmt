@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Container,
@@ -14,6 +14,7 @@ import {
   Select,
   NumberInput,
   Badge,
+  useMantineColorScheme,
 } from "@mantine/core";
 import {
   IconTrash,
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/settings")({
 function SettingsPage() {
   const [clearDataModalOpened, setClearDataModalOpened] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const { colorScheme: _colorScheme, setColorScheme } = useMantineColorScheme();
 
   // 앱 설정 상태
   const [notifications_enabled, setNotificationsEnabled] = useState(
@@ -41,6 +43,20 @@ function SettingsPage() {
   const [autoSaveInterval, setAutoSaveInterval] = useState(
     parseInt(localStorage.getItem("autoSaveInterval") || "30")
   );
+
+  // 페이지 로드 시 저장된 테마 적용
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") || "system";
+    if (savedTheme === "light" || savedTheme === "dark") {
+      setColorScheme(savedTheme);
+    } else if (savedTheme === "system") {
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      setColorScheme(systemTheme);
+    }
+  }, [setColorScheme]);
 
   // 로컬 스토리지 정보
   const getStorageInfo = () => {
@@ -192,6 +208,17 @@ function SettingsPage() {
         break;
       case "theme":
         setTheme(value as string);
+        // Mantine 테마 즉시 적용
+        if (value === "light" || value === "dark") {
+          setColorScheme(value as "light" | "dark");
+        } else if (value === "system") {
+          // 시스템 테마 감지하여 적용
+          const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+            .matches
+            ? "dark"
+            : "light";
+          setColorScheme(systemTheme);
+        }
         break;
       case "autoSaveInterval":
         setAutoSaveInterval(value as number);
