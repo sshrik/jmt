@@ -8,7 +8,7 @@ import {
   useEdgesState,
   addEdge,
 } from "reactflow";
-import type { Edge, Connection } from "reactflow";
+import type { Edge, Connection, ReactFlowInstance } from "reactflow";
 import "reactflow/dist/style.css";
 
 import { Card, Group, Stack, ThemeIcon, Text, Alert } from "@mantine/core";
@@ -259,7 +259,25 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   // const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // ReactFlow 컨테이너와 인스턴스 참조
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const _reactFlowInstance = useRef<ReactFlowInstance | null>(null);
+
+  // 노드가 변경될 때마다 자동으로 fitView 실행
+  useEffect(() => {
+    if (_reactFlowInstance.current && nodes.length > 0) {
+      // 약간의 지연을 두고 fitView 실행 (렌더링 완료 대기)
+      setTimeout(() => {
+        _reactFlowInstance.current?.fitView({
+          padding: 0.1,
+          includeHiddenNodes: false,
+          minZoom: 0.02,
+          maxZoom: 1,
+          duration: 300,
+        });
+      }, 100);
+    }
+  }, [nodes.length, edges.length]);
 
   // 디버그 로그 추가 함수 (현재 비활성화)
   // const addDebugLog = useCallback((message: string) => {
@@ -722,22 +740,22 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onInit={(_reactFlowInstance) => {
-              // console.log("🎪 ReactFlow initialized:", reactFlowInstance);
+            onInit={(rfInstance) => {
+              _reactFlowInstance.current = rfInstance;
               onReactFlowInit();
             }}
             nodeTypes={FLOW_NODE_TYPES}
             fitView
             fitViewOptions={{
-              padding: 0.2,
+              padding: 0.1,
               includeHiddenNodes: false,
-              minZoom: 0.05, // 더 많이 축소 가능
-              maxZoom: 2,
+              minZoom: 0.02, // 더 많이 축소 가능
+              maxZoom: 1.5,
             }}
             attributionPosition="bottom-left"
             deleteKeyCode={["Delete", "Backspace"]}
             multiSelectionKeyCode={["Meta", "Ctrl"]}
-            defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+            defaultViewport={{ x: 0, y: 0, zoom: 0.3 }}
           >
             <Background />
             <Controls />
