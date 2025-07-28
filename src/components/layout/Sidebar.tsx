@@ -16,7 +16,6 @@ import {
   IconFolder,
   IconSettings,
   IconHome,
-  IconAnalyze,
 } from "@tabler/icons-react";
 
 interface SidebarItemProps {
@@ -143,13 +142,6 @@ export const Sidebar = ({ _opened }: SidebarProps) => {
               label="백테스트"
               path="/backtest"
               description="전략 성과를 테스트하세요"
-            />
-            <SidebarItem
-              icon={<IconAnalyze size={18} />}
-              label="종목 분석"
-              path="/analysis"
-              badge="Soon"
-              description="개별 종목 분석 도구 (준비 중)"
             />
           </Stack>
         </div>

@@ -24,10 +24,10 @@ import {
 import { useProjectStore } from "../hooks/useProjectStore";
 
 export const Route = createFileRoute("/")({
-  component: ProjectList,
+  component: DashboardPage,
 });
 
-function ProjectList() {
+function DashboardPage() {
   const navigate = useNavigate();
   const { projects, loading, error, deleteProject } = useProjectStore();
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
@@ -35,6 +35,13 @@ function ProjectList() {
     id: string;
     name: string;
   } | null>(null);
+
+  // 프로젝트를 수익률 순으로 정렬 (가장 효과 좋은 것이 상위)
+  const sortedProjects = [...projects].sort((a, b) => {
+    const returnA = a.latestReturn || 0;
+    const returnB = b.latestReturn || 0;
+    return returnB - returnA; // 내림차순 정렬
+  });
 
   const handleDeleteClick = (projectId: string, projectName: string) => {
     setProjectToDelete({ id: projectId, name: projectName });
@@ -54,117 +61,264 @@ function ProjectList() {
     setProjectToDelete(null);
   };
 
+  const getReturnColor = (returnValue?: number) => {
+    if (!returnValue) return "gray";
+    if (returnValue > 0) return "green";
+    if (returnValue < 0) return "red";
+    return "gray";
+  };
+
+  const formatReturn = (returnValue?: number) => {
+    if (returnValue === undefined || returnValue === null) return "미측정";
+    return `${returnValue > 0 ? "+" : ""}${returnValue.toFixed(1)}%`;
+  };
+
   if (error) {
     return (
-      <Container size="xl">
-        <Card padding="xl" withBorder style={{ textAlign: "center" }}>
-          <Title order={3} c="red" mb="xs">
-            오류가 발생했습니다
-          </Title>
-          <Text c="dimmed">{error}</Text>
-        </Card>
+      <Container>
+        <Text color="red">오류가 발생했습니다: {error}</Text>
       </Container>
     );
   }
 
   return (
-    <Container size="xl" style={{ position: "relative" }}>
+    <Container size="xl">
       <LoadingOverlay visible={loading} />
 
-      <div style={{ marginBottom: "2rem" }}>
-        <Title order={1}>투자 전략 프로젝트</Title>
-        <Text c="dimmed" size="lg" mt="xs">
-          나만의 투자 전략을 설계하고 백테스트 결과를 확인하세요
-        </Text>
-      </div>
-
-      {projects.length === 0 && !loading ? (
-        <Card padding="xl" withBorder style={{ textAlign: "center" }}>
-          <IconChartLine
-            size={48}
-            style={{ margin: "0 auto", marginBottom: 16 }}
-          />
-          <Title order={3} mb="xs">
-            아직 생성된 프로젝트가 없습니다
-          </Title>
-          <Text c="dimmed" mb="md">
-            첫 번째 투자 전략을 만들어보세요
+      {/* 페이지 헤더 */}
+      <Group justify="space-between" mb="xl">
+        <div>
+          <Title order={1}>대시보드</Title>
+          <Text c="dimmed" size="lg" mt="xs">
+            투자 전략 성과를 확인하고 프로젝트를 관리하세요
           </Text>
-          <Button leftSection={<IconPlus size={16} />}>
-            새 프로젝트 만들기
+        </div>
+        <Button
+          leftSection={<IconPlus size={16} />}
+          onClick={() => navigate({ to: "/projects" })}
+          size="md"
+        >
+          새 프로젝트
+        </Button>
+      </Group>
+
+      {/* 성과 요약 */}
+      {projects.length > 0 && (
+        <SimpleGrid cols={{ base: 1, sm: 3 }} mb="xl">
+          <Card withBorder p="lg" style={{ textAlign: "center" }}>
+            <Text size="sm" c="dimmed" mb="xs">
+              총 프로젝트
+            </Text>
+            <Text size="xl" fw={700} c="blue">
+              {projects.length}개
+            </Text>
+          </Card>
+          <Card withBorder p="lg" style={{ textAlign: "center" }}>
+            <Text size="sm" c="dimmed" mb="xs">
+              최고 수익률
+            </Text>
+            <Text
+              size="xl"
+              fw={700}
+              c={getReturnColor(
+                Math.max(...projects.map((p) => p.latestReturn || 0))
+              )}
+            >
+              {formatReturn(
+                Math.max(...projects.map((p) => p.latestReturn || 0))
+              )}
+            </Text>
+          </Card>
+          <Card withBorder p="lg" style={{ textAlign: "center" }}>
+            <Text size="sm" c="dimmed" mb="xs">
+              평균 수익률
+            </Text>
+            <Text
+              size="xl"
+              fw={700}
+              c={getReturnColor(
+                projects.reduce((sum, p) => sum + (p.latestReturn || 0), 0) /
+                  projects.length
+              )}
+            >
+              {formatReturn(
+                projects.reduce((sum, p) => sum + (p.latestReturn || 0), 0) /
+                  projects.length
+              )}
+            </Text>
+          </Card>
+        </SimpleGrid>
+      )}
+
+      {/* 프로젝트 목록 */}
+      {projects.length === 0 ? (
+        <Card withBorder p="xl" style={{ textAlign: "center" }}>
+          <IconChartLine size={48} color="var(--mantine-color-dimmed)" />
+          <Title order={3} mt="md" mb="xs">
+            아직 프로젝트가 없습니다
+          </Title>
+          <Text c="dimmed" mb="lg">
+            첫 번째 투자 전략 프로젝트를 만들어보세요
+          </Text>
+          <Button
+            leftSection={<IconPlus size={16} />}
+            onClick={() => navigate({ to: "/projects" })}
+          >
+            프로젝트 만들기
           </Button>
         </Card>
       ) : (
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-          {projects.map((project) => (
-            <Card key={project.id} padding="lg" withBorder>
-              <Group justify="space-between" mb="xs">
-                <Group>
-                  <Title order={4}>{project.name}</Title>
-                  {project.latestReturn !== undefined && (
+        <div>
+          <Group justify="space-between" mb="md">
+            <Title order={2}>투자 전략 프로젝트</Title>
+            <Text c="dimmed" size="sm">
+              성과가 좋은 순으로 정렬됨
+            </Text>
+          </Group>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+            {sortedProjects.map((project, index) => (
+              <Card
+                key={project.id}
+                withBorder
+                p="lg"
+                style={{
+                  height: "fit-content",
+                  position: "relative",
+                }}
+              >
+                {/* 순위 배지 */}
+                {index < 3 &&
+                  project.latestReturn &&
+                  project.latestReturn > 0 && (
                     <Badge
-                      color={project.latestReturn > 0 ? "green" : "red"}
                       variant="filled"
-                    >
-                      {project.latestReturn > 0 ? "+" : ""}
-                      {project.latestReturn.toFixed(1)}%
-                    </Badge>
-                  )}
-                </Group>
-
-                <Menu shadow="md" width={200}>
-                  <Menu.Target>
-                    <ActionIcon variant="subtle" color="gray">
-                      <IconDots size={16} />
-                    </ActionIcon>
-                  </Menu.Target>
-
-                  <Menu.Dropdown>
-                    <Menu.Item
-                      leftSection={<IconEdit size={14} />}
-                      onClick={() => {
-                        navigate({ to: `/projects/${project.id}/edit` });
+                      color={
+                        index === 0 ? "yellow" : index === 1 ? "gray" : "orange"
+                      }
+                      style={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        zIndex: 1,
                       }}
                     >
-                      프로젝트 편집
-                    </Menu.Item>
-                    <Menu.Divider />
-                    <Menu.Item
-                      leftSection={<IconTrash size={14} />}
-                      color="red"
-                      onClick={() =>
-                        handleDeleteClick(project.id, project.name)
-                      }
-                    >
-                      프로젝트 삭제
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </Group>
+                      #{index + 1}
+                    </Badge>
+                  )}
 
-              <Text c="dimmed" size="sm" mb="md">
-                {project.description}
-              </Text>
+                <Group justify="space-between" mb="xs" align="flex-start">
+                  <Text
+                    fw={600}
+                    size="lg"
+                    lineClamp={1}
+                    style={{ flex: 1, marginRight: 8 }}
+                  >
+                    {project.name}
+                  </Text>
+                  <Menu shadow="md" width={200}>
+                    <Menu.Target>
+                      <ActionIcon variant="subtle" color="gray">
+                        <IconDots size={16} />
+                      </ActionIcon>
+                    </Menu.Target>
+                    <Menu.Dropdown>
+                      <Menu.Item
+                        leftSection={<IconEdit size={14} />}
+                        onClick={() =>
+                          navigate({ to: `/projects/${project.id}/edit` })
+                        }
+                      >
+                        프로젝트 수정
+                      </Menu.Item>
+                      <Menu.Divider />
+                      <Menu.Item
+                        leftSection={<IconTrash size={14} />}
+                        color="red"
+                        onClick={() =>
+                          handleDeleteClick(project.id, project.name)
+                        }
+                      >
+                        프로젝트 삭제
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
+                </Group>
 
-              <Group justify="space-between" mb="md">
-                <Text size="sm" c="dimmed">
-                  버전: {project.totalVersions}개
+                <Text c="dimmed" size="sm" mb="md" lineClamp={2}>
+                  {project.description || "설명이 없습니다."}
                 </Text>
-                <Text size="sm" c="dimmed">
-                  {project.lastModified.toLocaleDateString("ko-KR")}
-                </Text>
-              </Group>
 
-              <Button
-                fullWidth
-                variant="light"
-                onClick={() => navigate({ to: `/projects/${project.id}` })}
-              >
-                상세 보기
-              </Button>
-            </Card>
-          ))}
-        </SimpleGrid>
+                {/* 수익률 강조 표시 */}
+                <Card
+                  withBorder
+                  p="sm"
+                  mb="md"
+                  bg={
+                    project.latestReturn
+                      ? project.latestReturn > 0
+                        ? "green.0"
+                        : "red.0"
+                      : "gray.0"
+                  }
+                >
+                  <Group justify="space-between" align="center">
+                    <div>
+                      <Text size="xs" c="dimmed" mb="xs">
+                        투자 수익률
+                      </Text>
+                      <Text
+                        fw={700}
+                        size="lg"
+                        c={getReturnColor(project.latestReturn)}
+                      >
+                        {formatReturn(project.latestReturn)}
+                      </Text>
+                    </div>
+                    {project.latestReturn && (
+                      <IconChartLine
+                        size={24}
+                        color={
+                          getReturnColor(project.latestReturn) === "green"
+                            ? "green"
+                            : "red"
+                        }
+                      />
+                    )}
+                  </Group>
+                </Card>
+
+                <Group justify="space-between" mb="md">
+                  <div>
+                    <Text size="xs" c="dimmed">
+                      버전
+                    </Text>
+                    <Text size="sm" fw={500}>
+                      {project.totalVersions}개
+                    </Text>
+                  </div>
+                  <div>
+                    <Text size="xs" c="dimmed">
+                      마지막 수정
+                    </Text>
+                    <Text size="sm" fw={500}>
+                      {new Date(project.lastModified).toLocaleDateString(
+                        "ko-KR"
+                      )}
+                    </Text>
+                  </div>
+                </Group>
+
+                <Button
+                  fullWidth
+                  variant="light"
+                  onClick={() => navigate({ to: `/projects/${project.id}` })}
+                >
+                  상세 보기
+                </Button>
+              </Card>
+            ))}
+          </SimpleGrid>
+        </div>
       )}
 
       {/* 삭제 확인 Modal */}
