@@ -253,6 +253,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     null
   );
   const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   // 디버그 로그 추가 함수
@@ -263,116 +265,93 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     setDebugInfo((prev) => [...prev.slice(-4), logMessage]); // 최근 5개만 유지
   }, []);
 
+  // 마우스 기반 드래그 핸들러
+  const handleMouseDown = useCallback(
+    (nodeType: FlowNodeType, event: React.MouseEvent) => {
+      event.preventDefault();
+      setDraggedNodeType(nodeType);
+      setIsDragging(true);
+      setMousePosition({ x: event.clientX, y: event.clientY });
+      document.body.style.cursor = "grabbing";
+      addDebugLog(
+        `🎯 Mouse drag started: ${nodeType} at (${event.clientX}, ${event.clientY})`
+      );
+    },
+    [addDebugLog]
+  );
+
+  const handleMouseMove = useCallback(
+    (event: MouseEvent) => {
+      if (isDragging && draggedNodeType) {
+        setMousePosition({ x: event.clientX, y: event.clientY });
+        addDebugLog(
+          `🖱️ Dragging ${draggedNodeType} to (${event.clientX}, ${event.clientY})`
+        );
+      }
+    },
+    [isDragging, draggedNodeType, addDebugLog]
+  );
+
+  const handleMouseUp = useCallback(
+    (event: MouseEvent) => {
+      if (isDragging && draggedNodeType && reactFlowWrapper.current) {
+        const bounds = reactFlowWrapper.current.getBoundingClientRect();
+
+        // 마우스가 ReactFlow 영역 내에 있는지 확인
+        if (
+          event.clientX >= bounds.left &&
+          event.clientX <= bounds.right &&
+          event.clientY >= bounds.top &&
+          event.clientY <= bounds.bottom
+        ) {
+          const position = {
+            x: event.clientX - bounds.left,
+            y: event.clientY - bounds.top,
+          };
+
+          addDebugLog(
+            `✅ Dropping ${draggedNodeType} at (${position.x}, ${position.y})`
+          );
+
+          const newNode = createNode(draggedNodeType, position);
+          setNodes((nds) => [...nds, newNode]);
+          addDebugLog(
+            `📋 Node created successfully! Total nodes: ${nodes.length + 1}`
+          );
+        } else {
+          addDebugLog(`❌ Drop outside ReactFlow area`);
+        }
+      }
+
+      // 상태 정리
+      setIsDragging(false);
+      setDraggedNodeType(null);
+      document.body.style.cursor = "";
+      addDebugLog(`🏁 Drag ended`);
+    },
+    [isDragging, draggedNodeType, addDebugLog, setNodes, nodes.length]
+  );
+
+  // 전역 마우스 이벤트 리스너
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
   // ReactFlow가 마운트되었는지 확인
   const [_isReactFlowMounted, _setIsReactFlowMounted] = useState(false);
 
-  // ReactFlow 초기화 상태 추가
-  const [isReactFlowReady, setIsReactFlowReady] = useState(false);
-
   // ReactFlow 초기화 콜백
   const onReactFlowInit = useCallback(() => {
-    setIsReactFlowReady(true);
     addDebugLog("🎪 ReactFlow fully initialized and ready");
   }, [addDebugLog]);
-
-  // 강제 드롭 처리 (백업 메커니즘)
-  const forceCreateNode = useCallback(
-    (nodeType: FlowNodeType, clientX: number, clientY: number) => {
-      if (!reactFlowWrapper.current) return;
-
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = {
-        x: clientX - reactFlowBounds.left,
-        y: clientY - reactFlowBounds.top,
-      };
-
-      addDebugLog(
-        `🚑 Force creating node: ${nodeType} at (${position.x}, ${position.y})`
-      );
-      const newNode = createNode(nodeType, position);
-      setNodes((nds) => [...nds, newNode]);
-      setDraggedNodeType(null);
-    },
-    [addDebugLog, setNodes]
-  );
-
-  // 개선된 onDrop with 백업 메커니즘
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      addDebugLog(
-        `🎯 onDrop called - event type: ${event.type}, ready: ${isReactFlowReady}`
-      );
-
-      // 드롭 영역 스타일 복원
-      if (reactFlowWrapper.current) {
-        reactFlowWrapper.current.style.backgroundColor = "";
-        reactFlowWrapper.current.style.borderColor = "#e0e7ff";
-      }
-
-      // dataTransfer와 상태 둘 다 체크
-      const nodeTypeFromTransfer = event.dataTransfer.getData(
-        "application/reactflow-nodetype"
-      ) as FlowNodeType;
-      const nodeType = nodeTypeFromTransfer || draggedNodeType;
-
-      addDebugLog(
-        `📦 Node types - transfer: "${nodeTypeFromTransfer}", state: "${draggedNodeType}", final: "${nodeType}"`
-      );
-      addDebugLog(
-        `🏗️ ReactFlow status - wrapper: ${!!reactFlowWrapper.current}, mounted: ${_isReactFlowMounted}, ready: ${isReactFlowReady}`
-      );
-
-      if (!nodeType) {
-        addDebugLog(`❌ Drop failed - no nodeType available`);
-        return;
-      }
-
-      if (!reactFlowWrapper.current) {
-        addDebugLog(`❌ Drop failed - no ReactFlow wrapper`);
-        return;
-      }
-
-      // ReactFlow가 준비되지 않았지만 nodeType이 있다면 강제 생성
-      if (!isReactFlowReady && nodeType) {
-        addDebugLog(`⚠️ ReactFlow not ready, using force create`);
-        forceCreateNode(nodeType, event.clientX, event.clientY);
-        return;
-      }
-
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-
-      const position = {
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      };
-
-      addDebugLog(
-        `📍 Position calculated - x: ${position.x}, y: ${position.y}`
-      );
-      addDebugLog(
-        `✅ Creating node: ${nodeType} at (${position.x}, ${position.y})`
-      );
-
-      const newNode = createNode(nodeType, position);
-      setNodes((nds) => {
-        addDebugLog(`📋 Adding node to ${nds.length} existing nodes`);
-        return [...nds, newNode];
-      });
-
-      // 상태 정리
-      setDraggedNodeType(null);
-      addDebugLog("🧹 Drag state cleared");
-    },
-    [
-      draggedNodeType,
-      setNodes,
-      addDebugLog,
-      _isReactFlowMounted,
-      isReactFlowReady,
-      forceCreateNode,
-    ]
-  );
 
   // 엣지 연결 핸들러
   const onConnect = useCallback(
@@ -423,39 +402,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     [setNodes]
   );
 
-  const onDragOver = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "move";
-      addDebugLog(
-        `🔄 onDragOver - draggedNodeType: ${draggedNodeType}, mounted: ${_isReactFlowMounted}`
-      );
-
-      // 드롭 영역 시각적 피드백
-      if (reactFlowWrapper.current) {
-        reactFlowWrapper.current.style.backgroundColor =
-          "rgba(59, 130, 246, 0.05)";
-        reactFlowWrapper.current.style.borderColor = "#3b82f6";
-      }
-    },
-    [draggedNodeType, addDebugLog, _isReactFlowMounted]
-  );
-
-  const onDragLeave = useCallback(
-    (event: React.DragEvent) => {
-      addDebugLog("🚪 onDragLeave");
-      // 드롭 영역에서 벗어났을 때 스타일 복원
-      if (
-        reactFlowWrapper.current &&
-        !event.currentTarget.contains(event.relatedTarget as Node)
-      ) {
-        reactFlowWrapper.current.style.backgroundColor = "";
-        reactFlowWrapper.current.style.borderColor = "#e0e7ff";
-      }
-    },
-    [addDebugLog]
-  );
-
   // 노드 삭제
   const deleteNode = useCallback(
     (nodeId: string) => {
@@ -496,112 +442,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     };
     checkMount();
   }, [addDebugLog]);
-
-  // 전역 드래그 이벤트 추적 (디버깅용)
-  useEffect(() => {
-    const handleDocumentDragOver = (e: DragEvent) => {
-      addDebugLog(
-        `🌍 Document dragover - target: ${(e.target as Element)?.tagName}`
-      );
-    };
-
-    const handleDocumentDrop = (e: DragEvent) => {
-      addDebugLog(
-        `🌍 Document drop - target: ${(e.target as Element)?.tagName}`
-      );
-    };
-
-    const handleDocumentDragEnd = (e: DragEvent) => {
-      addDebugLog(
-        `🌍 Document dragend - target: ${(e.target as Element)?.tagName}`
-      );
-    };
-
-    document.addEventListener("dragover", handleDocumentDragOver);
-    document.addEventListener("drop", handleDocumentDrop);
-    document.addEventListener("dragend", handleDocumentDragEnd);
-
-    return () => {
-      document.removeEventListener("dragover", handleDocumentDragOver);
-      document.removeEventListener("drop", handleDocumentDrop);
-      document.removeEventListener("dragend", handleDocumentDragEnd);
-    };
-  }, [addDebugLog]);
-
-  // ReactFlow 컨테이너에 직접 이벤트 리스너 추가
-  useEffect(() => {
-    const container = reactFlowWrapper.current;
-    if (!container) return;
-
-    const handleContainerDragOver = (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      addDebugLog(
-        `🎯 Container dragover - dataTransfer types: ${Array.from(e.dataTransfer?.types || []).join(", ")}`
-      );
-    };
-
-    const handleContainerDrop = (e: DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      addDebugLog(
-        `🎯 Container drop - clientX: ${e.clientX}, clientY: ${e.clientY}`
-      );
-
-      // 직접 노드 생성 로직 실행
-      const nodeTypeFromTransfer = e.dataTransfer?.getData(
-        "application/reactflow-nodetype"
-      ) as FlowNodeType;
-      const nodeType = nodeTypeFromTransfer || draggedNodeType;
-
-      addDebugLog(
-        `📦 Manual node creation - transfer: "${nodeTypeFromTransfer}", state: "${draggedNodeType}", final: "${nodeType}"`
-      );
-
-      if (!nodeType) {
-        addDebugLog(`❌ Manual drop failed - no nodeType available`);
-        return;
-      }
-
-      const reactFlowBounds = container.getBoundingClientRect();
-      const position = {
-        x: e.clientX - reactFlowBounds.left,
-        y: e.clientY - reactFlowBounds.top,
-      };
-
-      addDebugLog(
-        `✅ Manual creating node: ${nodeType} at (${position.x}, ${position.y})`
-      );
-      const newNode = createNode(nodeType, position);
-      setNodes((nds) => [...nds, newNode]);
-      setDraggedNodeType(null);
-      addDebugLog("🧹 Manual drag state cleared");
-    };
-
-    const handleContainerDragEnter = (e: DragEvent) => {
-      e.preventDefault();
-      addDebugLog(`🎯 Container dragenter`);
-    };
-
-    const handleContainerDragLeave = (_e: DragEvent) => {
-      addDebugLog(`🎯 Container dragleave`);
-    };
-
-    // 직접 이벤트 리스너 추가
-    container.addEventListener("dragover", handleContainerDragOver);
-    container.addEventListener("drop", handleContainerDrop);
-    container.addEventListener("dragenter", handleContainerDragEnter);
-    container.addEventListener("dragleave", handleContainerDragLeave);
-
-    addDebugLog(`🔗 Direct event listeners attached to container`);
-
-    return () => {
-      container.removeEventListener("dragover", handleContainerDragOver);
-      container.removeEventListener("drop", handleContainerDrop);
-      container.removeEventListener("dragenter", handleContainerDragEnter);
-      container.removeEventListener("dragleave", handleContainerDragLeave);
-    };
-  }, [addDebugLog, draggedNodeType, setNodes]);
 
   // 플로우 변경사항 자동 저장 (개선된 무한 루프 방지)
   useEffect(() => {
@@ -728,7 +568,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
       p="xs"
       withBorder
       style={{
-        cursor: "grab",
+        cursor: isDragging && draggedNodeType === type ? "grabbing" : "grab",
         userSelect: "none",
         minWidth: "80px",
         maxWidth: "120px",
@@ -739,48 +579,15 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         position: "relative",
         borderWidth: "2px",
         borderStyle: "solid",
-        opacity: 1,
+        opacity: isDragging && draggedNodeType === type ? 0.7 : 1,
+        transform:
+          isDragging && draggedNodeType === type ? "scale(0.95)" : "scale(1)",
       }}
-      onDragStart={(event) => {
-        event.dataTransfer.setData("application/reactflow-nodetype", type);
-        setDraggedNodeType(type);
-        addDebugLog(`🚀 Drag started: ${type}`);
-
-        // 드래그 중 커서 변경
-        document.body.style.cursor = "grabbing";
-      }}
-      onDragEnd={() => {
-        document.body.style.cursor = "";
-        addDebugLog(`🏁 Drag ended: ${type}`);
-        // 드래그 종료 시 상태 정리
-        setDraggedNodeType(null);
-      }}
-      onMouseDown={(event) => {
-        // 마우스 다운 시 드래그 준비
-        event.currentTarget.style.cursor = "grabbing";
-      }}
-      onMouseUp={(event) => {
-        // 마우스 업 시 커서 복원
-        event.currentTarget.style.cursor = "grab";
-      }}
-      onMouseEnter={(event) => {
-        // 호버 시 시각적 피드백
-        if (draggedNodeType !== type) {
-          event.currentTarget.style.borderColor = "#3b82f6";
-          event.currentTarget.style.backgroundColor = "#f8fafc";
-        }
-      }}
-      onMouseLeave={(event) => {
-        // 호버 해제 시 원래 스타일로 + 커서 복원
-        if (draggedNodeType !== type) {
-          event.currentTarget.style.borderColor = "#e9ecef";
-          event.currentTarget.style.backgroundColor = "white";
-        }
-        event.currentTarget.style.cursor = "grab";
-      }}
-      draggable={true}
+      onMouseDown={(event) => handleMouseDown(type, event)}
+      // HTML5 드래그 API 완전 비활성화
+      draggable={false}
     >
-      <Stack gap="xs" align="center" style={{ pointerEvents: "none" }}>
+      <Stack gap="xs" align="center">
         <ThemeIcon color={color} size="md" radius="md">
           <Icon size={16} />
         </ThemeIcon>
@@ -795,6 +602,31 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
       </Stack>
     </Card>
   );
+
+  // 드래깅 중 시각적 커서 표시 (옵션)
+  const DragCursor = () => {
+    if (!isDragging || !draggedNodeType) return null;
+
+    return (
+      <div
+        style={{
+          position: "fixed",
+          left: mousePosition.x + 10,
+          top: mousePosition.y + 10,
+          zIndex: 1000,
+          pointerEvents: "none",
+          padding: "4px 8px",
+          backgroundColor: "#3b82f6",
+          color: "white",
+          borderRadius: "4px",
+          fontSize: "12px",
+          fontWeight: 500,
+        }}
+      >
+        {draggedNodeType} 노드 드래그 중...
+      </div>
+    );
+  };
 
   return (
     <Card withBorder p="lg" style={{ height: "100%" }}>
@@ -884,13 +716,10 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
           <div
             ref={reactFlowWrapper}
             style={{
-              flexGrow: 1,
-              width: "100%",
-              height: "500px", // 높이 증가
+              height: "500px",
               minHeight: "500px",
-              border: "1px solid #e0e7ff",
+              border: "2px dashed #e0e7ff",
               borderRadius: "8px",
-              overflow: "hidden",
               position: "relative",
             }}
           >
@@ -932,9 +761,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-              onDragLeave={onDragLeave}
               onInit={onReactFlowInit}
               nodeTypes={FLOW_NODE_TYPES}
               fitView
@@ -958,6 +784,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
                 position="bottom-right"
               />
             </ReactFlow>
+            <DragCursor />
           </div>
         </Group>
 
