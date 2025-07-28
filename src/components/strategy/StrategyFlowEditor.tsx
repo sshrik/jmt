@@ -497,6 +497,112 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     checkMount();
   }, [addDebugLog]);
 
+  // 전역 드래그 이벤트 추적 (디버깅용)
+  useEffect(() => {
+    const handleDocumentDragOver = (e: DragEvent) => {
+      addDebugLog(
+        `🌍 Document dragover - target: ${(e.target as Element)?.tagName}`
+      );
+    };
+
+    const handleDocumentDrop = (e: DragEvent) => {
+      addDebugLog(
+        `🌍 Document drop - target: ${(e.target as Element)?.tagName}`
+      );
+    };
+
+    const handleDocumentDragEnd = (e: DragEvent) => {
+      addDebugLog(
+        `🌍 Document dragend - target: ${(e.target as Element)?.tagName}`
+      );
+    };
+
+    document.addEventListener("dragover", handleDocumentDragOver);
+    document.addEventListener("drop", handleDocumentDrop);
+    document.addEventListener("dragend", handleDocumentDragEnd);
+
+    return () => {
+      document.removeEventListener("dragover", handleDocumentDragOver);
+      document.removeEventListener("drop", handleDocumentDrop);
+      document.removeEventListener("dragend", handleDocumentDragEnd);
+    };
+  }, [addDebugLog]);
+
+  // ReactFlow 컨테이너에 직접 이벤트 리스너 추가
+  useEffect(() => {
+    const container = reactFlowWrapper.current;
+    if (!container) return;
+
+    const handleContainerDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      addDebugLog(
+        `🎯 Container dragover - dataTransfer types: ${Array.from(e.dataTransfer?.types || []).join(", ")}`
+      );
+    };
+
+    const handleContainerDrop = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      addDebugLog(
+        `🎯 Container drop - clientX: ${e.clientX}, clientY: ${e.clientY}`
+      );
+
+      // 직접 노드 생성 로직 실행
+      const nodeTypeFromTransfer = e.dataTransfer?.getData(
+        "application/reactflow-nodetype"
+      ) as FlowNodeType;
+      const nodeType = nodeTypeFromTransfer || draggedNodeType;
+
+      addDebugLog(
+        `📦 Manual node creation - transfer: "${nodeTypeFromTransfer}", state: "${draggedNodeType}", final: "${nodeType}"`
+      );
+
+      if (!nodeType) {
+        addDebugLog(`❌ Manual drop failed - no nodeType available`);
+        return;
+      }
+
+      const reactFlowBounds = container.getBoundingClientRect();
+      const position = {
+        x: e.clientX - reactFlowBounds.left,
+        y: e.clientY - reactFlowBounds.top,
+      };
+
+      addDebugLog(
+        `✅ Manual creating node: ${nodeType} at (${position.x}, ${position.y})`
+      );
+      const newNode = createNode(nodeType, position);
+      setNodes((nds) => [...nds, newNode]);
+      setDraggedNodeType(null);
+      addDebugLog("🧹 Manual drag state cleared");
+    };
+
+    const handleContainerDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      addDebugLog(`🎯 Container dragenter`);
+    };
+
+    const handleContainerDragLeave = (_e: DragEvent) => {
+      addDebugLog(`🎯 Container dragleave`);
+    };
+
+    // 직접 이벤트 리스너 추가
+    container.addEventListener("dragover", handleContainerDragOver);
+    container.addEventListener("drop", handleContainerDrop);
+    container.addEventListener("dragenter", handleContainerDragEnter);
+    container.addEventListener("dragleave", handleContainerDragLeave);
+
+    addDebugLog(`🔗 Direct event listeners attached to container`);
+
+    return () => {
+      container.removeEventListener("dragover", handleContainerDragOver);
+      container.removeEventListener("drop", handleContainerDrop);
+      container.removeEventListener("dragenter", handleContainerDragEnter);
+      container.removeEventListener("dragleave", handleContainerDragLeave);
+    };
+  }, [addDebugLog, draggedNodeType, setNodes]);
+
   // 플로우 변경사항 자동 저장 (개선된 무한 루프 방지)
   useEffect(() => {
     // 초기 로딩 시에는 저장하지 않음
