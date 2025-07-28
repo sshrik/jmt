@@ -575,15 +575,7 @@ function ProjectEdit() {
               미리보기
             </Button>
           </Tooltip>
-          <Tooltip label="취소 (Esc)">
-            <Button
-              variant="subtle"
-              leftSection={<IconX size={16} />}
-              onClick={handleCancel}
-            >
-              취소
-            </Button>
-          </Tooltip>
+
           <Group gap="sm">
             <Button
               variant="light"
