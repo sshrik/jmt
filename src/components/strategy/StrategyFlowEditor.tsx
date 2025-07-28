@@ -46,69 +46,121 @@ interface StrategyFlowEditorProps {
   readOnly?: boolean;
 }
 
-// 기본 플로우 템플릿
+// 기본 플로우 생성 (더 넓은 간격)
 const createDefaultFlow = (): {
   nodes: StrategyFlowNode[];
   edges: StrategyFlowEdge[];
 } => {
-  const startNode: StrategyFlowNode = {
-    id: "start-1",
-    type: "start",
-    position: { x: 300, y: 100 },
-    data: {
-      id: "start-1",
-      label: "전략 시작",
+  const nodes: StrategyFlowNode[] = [
+    {
+      id: "start",
       type: "start",
-      description: "투자 전략이 시작되는 지점입니다.",
-    },
-  };
-
-  const scheduleNode: StrategyFlowNode = {
-    id: "schedule-1",
-    type: "schedule",
-    position: { x: 300, y: 350 },
-    data: {
-      id: "schedule-1",
-      label: "실행 일정",
-      type: "schedule",
-      scheduleParams: {
-        scheduleType: "market_open",
-        description: "장 시작 시 실행",
+      position: { x: 400, y: 100 },
+      data: {
+        id: "start",
+        label: "전략 시작",
+        type: "start",
+        enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
-      description: "전략 실행 일정을 설정합니다.",
     },
-  };
-
-  const endNode: StrategyFlowNode = {
-    id: "end-1",
-    type: "end",
-    position: { x: 300, y: 600 },
-    data: {
-      id: "end-1",
-      label: "전략 종료",
+    {
+      id: "schedule",
+      type: "schedule",
+      position: { x: 400, y: 400 }, // 시작에서 300px 간격
+      data: {
+        id: "schedule",
+        label: "실행 일정",
+        type: "schedule",
+        enabled: true,
+        scheduleParams: {
+          scheduleType: "daily",
+          executionTime: "09:30",
+          description: "매일 09:30에 실행",
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    },
+    {
+      id: "condition-1",
+      type: "condition",
+      position: { x: 200, y: 800 }, // 스케줄에서 400px 아래
+      data: {
+        id: "condition-1",
+        label: "투자 조건",
+        type: "condition",
+        enabled: true,
+        conditionType: "close_price_change",
+        conditionParams: {
+          priceChangePercent: 5,
+          priceChangeDirection: "up",
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    },
+    {
+      id: "action-1",
+      type: "action",
+      position: { x: 200, y: 1300 }, // 조건에서 500px 아래
+      data: {
+        id: "action-1",
+        label: "투자 액션",
+        type: "action",
+        enabled: true,
+        actionType: "buy_percent_cash",
+        actionParams: {
+          percentCash: 30,
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    },
+    {
+      id: "end",
       type: "end",
-      description: "투자 전략이 종료되는 지점입니다.",
+      position: { x: 400, y: 1800 }, // 액션에서 500px 아래
+      data: {
+        id: "end",
+        label: "전략 종료",
+        type: "end",
+        enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     },
-  };
+  ];
 
-  const startToScheduleEdge: StrategyFlowEdge = {
-    id: "start-schedule",
-    source: "start-1",
-    target: "schedule-1",
-    animated: true,
-  };
+  const edges: StrategyFlowEdge[] = [
+    {
+      id: "start-schedule",
+      source: "start",
+      target: "schedule",
+      animated: true,
+    },
+    {
+      id: "schedule-condition",
+      source: "schedule",
+      target: "condition-1",
+      animated: true,
+    },
+    {
+      id: "condition-action",
+      source: "condition-1",
+      target: "action-1",
+      animated: true,
+    },
+    {
+      id: "action-end",
+      source: "action-1",
+      target: "end",
+      animated: true,
+    },
+  ];
 
-  const scheduleToEndEdge: StrategyFlowEdge = {
-    id: "schedule-end",
-    source: "schedule-1",
-    target: "end-1",
-    animated: true,
-  };
-
-  return {
-    nodes: [startNode, scheduleNode, endNode],
-    edges: [startToScheduleEdge, scheduleToEndEdge],
-  };
+  return { nodes, edges };
 };
 
 // 노드 생성 헬퍼

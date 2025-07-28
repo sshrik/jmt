@@ -303,11 +303,11 @@ export const StrategyEditor = ({
       },
     });
 
-    // 스케줄 노드
+    // 스케줄 노드 (시작에서 더 멀리)
     flowNodes.push({
       id: "schedule",
       type: "schedule",
-      position: { x: 400, y: 300 },
+      position: { x: 400, y: 400 }, // 300px 간격으로 증가
       data: {
         id: "schedule",
         label: "실행 일정",
@@ -323,13 +323,13 @@ export const StrategyEditor = ({
       },
     });
 
-    // 기존 블록들을 플로우 노드로 변환
+    // 기존 블록들을 플로우 노드로 변환 (더 넓은 간격)
     rules.forEach((rule, ruleIndex) => {
-      const ruleY = 500 + ruleIndex * 400;
+      const ruleY = 800 + ruleIndex * 600; // 스케줄에서 400px 떨어진 곳부터 시작, 룰 간 600px 간격
 
       // 조건 노드들
       rule.conditions.forEach((condition, condIndex) => {
-        const nodeX = 100 + condIndex * 400;
+        const nodeX = 100 + condIndex * 500; // 조건 간 500px 간격
         flowNodes.push({
           id: condition.id,
           type: "condition",
@@ -347,10 +347,10 @@ export const StrategyEditor = ({
         });
       });
 
-      // 액션 노드들
+      // 액션 노드들 (조건에서 더 멀리)
       rule.actions.forEach((action, actionIndex) => {
-        const nodeX = 100 + actionIndex * 400;
-        const actionY = ruleY + 300;
+        const nodeX = 100 + actionIndex * 500; // 액션 간 500px 간격
+        const actionY = ruleY + 500; // 조건에서 500px 아래
         flowNodes.push({
           id: action.id,
           type: "action",
@@ -369,11 +369,13 @@ export const StrategyEditor = ({
       });
     });
 
-    // 종료 노드
+    // 종료 노드 (마지막 룰에서 충분히 멀리)
+    const finalY =
+      rules.length > 0 ? 800 + (rules.length - 1) * 600 + 1000 : 1200;
     flowNodes.push({
       id: "end",
       type: "end",
-      position: { x: 400, y: 1000 },
+      position: { x: 400, y: finalY },
       data: {
         id: "end",
         label: "전략 종료",
