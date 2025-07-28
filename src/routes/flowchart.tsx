@@ -348,17 +348,20 @@ function StockTrendPage() {
         </Group>
       </Card>
 
-      {/* 주식 정보 섹션 */}
-      <Grid mb="xl">
-        <Grid.Col span={{ base: 12, md: 8 }}>
-          <Card withBorder p="lg" h="100%">
+      <Divider mb="xl" label="선택된 종목 정보" labelPosition="center" />
+
+      {/* 종목 정보 및 차트 통합 섹션 */}
+      <Card withBorder mb="xl" p="lg">
+        {/* 주식 종목 정보 */}
+        <Stack gap="xl">
+          <div>
             <Group justify="space-between" mb="md">
               <div>
-                <Text fw={500} mb="xs">
+                <Text fw={500} size="lg" mb="xs">
                   주식 종목 정보
                 </Text>
                 <Text size="sm" c="dimmed">
-                  종목과 날짜를 선택하여 가격 정보를 확인하세요
+                  선택된 종목의 가격 정보를 확인하세요
                 </Text>
               </div>
               {loading && <Loader size="sm" />}
@@ -426,21 +429,42 @@ function StockTrendPage() {
                 </Paper>
               )}
 
+              {/* 선택된 날짜 가격 정보 */}
               {selectedDatePrice && (
                 <Paper withBorder p="md" bg="gray.0">
-                  <Text fw={500} mb="sm">
-                    {stockData?.info.name} ({selectedDatePrice.date})
-                  </Text>
+                  <Group justify="space-between" align="center" mb="md">
+                    <div>
+                      <Text fw={500} mb="xs">
+                        선택된 날짜 가격 정보
+                      </Text>
+                      <Group gap="xs" align="center">
+                        <IconCalendar size={16} />
+                        <Text size="sm" c="dimmed">
+                          {selectedDatePrice.date}
+                        </Text>
+                      </Group>
+                    </div>
+                    <Group gap="xs" align="center">
+                      <IconCurrencyWon size={16} />
+                      <Text fw={600} size="lg">
+                        <NumberFormatter
+                          value={selectedDatePrice.close}
+                          thousandSeparator
+                          suffix="원"
+                        />
+                      </Text>
+                    </Group>
+                  </Group>
+
                   <Grid>
                     <Grid.Col span={3}>
                       <Stack gap="xs" align="center">
-                        <IconCurrencyWon size={20} color="blue" />
                         <Text size="xs" c="dimmed">
-                          종가
+                          시가
                         </Text>
                         <Text fw={600}>
                           <NumberFormatter
-                            value={selectedDatePrice.close}
+                            value={selectedDatePrice.open}
                             thousandSeparator
                             suffix="원"
                           />
@@ -494,14 +518,17 @@ function StockTrendPage() {
                 </Paper>
               )}
             </Stack>
-          </Card>
-        </Grid.Col>
+          </div>
 
-        <Grid.Col span={{ base: 12, md: 4 }}>
-          <Card withBorder p="lg" h="100%">
+          <Divider label="주가 추이 차트" labelPosition="center" />
+
+          {/* 주가 추이 차트 */}
+          <div>
             <Group justify="space-between" mb="md">
               <div>
-                <Text fw={500}>주가 추이 차트</Text>
+                <Text fw={500} size="lg">
+                  주가 추이 차트
+                </Text>
                 {chartPeriodInfo && (
                   <Text size="xs" c="dimmed">
                     {chartPeriodInfo.days}일간 • {chartPeriodInfo.sampling}{" "}
@@ -586,13 +613,13 @@ function StockTrendPage() {
 
             {/* 차트 */}
             {chartData.length > 0 ? (
-              <div style={{ height: 200 }}>
+              <div style={{ height: 400, width: "100%" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 10 }}
+                      tick={{ fontSize: 12 }}
                       tickFormatter={(value) => {
                         const date = new Date(value);
                         // 기간에 따라 표시 형식 변경
@@ -608,7 +635,7 @@ function StockTrendPage() {
                         }
                       }}
                     />
-                    <YAxis tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip
                       formatter={(value: number) => [
                         `${value.toLocaleString()}원`,
@@ -629,10 +656,13 @@ function StockTrendPage() {
             ) : (
               <div
                 style={{
-                  height: 200,
+                  height: 400,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  border: "1px dashed #dee2e6",
+                  borderRadius: "8px",
+                  backgroundColor: "#f8f9fa",
                 }}
               >
                 <Text c="dimmed" size="sm">
@@ -642,9 +672,9 @@ function StockTrendPage() {
                 </Text>
               </div>
             )}
-          </Card>
-        </Grid.Col>
-      </Grid>
+          </div>
+        </Stack>
+      </Card>
 
       <Divider mb="xl" />
 
