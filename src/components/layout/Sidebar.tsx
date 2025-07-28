@@ -9,6 +9,7 @@ import {
   Divider,
   Badge,
   Tooltip,
+  useMantineColorScheme,
 } from "@mantine/core";
 import {
   IconChartLine,
@@ -35,12 +36,48 @@ const SidebarItem = ({
 }: SidebarItemProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === "dark";
+
   const isActive =
     location.pathname === path || location.pathname.startsWith(path + "/");
 
   const handleClick = () => {
     navigate({ to: path });
   };
+
+  // 다크모드에 맞는 색상 설정
+  const getColors = () => {
+    if (isActive) {
+      return {
+        color: isDark
+          ? "var(--mantine-color-blue-4)"
+          : "var(--mantine-color-blue-6)",
+        backgroundColor: isDark
+          ? "var(--mantine-color-dark-6)"
+          : "var(--mantine-color-blue-0)",
+        borderColor: isDark
+          ? "var(--mantine-color-dark-4)"
+          : "var(--mantine-color-blue-2)",
+        iconColor: isDark
+          ? "var(--mantine-color-blue-4)"
+          : "var(--mantine-color-blue-6)",
+      };
+    }
+
+    return {
+      color: isDark
+        ? "var(--mantine-color-dark-1)"
+        : "var(--mantine-color-gray-7)",
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+      iconColor: isDark
+        ? "var(--mantine-color-dark-2)"
+        : "var(--mantine-color-gray-6)",
+    };
+  };
+
+  const colors = getColors();
 
   return (
     <Tooltip label={description} position="right" disabled={!description}>
@@ -51,28 +88,28 @@ const SidebarItem = ({
           width: "100%",
           padding: rem(12),
           borderRadius: rem(8),
-          color: isActive
-            ? "var(--mantine-color-blue-6)"
-            : "var(--mantine-color-gray-7)",
-          backgroundColor: isActive
-            ? "var(--mantine-color-blue-0)"
-            : "transparent",
-          border: isActive
-            ? "1px solid var(--mantine-color-blue-2)"
-            : "1px solid transparent",
+          color: colors.color,
+          backgroundColor: colors.backgroundColor,
+          border: `1px solid ${colors.borderColor}`,
           transition: "all 0.2s ease",
         }}
-        data-active={isActive}
-        __vars={{
-          "--button-hover": "var(--mantine-color-gray-0)",
+        styles={{
+          root: {
+            "&:hover": {
+              backgroundColor: isActive
+                ? colors.backgroundColor
+                : isDark
+                  ? "var(--mantine-color-dark-7)"
+                  : "var(--mantine-color-gray-0)",
+            },
+          },
         }}
+        data-active={isActive}
       >
         <Group gap="sm" wrap="nowrap" align="center">
           <div
             style={{
-              color: isActive
-                ? "var(--mantine-color-blue-6)"
-                : "var(--mantine-color-gray-6)",
+              color: colors.iconColor,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -92,7 +129,17 @@ const SidebarItem = ({
             </Text>
           </div>
           {badge && (
-            <Badge size="xs" variant="light" color={isActive ? "blue" : "gray"}>
+            <Badge
+              size="xs"
+              variant="light"
+              color={isActive ? "blue" : isDark ? "gray" : "gray"}
+              style={{
+                color:
+                  isDark && !isActive
+                    ? "var(--mantine-color-dark-1)"
+                    : undefined,
+              }}
+            >
               {badge}
             </Badge>
           )}
@@ -103,12 +150,21 @@ const SidebarItem = ({
 };
 
 export const Sidebar = () => {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === "dark";
+
   return (
     <AppShell.Navbar p="md">
       <Stack gap="xs">
         {/* 메인 네비게이션 */}
         <div>
-          <Text size="xs" fw={700} c="dimmed" mb="xs" tt="uppercase">
+          <Text
+            size="xs"
+            fw={700}
+            c={isDark ? "dark.2" : "dimmed"}
+            mb="xs"
+            tt="uppercase"
+          >
             메인
           </Text>
           <Stack gap={4}>
@@ -131,7 +187,13 @@ export const Sidebar = () => {
 
         {/* 분석 도구 */}
         <div>
-          <Text size="xs" fw={700} c="dimmed" mb="xs" tt="uppercase">
+          <Text
+            size="xs"
+            fw={700}
+            c={isDark ? "dark.2" : "dimmed"}
+            mb="xs"
+            tt="uppercase"
+          >
             분석 도구
           </Text>
           <Stack gap={4}>
@@ -155,7 +217,13 @@ export const Sidebar = () => {
 
         {/* 설정 */}
         <div>
-          <Text size="xs" fw={700} c="dimmed" mb="xs" tt="uppercase">
+          <Text
+            size="xs"
+            fw={700}
+            c={isDark ? "dark.2" : "dimmed"}
+            mb="xs"
+            tt="uppercase"
+          >
             설정
           </Text>
           <Stack gap={4}>
