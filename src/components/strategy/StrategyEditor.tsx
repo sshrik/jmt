@@ -118,8 +118,6 @@ export const StrategyEditor = ({
         }
         currentConditions.push(block);
       } else if (block.type === "action") {
-        // 조건 없이 액션이 나오면 이전 룰에 액션 추가
-        // 단, 이미 액션이 있고 새로운 액션 그룹이 시작되는 경우 구분 필요
         currentActions.push(block);
       }
     }
@@ -516,9 +514,17 @@ export const StrategyEditor = ({
             currentOrder.every((id, index) => id === expectedOrder[index]);
 
           if (orderMatches) {
-            return;
+            return; // 변경사항이 없으므로 업데이트 스킵
           }
         }
+      }
+
+      // 실제 변경이 있는 경우에만 업데이트 진행
+      // 추가 조건: 룰 기반 에디터에서 최근에 변경했다면 일정 시간 동안 스킵
+      const timeSinceLastUpdate = Date.now() - strategy.updatedAt.getTime();
+      if (timeSinceLastUpdate < 3000) {
+        // 3초 이내에는 스킵
+        return;
       }
 
       // 플로우에서 조건과 액션 블록들 추출

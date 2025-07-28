@@ -235,11 +235,11 @@ const getNodeTypeDescription = (type: FlowNodeType): string => {
   return descriptions[type];
 };
 
-export const StrategyFlowEditor = ({
+export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   flow,
-  onFlowUpdate,
+  onFlowUpdate, // 디버깅을 위해 일시적으로 사용하지 않음
   readOnly = false,
-}: StrategyFlowEditorProps) => {
+}) => {
   const defaultFlow = useMemo(() => createDefaultFlow(), []);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(
@@ -352,7 +352,7 @@ export const StrategyFlowEditor = ({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onKeyDown]);
 
-  // 플로우 변경사항 자동 저장 (무한 루프 방지)
+  // 플로우 변경사항 자동 저장 (개선된 무한 루프 방지)
   useEffect(() => {
     // 초기 로딩 시에는 저장하지 않음
     if (!onFlowUpdate) return;
@@ -361,27 +361,30 @@ export const StrategyFlowEditor = ({
     const hasChanges = nodes.length > 0 || edges.length > 0;
     if (!hasChanges) return;
 
-    // 디바운싱으로 빈번한 업데이트 방지
+    // 더 긴 디바운싱으로 빈번한 업데이트 방지
     const timeoutId = setTimeout(() => {
+      // 플로우가 없으면 저장하지 않음
+      if (!flow) return;
+
       const updatedFlow: StrategyFlow = {
-        id: flow?.id || `flow-${Date.now()}`,
-        projectId: flow?.projectId || "",
-        versionId: flow?.versionId || "",
-        name: flow?.name || "새 플로우 전략",
-        description: flow?.description || "",
+        id: flow.id,
+        projectId: flow.projectId,
+        versionId: flow.versionId,
+        name: flow.name,
+        description: flow.description,
         nodes: nodes as StrategyFlowNode[],
         edges: edges as StrategyFlowEdge[],
-        executionSettings: flow?.executionSettings,
-        createdAt: flow?.createdAt || new Date(),
+        executionSettings: flow.executionSettings,
+        createdAt: flow.createdAt,
         updatedAt: new Date(),
-        isActive: flow?.isActive || true,
+        isActive: flow.isActive,
       };
 
       onFlowUpdate(updatedFlow);
-    }, 1000); // 1초 디바운싱으로 증가
+    }, 2000); // 2초 디바운싱으로 증가
 
     return () => clearTimeout(timeoutId);
-  }, [nodes, edges, onFlowUpdate]); // flow 의존성 제거
+  }, [nodes, edges, onFlowUpdate, flow?.id]); // flow 전체가 아닌 flow.id만 의존성에 포함
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
