@@ -36,6 +36,8 @@ interface StrategyRuleEditorProps {
   readOnly?: boolean;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
+  canDeleteRule?: boolean;
+  totalRules?: number;
 }
 
 export const StrategyRuleEditor = ({
@@ -54,7 +56,14 @@ export const StrategyRuleEditor = ({
   readOnly = false,
   canMoveUp = false,
   canMoveDown = false,
+  canDeleteRule = true,
+  totalRules = 1,
 }: StrategyRuleEditorProps) => {
+  // 삭제 버튼 비활성화 조건
+  const canDeleteCondition = conditionBlocks.length > 1;
+  const canDeleteAction = actionBlocks.length > 1;
+  const canDeleteThisRule = canDeleteRule && totalRules > 1;
+
   return (
     <Card withBorder p="lg" style={{ backgroundColor: "#f8f9fa" }}>
       <Stack gap="lg">
@@ -92,7 +101,12 @@ export const StrategyRuleEditor = ({
                 </ActionIcon>
               </Tooltip>
               <Tooltip label="규칙 삭제">
-                <ActionIcon color="red" variant="subtle" onClick={onDeleteRule}>
+                <ActionIcon
+                  color="red"
+                  variant="subtle"
+                  onClick={onDeleteRule}
+                  disabled={!canDeleteThisRule}
+                >
                   <IconTrash size={16} />
                 </ActionIcon>
               </Tooltip>
@@ -125,12 +139,9 @@ export const StrategyRuleEditor = ({
                 key={conditionBlock.id}
                 block={conditionBlock}
                 onUpdate={onUpdateCondition}
-                onDelete={(blockId) => {
-                  if (conditionBlocks.length > 1) {
-                    onDeleteCondition(blockId);
-                  }
-                }}
+                onDelete={onDeleteCondition}
                 readOnly={readOnly}
+                canDelete={canDeleteCondition}
               />
             ))}
           </Stack>
@@ -173,31 +184,12 @@ export const StrategyRuleEditor = ({
                 key={actionBlock.id}
                 block={actionBlock}
                 onUpdate={onUpdateAction}
-                onDelete={(blockId) => {
-                  if (actionBlocks.length > 1) {
-                    onDeleteAction(blockId);
-                  }
-                }}
+                onDelete={onDeleteAction}
                 readOnly={readOnly}
+                canDelete={canDeleteAction}
               />
             ))}
           </Stack>
-        </div>
-
-        {/* 실행 로직 설명 */}
-        <div
-          style={{
-            padding: "12px",
-            backgroundColor: "#e3f2fd",
-            borderRadius: "8px",
-            borderLeft: "4px solid #2196f3",
-          }}
-        >
-          <Text size="sm" c="dimmed">
-            💡 <strong>실행 로직:</strong> 모든 조건이 만족되면(AND 조건)
-            순서대로 모든 액션을 실행하고 다음 규칙으로 넘어갑니다. 여러 규칙이
-            있을 경우 위에서부터 순차적으로 확인합니다.
-          </Text>
         </div>
       </Stack>
     </Card>

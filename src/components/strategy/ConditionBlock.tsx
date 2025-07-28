@@ -25,6 +25,7 @@ interface ConditionBlockProps {
   onUpdate: (block: StrategyBlock) => void;
   onDelete: (blockId: string) => void;
   readOnly?: boolean;
+  canDelete?: boolean;
 }
 
 // 조건 타입별 설정
@@ -54,6 +55,7 @@ export const ConditionBlock = ({
   onUpdate,
   onDelete,
   readOnly = false,
+  canDelete = true,
 }: ConditionBlockProps) => {
   const conditionType = block.conditionType || "close_price_change";
   const params = block.conditionParams || {};
@@ -92,9 +94,6 @@ export const ConditionBlock = ({
       onDelete(block.id);
     }
   };
-
-  // 삭제 가능 여부 확인 (onDelete가 실제 삭제 로직을 가지고 있는지)
-  const canDelete = onDelete.toString().includes("onDeleteCondition");
 
   // 조건 파라미터 UI 렌더링
   const renderConditionParams = () => {

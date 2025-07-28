@@ -11,12 +11,7 @@ import {
   Card,
   Tabs,
 } from "@mantine/core";
-import {
-  IconPlus,
-  IconInfoCircle,
-  IconGitBranch,
-  IconListCheck,
-} from "@tabler/icons-react";
+import { IconPlus, IconGitBranch, IconListCheck } from "@tabler/icons-react";
 import { StrategyRuleEditor } from "./StrategyRuleEditor";
 import { StrategyFlowEditor } from "./StrategyFlowEditor";
 import type {
@@ -313,7 +308,14 @@ export const StrategyEditor = ({
 
       // 조건 노드들
       rule.conditions.forEach((condition, condIndex) => {
-        const nodeX = 100 + condIndex * 500; // 조건 간 500px 간격
+        // 첫 번째 조건이고 이전 룰이 있다면, 이전 룰의 첫 번째 액션과 같은 X 위치에 배치
+        let nodeX;
+        if (condIndex === 0 && ruleIndex > 0) {
+          nodeX = 100; // 첫 번째 액션과 같은 X 위치
+        } else {
+          nodeX = 100 + condIndex * 500; // 조건 간 500px 간격
+        }
+
         flowNodes.push({
           id: condition.id,
           type: "condition",
@@ -655,17 +657,6 @@ export const StrategyEditor = ({
 
           {/* 룰 기반 에디터 */}
           <Tabs.Panel value="rules" pt="lg">
-            {/* 설명 (편집 모드에서만 표시) */}
-            {!readOnly && (
-              <Alert icon={<IconInfoCircle size="1rem" />} color="blue" mb="lg">
-                <Text size="sm">
-                  <strong>룰 기반 에디터:</strong> 조건과 액션을 쌍으로 연결하여
-                  순차적인 투자 룰을 만드세요. 각 룰은 "이런 조건일 때 → 이런
-                  행동을 실행"으로 구성됩니다.
-                </Text>
-              </Alert>
-            )}
-
             {/* 통계 정보 */}
             <Paper p="md" withBorder mb="lg">
               <Group gap="md">
@@ -683,73 +674,78 @@ export const StrategyEditor = ({
 
             {/* 기존 룰 에디터 내용 */}
             <div>
-              <Group justify="space-between" mb="md">
+              <Group justify="space-between" mb="xs">
                 <Title order={3}>투자 전략 룰</Title>
                 {!readOnly && (
                   <Button
                     size="sm"
-                    variant="light"
                     leftSection={<IconPlus size={16} />}
                     onClick={addRule}
                   >
-                    새 룰 추가
+                    조건-액션 쌍 추가
                   </Button>
                 )}
               </Group>
 
-              <Stack gap="md">
-                {rules.length === 0 ? (
-                  <Paper p="xl" withBorder style={{ textAlign: "center" }}>
-                    <Text c="dimmed">
-                      투자 룰이 없습니다. 조건과 액션을 연결한 룰을
-                      추가해주세요.
-                    </Text>
-                    {!readOnly && (
-                      <Button
-                        mt="md"
-                        variant="light"
-                        leftSection={<IconPlus size={16} />}
-                        onClick={addRule}
-                      >
-                        첫 번째 룰 추가
-                      </Button>
-                    )}
-                  </Paper>
-                ) : (
-                  rules.map((rule, index) => (
-                    <StrategyRuleEditor
-                      key={`rule-${index}-${rule.conditions[0]?.id || ""}-${rule.actions[0]?.id || ""}`}
-                      conditionBlocks={rule.conditions}
-                      actionBlocks={rule.actions}
-                      index={index}
-                      onUpdateCondition={updateBlock}
-                      onUpdateAction={updateBlock}
-                      onDeleteCondition={deleteBlock}
-                      onDeleteAction={deleteBlock}
-                      onAddCondition={() => addConditionToRule(index)}
-                      onAddAction={() => addActionToRule(index)}
-                      onDeleteRule={() => deleteRule(index)}
-                      onMoveUp={
-                        index > 0
-                          ? () => {
-                              // 룰 순서 변경 로직은 복잡하므로 일단 비활성화
-                            }
-                          : undefined
-                      }
-                      onMoveDown={
-                        index < rules.length - 1
-                          ? () => {
-                              // 룰 순서 변경 로직은 복잡하므로 일단 비활성화
-                            }
-                          : undefined
-                      }
-                      readOnly={readOnly}
-                      canMoveUp={false} // 룰 순서 변경은 일단 비활성화
-                      canMoveDown={false} // 룰 순서 변경은 일단 비활성화
-                    />
-                  ))
-                )}
-              </Stack>
+              {/* 실행 로직 설명 */}
+              <Text size="sm" c="dimmed" mb="md">
+                각 룰은 조건이 만족되면 액션을 순차적으로 실행합니다. 여러
+                조건이 있는 경우 모두 만족해야 하며, 여러 액션이 있는 경우 모두
+                실행됩니다.
+              </Text>
+
+              {rules.length === 0 ? (
+                <Paper p="xl" withBorder style={{ textAlign: "center" }}>
+                  <Text c="dimmed">
+                    투자 룰이 없습니다. 조건과 액션을 연결한 룰을 추가해주세요.
+                  </Text>
+                  {!readOnly && (
+                    <Button
+                      mt="md"
+                      variant="light"
+                      leftSection={<IconPlus size={16} />}
+                      onClick={addRule}
+                    >
+                      첫 번째 룰 추가
+                    </Button>
+                  )}
+                </Paper>
+              ) : (
+                rules.map((rule, index) => (
+                  <StrategyRuleEditor
+                    key={`rule-${index}-${rule.conditions[0]?.id || ""}-${rule.actions[0]?.id || ""}`}
+                    conditionBlocks={rule.conditions}
+                    actionBlocks={rule.actions}
+                    index={index}
+                    onUpdateCondition={updateBlock}
+                    onUpdateAction={updateBlock}
+                    onDeleteCondition={deleteBlock}
+                    onDeleteAction={deleteBlock}
+                    onAddCondition={() => addConditionToRule(index)}
+                    onAddAction={() => addActionToRule(index)}
+                    onDeleteRule={() => deleteRule(index)}
+                    onMoveUp={
+                      index > 0
+                        ? () => {
+                            // 룰 순서 변경 로직은 복잡하므로 일단 비활성화
+                          }
+                        : undefined
+                    }
+                    onMoveDown={
+                      index < rules.length - 1
+                        ? () => {
+                            // 룰 순서 변경 로직은 복잡하므로 일단 비활성화
+                          }
+                        : undefined
+                    }
+                    readOnly={readOnly}
+                    canMoveUp={false} // 룰 순서 변경은 일단 비활성화
+                    canMoveDown={false} // 룰 순서 변경은 일단 비활성화
+                    canDeleteRule={true}
+                    totalRules={rules.length}
+                  />
+                ))
+              )}
             </div>
 
             {/* 전략 유효성 알림 (편집 모드에서만 표시) */}
@@ -765,14 +761,6 @@ export const StrategyEditor = ({
 
           {/* 플로우 차트 에디터 */}
           <Tabs.Panel value="flow" pt="lg">
-            <Alert icon={<IconInfoCircle size="1rem" />} color="green" mb="lg">
-              <Text size="sm">
-                <strong>플로우 차트 에디터:</strong> 드래그앤드롭으로 노드를
-                추가하고 연결하여 복잡한 투자 전략을 시각적으로 구성하세요.
-                분기와 조건부 실행이 가능합니다.
-              </Text>
-            </Alert>
-
             <StrategyFlowEditor
               flow={convertToFlow()}
               onFlowUpdate={handleFlowUpdate}

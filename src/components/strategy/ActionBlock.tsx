@@ -28,6 +28,7 @@ interface ActionBlockProps {
   onUpdate: (block: StrategyBlock) => void;
   onDelete: (blockId: string) => void;
   readOnly?: boolean;
+  canDelete?: boolean;
 }
 
 // 액션 타입별 설정
@@ -81,6 +82,7 @@ export const ActionBlock = ({
   onUpdate,
   onDelete,
   readOnly = false,
+  canDelete = false,
 }: ActionBlockProps) => {
   const actionType = block.actionType || "buy_percent_cash";
   const params = block.actionParams || {};
@@ -110,9 +112,6 @@ export const ActionBlock = ({
       });
     }
   };
-
-  // 삭제 가능 여부 확인 (onDelete가 실제 삭제 로직을 가지고 있는지)
-  const canDelete = onDelete.toString().includes("onDeleteAction");
 
   // 액션별 파라미터 UI 렌더링
   const renderActionParams = () => {

@@ -569,8 +569,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
       style={{
         cursor: isDragging && draggedNodeType === type ? "grabbing" : "grab",
         userSelect: "none",
-        minWidth: "80px",
-        maxWidth: "120px",
+        width: "120px", // 고정 너비
         textAlign: "center",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         backgroundColor: draggedNodeType === type ? "#eff6ff" : "white",
@@ -832,7 +831,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             fitViewOptions={{
               padding: 0.2,
               includeHiddenNodes: false,
-              minZoom: 0.1,
+              minZoom: 0.05, // 더 많이 축소 가능
               maxZoom: 2,
             }}
             attributionPosition="bottom-left"
