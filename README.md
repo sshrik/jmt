@@ -97,9 +97,6 @@ AWS_REGION=ap-northeast-2
 S3_BUCKET_NAME=your-s3-bucket-name
 CLOUDFRONT_DISTRIBUTION_ID=your-cloudfront-distribution-id
 CLOUDFRONT_DOMAIN=your-domain.com
-
-# 선택적: Slack 알림 (선택사항)
-SLACK_WEBHOOK_URL=https://hooks.slack.com/your-webhook
 ```
 
 #### 🛠️ AWS 설정 가이드

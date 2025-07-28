@@ -146,19 +146,6 @@ jobs:
           echo "- ✅ CloudFront cache invalidated" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Deployment tag created" >> $GITHUB_STEP_SUMMARY
 
-      - name: 🔔 Slack notification (if configured)
-        if: always() && secrets.SLACK_WEBHOOK_URL
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          channel: "#deployments"
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow
-          text: |
-            🚀 Production deployment ${{ job.status }}!
-            Environment: ${{ inputs.environment || 'production' }}
-            URL: https://${{ secrets.CLOUDFRONT_DOMAIN }}
-
   health-check:
     name: 🏥 Health Check
     runs-on: ubuntu-latest
