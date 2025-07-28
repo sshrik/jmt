@@ -14,7 +14,7 @@ import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as FlowchartRouteImport } from './routes/flowchart'
 import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProjectsProjectIdIndexRouteImport } from './routes/projects/$projectId.index'
+import { Route as ProjectsProjectIdIndexRouteImport } from './routes/projects/$projectId/index'
 import { Route as ProjectsProjectIdEditRouteImport } from './routes/projects/$projectId/edit'
 
 const SettingsRoute = SettingsRouteImport.update({

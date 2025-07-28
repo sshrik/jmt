@@ -23,11 +23,11 @@ import {
   IconTrendingUp,
   IconEye,
 } from "@tabler/icons-react";
-import { useProjectStore } from "../../hooks/useProjectStore";
-import { ProjectStore } from "../../stores/projectStore";
-import { StrategyEditor } from "../../components/strategy/StrategyEditor";
-import { BacktestRunner } from "../../components/backtest/BacktestRunner";
-import type { Strategy } from "../../types/strategy";
+import { useProjectStore } from "../../../hooks/useProjectStore";
+import { ProjectStore } from "../../../stores/projectStore";
+import { StrategyEditor } from "../../../components/strategy/StrategyEditor";
+import { BacktestRunner } from "../../../components/backtest/BacktestRunner";
+import type { Strategy } from "../../../types/strategy";
 
 export const Route = createFileRoute("/projects/$projectId/")({
   component: ProjectDetail,
