@@ -343,6 +343,8 @@ function StockTrendPage() {
             }}
             leftSection={<IconCalendar size={16} />}
             disabled={loading}
+            dropdownType="popover"
+            popoverProps={{ position: "bottom" }}
             size="md"
           />
         </Group>
@@ -592,6 +594,8 @@ function StockTrendPage() {
                   }}
                   maxDate={chartEndDate || undefined}
                   w="48%"
+                  dropdownType="popover"
+                  popoverProps={{ position: "bottom" }}
                 />
                 <DatePickerInput
                   size="xs"
@@ -607,6 +611,8 @@ function StockTrendPage() {
                   minDate={chartStartDate || undefined}
                   maxDate={new Date()}
                   w="48%"
+                  dropdownType="popover"
+                  popoverProps={{ position: "bottom" }}
                 />
               </Group>
             </Stack>

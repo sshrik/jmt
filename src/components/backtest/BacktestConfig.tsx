@@ -204,6 +204,8 @@ export const BacktestConfig = ({
               }}
               leftSection={<IconCalendar size={16} />}
               maxDate={config.endDate ? new Date(config.endDate) : undefined}
+              dropdownType="popover"
+              popoverProps={{ position: "bottom" }}
             />
           </div>
           <div>
@@ -227,6 +229,8 @@ export const BacktestConfig = ({
                 config.startDate ? new Date(config.startDate) : undefined
               }
               maxDate={new Date()}
+              dropdownType="popover"
+              popoverProps={{ position: "bottom" }}
             />
           </div>
         </Group>
