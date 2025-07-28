@@ -527,7 +527,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
 
   return (
     <Card withBorder p="lg" style={{ height: "100%" }}>
-      <Stack gap="lg" style={{ height: "100%" }}>
+      <Stack gap="lg" style={{ height: "100%", minHeight: "500px" }}>
         {/* 헤더와 통계 */}
         <Group justify="space-between" align="flex-start">
           <div>
@@ -567,16 +567,22 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         </Group>
 
         {/* 메인 컨텐츠 - flexGrow로 남은 공간 차지 */}
-        <Group align="flex-start" style={{ flexGrow: 1, height: 0 }} gap="lg">
-          {/* 노드 팔레트 */}
-          <Stack gap="md" style={{ minWidth: "200px", flexShrink: 0 }}>
-            <Text size="sm" fw={500} c="dimmed">
-              노드 추가
-            </Text>
-            {DRAGGABLE_NODES.map((nodeType) => (
-              <DraggableNode key={nodeType.type} {...nodeType} />
-            ))}
-          </Stack>
+        <Group
+          align="flex-start"
+          style={{ flexGrow: 1, minHeight: "400px" }}
+          gap="lg"
+        >
+          {/* 노드 팔레트 - 읽기 전용이 아닐 때만 표시 */}
+          {!readOnly && (
+            <Stack gap="md" style={{ minWidth: "200px", flexShrink: 0 }}>
+              <Text size="sm" fw={500} c="dimmed">
+                노드 추가
+              </Text>
+              {DRAGGABLE_NODES.map((nodeType) => (
+                <DraggableNode key={nodeType.type} {...nodeType} />
+              ))}
+            </Stack>
+          )}
 
           {/* 단축키 안내 (읽기 전용이 아닐 때만 표시) */}
           {!readOnly && (
@@ -610,8 +616,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             style={{
               flexGrow: 1,
               width: "100%",
-              height: "100%", // 부모 컨테이너에 맞춤
-              minHeight: "400px", // 최소 높이 설정
+              height: "400px", // 고정 높이로 변경
+              minHeight: "400px",
               border: "1px solid #e0e7ff",
               borderRadius: "8px",
               overflow: "hidden",
