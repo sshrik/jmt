@@ -34,6 +34,13 @@ interface StrategyEditorProps {
   readOnly?: boolean;
 }
 
+// 룰 구조 정의
+interface StrategyRule {
+  id: string;
+  conditions: StrategyBlock[];
+  actions: StrategyBlock[];
+}
+
 // 새 블록 생성 헬퍼 함수
 const createBlock = (type: "condition" | "action"): StrategyBlock => {
   const timestamp = Date.now();
@@ -78,76 +85,51 @@ export const StrategyEditor = ({
 }: StrategyEditorProps) => {
   const [activeTab, setActiveTab] = useState<"rules" | "flow">("rules");
 
-  // 순서대로 정렬된 블록들
-  const orderedBlocks = strategy.blockOrder
-    .map((id) => strategy.blocks.find((block) => block.id === id))
-    .filter(Boolean) as StrategyBlock[];
-
-  console.log("📋 StrategyEditor 블록 순서 정렬:", {
-    blockOrderLength: strategy.blockOrder.length,
-    foundBlocks: orderedBlocks.length,
-    allBlocks: strategy.blocks.length,
-    blockIds: strategy.blocks.map((b) => b.id),
-    blockOrder: strategy.blockOrder,
-  });
-
-  // 룰별로 블록 그룹핑 (blockOrder 기반으로 순서대로 조건-액션 쌍을 만듦)
+  // 블록 정렬 및 룰 생성
   const rules = useMemo(() => {
-    const orderedBlocks = strategy.blockOrder
-      .map((id) => strategy.blocks.find((block) => block.id === id))
-      .filter(Boolean) as StrategyBlock[];
+    // blockOrder가 있으면 그에 따라 정렬, 없으면 createdAt 순서
+    const sortedBlocks = strategy.blockOrder?.length
+      ? (strategy.blockOrder
+          .map((id) => strategy.blocks.find((block) => block.id === id))
+          .filter(Boolean) as StrategyBlock[])
+      : [...strategy.blocks].sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
 
-    console.log("📋 StrategyEditor 블록 순서 정렬:", {
-      blockOrderLength: strategy.blockOrder.length,
-      foundBlocks: orderedBlocks.length,
-      allBlocks: strategy.blocks.length,
-      blockIds: strategy.blocks.map((b) => b.id),
-      blockOrder: strategy.blockOrder,
-    });
+    // 조건과 액션을 쌍으로 묶어서 룰 생성
+    const newRules: StrategyRule[] = [];
+    let currentConditions: StrategyBlock[] = [];
+    let currentActions: StrategyBlock[] = [];
 
-    // 조건과 액션을 순서대로 쌍으로 만들되, 룰 단위로 그룹핑
-    const generatedRules = [];
-    let currentRuleConditions: StrategyBlock[] = [];
-    let currentRuleActions: StrategyBlock[] = [];
-    let expectingAction = false;
-
-    for (const block of orderedBlocks) {
+    for (const block of sortedBlocks) {
       if (block.type === "condition") {
-        // 새로운 조건이 시작되면 이전 룰을 완성하고 새 룰 시작
-        if (expectingAction && currentRuleActions.length > 0) {
-          generatedRules.push({
-            conditions: currentRuleConditions,
-            actions: currentRuleActions,
+        // 이전 룰이 있으면 완료하고 새 룰 시작
+        if (currentActions.length > 0) {
+          newRules.push({
+            id: `rule-${newRules.length}`,
+            conditions: currentConditions,
+            actions: currentActions,
           });
-          currentRuleConditions = [];
-          currentRuleActions = [];
+          currentConditions = [];
+          currentActions = [];
         }
-        currentRuleConditions.push(block);
-        expectingAction = false;
+        currentConditions.push(block);
       } else if (block.type === "action") {
-        currentRuleActions.push(block);
-        expectingAction = true;
+        currentActions.push(block);
       }
     }
 
     // 마지막 룰 추가
-    if (currentRuleConditions.length > 0 && currentRuleActions.length > 0) {
-      generatedRules.push({
-        conditions: currentRuleConditions,
-        actions: currentRuleActions,
+    if (currentConditions.length > 0 && currentActions.length > 0) {
+      newRules.push({
+        id: `rule-${newRules.length}`,
+        conditions: currentConditions,
+        actions: currentActions,
       });
     }
 
-    console.log("🔗 룰 생성:", {
-      totalRules: generatedRules.length,
-      rules: generatedRules.map((rule, index) => ({
-        ruleIndex: index,
-        conditionCount: rule.conditions.length,
-        actionCount: rule.actions.length,
-      })),
-    });
-
-    return generatedRules;
+    return newRules;
   }, [strategy.blocks, strategy.blockOrder]);
 
   // 전략 유효성 검사
@@ -164,13 +146,6 @@ export const StrategyEditor = ({
       blockOrder: [...strategy.blockOrder, conditionBlock.id, actionBlock.id],
       updatedAt: new Date(),
     };
-
-    console.log("➕ 새 룰 추가:", {
-      blocksCount: updatedStrategy.blocks.length,
-      blockOrderCount: updatedStrategy.blockOrder.length,
-      conditionId: conditionBlock.id,
-      actionId: actionBlock.id,
-    });
 
     onStrategyUpdate(updatedStrategy);
   }, [strategy, onStrategyUpdate]);
@@ -483,7 +458,6 @@ export const StrategyEditor = ({
   const handleFlowUpdate = useCallback(
     (updatedFlow: StrategyFlow) => {
       // 플로우를 기존 룰 기반 구조로 역변환하는 로직
-      console.log("🔄 플로우 업데이트:", updatedFlow);
 
       // 기존 블록 수와 새 노드 수가 같다면 메타데이터만 업데이트
       const conditionNodes = updatedFlow.nodes.filter(
@@ -496,7 +470,6 @@ export const StrategyEditor = ({
 
       // 실제 블록 구조 변경이 없다면 업데이트 스킵
       if (totalNewBlocks === strategy.blocks.length) {
-        console.log("📝 블록 구조 변경 없음 - 업데이트 스킵");
         return;
       }
 
@@ -549,12 +522,6 @@ export const StrategyEditor = ({
         blockOrder: newBlockOrder,
         updatedAt: new Date(),
       };
-
-      console.log("📝 전략 업데이트:", {
-        원본블록수: strategy.blocks.length,
-        새블록수: newBlocks.length,
-        블록순서: newBlockOrder,
-      });
 
       onStrategyUpdate(updatedStrategy);
     },

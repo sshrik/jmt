@@ -168,9 +168,8 @@ function ProjectEdit() {
 
     // blockOrder가 없으면 blocks의 id로 자동 생성
     const blockOrder = migratedBlocks.map((block) => block.id);
-    console.log("🔧 수정 페이지 blockOrder 생성:", blockOrder);
 
-    return {
+    const strategy: Strategy = {
       id: `strategy-${project.id}`,
       projectId: project.id,
       versionId: project.versions[0]?.versionName || "v1.0",
@@ -182,6 +181,8 @@ function ProjectEdit() {
       updatedAt: project.updatedAt,
       isActive: true,
     };
+
+    return strategy;
   }, [project, projectId]);
 
   // 현재 사용할 전략 (수정된 전략이 있으면 그것을, 없으면 기본 전략)

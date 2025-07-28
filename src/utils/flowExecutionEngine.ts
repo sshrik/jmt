@@ -31,12 +31,6 @@ export class FlowExecutionEngine {
   // 플로우 실행 메인 메서드
   async execute(): Promise<FlowExecutionResult> {
     try {
-      console.log("🚀 플로우 실행 시작:", {
-        flowId: this.flow.id,
-        nodeCount: this.flow.nodes.length,
-        edgeCount: this.flow.edges.length,
-      });
-
       // 1. 시작 노드 찾기
       const startNode = this.flow.nodes.find(
         (node) => node.data.type === "start"
@@ -52,7 +46,6 @@ export class FlowExecutionEngine {
       this.executionResult.status = "completed";
       this.executionResult.endTime = new Date();
 
-      console.log("✅ 플로우 실행 완료:", this.executionResult);
       return this.executionResult;
     } catch (error) {
       console.error("❌ 플로우 실행 실패:", error);
@@ -68,8 +61,6 @@ export class FlowExecutionEngine {
     if (!node) {
       throw new Error(`노드를 찾을 수 없습니다: ${nodeId}`);
     }
-
-    console.log(`🔄 노드 실행: ${node.data.type} - ${node.data.label}`);
 
     // 노드 실행 결과 초기화
     const nodeResult = {
@@ -130,7 +121,6 @@ export class FlowExecutionEngine {
   private async executeStartNode(
     data: FlowNodeData
   ): Promise<Record<string, unknown>> {
-    console.log("🎬 전략 시작:", data.label);
     return {
       type: "start",
       message: "전략이 시작되었습니다.",

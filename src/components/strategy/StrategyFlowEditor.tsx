@@ -268,7 +268,6 @@ export const StrategyFlowEditor = ({
               edge.targetHandle === connection.targetHandle
           );
           if (existingConnection) {
-            console.log("액션 노드는 하나의 입력만 허용됩니다.");
             return; // 연결 차단
           }
         }
@@ -317,14 +316,6 @@ export const StrategyFlowEditor = ({
         y: event.clientY - reactFlowBounds.top,
       };
 
-      console.log("드래그앤드롭 위치:", {
-        clientX: event.clientX,
-        clientY: event.clientY,
-        boundsLeft: reactFlowBounds.left,
-        boundsTop: reactFlowBounds.top,
-        finalPosition: position,
-      });
-
       const newNode = createNode(draggedNodeType, position);
       setNodes((nds) => [...nds, newNode]);
       setDraggedNodeType(null);
@@ -353,7 +344,6 @@ export const StrategyFlowEditor = ({
   const onKeyDown = useCallback((event: KeyboardEvent) => {
     if (event.key === "Delete" || event.key === "Backspace") {
       // 선택된 노드들 삭제 (향후 구현)
-      console.log("노드 삭제 단축키");
     }
   }, []);
 
@@ -386,12 +376,6 @@ export const StrategyFlowEditor = ({
         updatedAt: new Date(),
         isActive: flow?.isActive || true,
       };
-
-      console.log("💾 플로우 자동 저장:", {
-        노드수: nodes.length,
-        엣지수: edges.length,
-        저장시간: new Date().toLocaleTimeString(),
-      });
 
       onFlowUpdate(updatedFlow);
     }, 500); // 500ms 디바운싱
