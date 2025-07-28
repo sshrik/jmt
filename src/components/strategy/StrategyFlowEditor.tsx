@@ -237,16 +237,29 @@ const getNodeTypeDescription = (type: FlowNodeType): string => {
 
 export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   flow,
-  onFlowUpdate, // 디버깅을 위해 일시적으로 사용하지 않음
+  onFlowUpdate,
   readOnly = false,
 }) => {
+  // 모든 Hook들을 먼저 정의
   const defaultFlow = useMemo(() => createDefaultFlow(), []);
 
+  // 현재 플로우 또는 기본 플로우 사용
+  const currentFlow = flow || defaultFlow;
+
+  // 디버깅 정보 추가
+  console.log("🎯 StrategyFlowEditor Debug Info:", {
+    flow: flow ? "provided" : "null",
+    currentFlow: currentFlow ? "valid" : "invalid",
+    flowNodes: currentFlow?.nodes?.length || 0,
+    flowEdges: currentFlow?.edges?.length || 0,
+    readOnly,
+  });
+
   const [nodes, setNodes, onNodesChange] = useNodesState(
-    flow?.nodes || defaultFlow.nodes
+    currentFlow.nodes || defaultFlow.nodes
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(
-    flow?.edges || defaultFlow.edges
+    currentFlow.edges || defaultFlow.edges
   );
 
   const [draggedNodeType, setDraggedNodeType] = useState<FlowNodeType | null>(
