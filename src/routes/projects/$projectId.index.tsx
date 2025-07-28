@@ -217,11 +217,17 @@ function ProjectDetail() {
       </Card>
 
       {/* 투자 전략 (읽기 전용) */}
-      <StrategyEditor
-        strategy={strategy}
-        onStrategyUpdate={() => {}} // 읽기 전용이므로 빈 함수
-        readOnly={true}
-      />
+      {/* 투자 전략 (읽기 전용) */}
+      <div>
+        <Text size="sm" c="dimmed" mb="sm">
+          현재 전략 블록 수: {strategy.blocks.length}개
+        </Text>
+        <StrategyEditor
+          strategy={strategy}
+          onStrategyUpdate={() => {}} // 읽기 전용이므로 빈 함수
+          readOnly={true}
+        />
+      </div>
     </Container>
   );
 }
