@@ -11,22 +11,13 @@ import {
 import type { Edge, Connection } from "reactflow";
 import "reactflow/dist/style.css";
 
-import {
-  Card,
-  Group,
-  Stack,
-  Paper,
-  Alert,
-  ThemeIcon,
-  Text,
-} from "@mantine/core";
+import { Card, Group, Stack, ThemeIcon, Text, Alert } from "@mantine/core";
 import {
   IconPlayerPlay,
   IconClock,
   IconGitBranch,
   IconTarget,
   IconPlayerStop,
-  IconInfoCircle,
 } from "@tabler/icons-react";
 
 import { FLOW_NODE_TYPES } from "./flow-nodes";
@@ -718,31 +709,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             flexGrow: 1,
           }}
         >
-          {/* 단축키 안내 오버레이 */}
-          {!readOnly && (
-            <Paper
-              withBorder
-              p="sm"
-              style={{
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                zIndex: 10,
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                minWidth: "200px",
-              }}
-            >
-              <Alert icon={<IconInfoCircle size="1rem" />} color="blue">
-                <Text size="xs" mb="xs">
-                  <strong>단축키:</strong>
-                </Text>
-                <Text size="xs">• Del/Backspace: 노드 삭제</Text>
-                <Text size="xs">• Ctrl/Cmd + 클릭: 다중 선택</Text>
-                <Text size="xs">• 마우스 휠: 확대/축소</Text>
-              </Alert>
-            </Paper>
-          )}
-
           <ReactFlow
             nodes={nodes.map((node) => ({
               ...node,

@@ -304,7 +304,7 @@ export const StrategyEditor = ({
 
     // 기존 블록들을 플로우 노드로 변환 (더 넓은 간격)
     rules.forEach((rule, ruleIndex) => {
-      const ruleY = 800 + ruleIndex * 600; // 스케줄에서 400px 떨어진 곳부터 시작, 룰 간 600px 간격
+      const ruleY = 800 + ruleIndex * 1200; // 스케줄에서 400px 떨어진 곳부터 시작, 룰 간 1200px 간격
 
       // 조건 노드들
       rule.conditions.forEach((condition, condIndex) => {
@@ -336,7 +336,7 @@ export const StrategyEditor = ({
       // 액션 노드들 (조건에서 더 멀리)
       rule.actions.forEach((action, actionIndex) => {
         const nodeX = 100 + actionIndex * 500; // 액션 간 500px 간격
-        const actionY = ruleY + 500; // 조건에서 500px 아래
+        const actionY = ruleY + 600; // 조건에서 600px 아래
         flowNodes.push({
           id: action.id,
           type: "action",
@@ -357,7 +357,7 @@ export const StrategyEditor = ({
 
     // 종료 노드 (마지막 룰에서 충분히 멀리)
     const finalY =
-      rules.length > 0 ? 800 + (rules.length - 1) * 600 + 1000 : 1200;
+      rules.length > 0 ? 800 + (rules.length - 1) * 1200 + 1200 : 1200;
     flowNodes.push({
       id: "end",
       type: "end",
@@ -691,40 +691,42 @@ export const StrategyEditor = ({
                   )}
                 </Paper>
               ) : (
-                rules.map((rule, index) => (
-                  <StrategyRuleEditor
-                    key={`rule-${index}-${rule.conditions[0]?.id || ""}-${rule.actions[0]?.id || ""}`}
-                    conditionBlocks={rule.conditions}
-                    actionBlocks={rule.actions}
-                    index={index}
-                    onUpdateCondition={updateBlock}
-                    onUpdateAction={updateBlock}
-                    onDeleteCondition={deleteBlock}
-                    onDeleteAction={deleteBlock}
-                    onAddCondition={() => addConditionToRule(index)}
-                    onAddAction={() => addActionToRule(index)}
-                    onDeleteRule={() => deleteRule(index)}
-                    onMoveUp={
-                      index > 0
-                        ? () => {
-                            // 룰 순서 변경 로직은 복잡하므로 일단 비활성화
-                          }
-                        : undefined
-                    }
-                    onMoveDown={
-                      index < rules.length - 1
-                        ? () => {
-                            // 룰 순서 변경 로직은 복잡하므로 일단 비활성화
-                          }
-                        : undefined
-                    }
-                    readOnly={readOnly}
-                    canMoveUp={false} // 룰 순서 변경은 일단 비활성화
-                    canMoveDown={false} // 룰 순서 변경은 일단 비활성화
-                    canDeleteRule={true}
-                    totalRules={rules.length}
-                  />
-                ))
+                <Stack gap="xl">
+                  {rules.map((rule, index) => (
+                    <StrategyRuleEditor
+                      key={`rule-${index}-${rule.conditions[0]?.id || ""}-${rule.actions[0]?.id || ""}`}
+                      conditionBlocks={rule.conditions}
+                      actionBlocks={rule.actions}
+                      index={index}
+                      onUpdateCondition={updateBlock}
+                      onUpdateAction={updateBlock}
+                      onDeleteCondition={deleteBlock}
+                      onDeleteAction={deleteBlock}
+                      onAddCondition={() => addConditionToRule(index)}
+                      onAddAction={() => addActionToRule(index)}
+                      onDeleteRule={() => deleteRule(index)}
+                      onMoveUp={
+                        index > 0
+                          ? () => {
+                              // 룰 순서 변경 로직은 복잡하므로 일단 비활성화
+                            }
+                          : undefined
+                      }
+                      onMoveDown={
+                        index < rules.length - 1
+                          ? () => {
+                              // 룰 순서 변경 로직은 복잡하므로 일단 비활성화
+                            }
+                          : undefined
+                      }
+                      readOnly={readOnly}
+                      canMoveUp={false} // 룰 순서 변경은 일단 비활성화
+                      canMoveDown={false} // 룰 순서 변경은 일단 비활성화
+                      canDeleteRule={true}
+                      totalRules={rules.length}
+                    />
+                  ))}
+                </Stack>
               )}
             </div>
 

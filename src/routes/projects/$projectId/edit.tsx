@@ -652,19 +652,6 @@ function ProjectEdit() {
               </Alert>
             )}
 
-            <Alert
-              icon={<IconInfoCircle size={16} />}
-              color="blue"
-              variant="light"
-              mb="lg"
-            >
-              <Text size="sm">
-                <strong>블록 추가 방법:</strong> 아래 "조건 추가" 또는 "액션
-                추가" 버튼을 클릭하여 새로운 전략 블록을 추가할 수 있습니다.
-                조건 블록은 매매 조건을, 액션 블록은 실행할 행동을 정의합니다.
-              </Text>
-            </Alert>
-
             <div
               style={{ height: "70vh", minHeight: "500px", maxHeight: "800px" }}
             >
