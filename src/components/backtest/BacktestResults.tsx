@@ -225,10 +225,10 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                   />
                   <Tooltip
                     formatter={(value: number, name: string) => [
-                      name === "totalValue"
+                      name === "포트폴리오 가치"
                         ? `₩${formatNumber(value)}`
                         : `${formatNumber(value, 2)}%`,
-                      name === "totalValue" ? "포트폴리오 가치" : "수익률",
+                      name,
                     ]}
                     labelFormatter={(date) =>
                       new Date(date).toLocaleDateString("ko-KR")
