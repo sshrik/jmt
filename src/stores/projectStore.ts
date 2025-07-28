@@ -90,7 +90,14 @@ const saveProjectsToStorage = (projects: Project[]): void => {
 export class ProjectStore {
   // 프로젝트 CRUD
   static getAllProjects(): Project[] {
-    return getProjectsFromStorage();
+    const projects = getProjectsFromStorage();
+    if (projects.length === 0) {
+      console.log("No projects found in storage, creating sample project");
+      const sampleProject = this.createSampleProject();
+      saveProjectsToStorage([sampleProject]);
+      return [sampleProject];
+    }
+    return projects;
   }
 
   static getProjectSummaries(): ProjectSummary[] {
@@ -115,6 +122,29 @@ export class ProjectStore {
   static getProjectById(projectId: string): Project | null {
     const projects = this.getAllProjects();
     return projects.find((p) => p.id === projectId) || null;
+  }
+
+  private static createSampleProject(): Project {
+    const now = new Date();
+    const sampleProject: Project = {
+      id: "sample-project",
+      name: "샘플 프로젝트",
+      description:
+        "시연용 샘플 프로젝트입니다. 자유롭게 수정하거나 삭제하세요.",
+      createdAt: now,
+      updatedAt: now,
+      versions: [
+        {
+          id: "sample-version-1",
+          projectId: "sample-project",
+          versionName: "v1.0",
+          description: "샘플 버전 1",
+          createdAt: now,
+          strategy: [],
+        },
+      ],
+    };
+    return sampleProject;
   }
 
   static createProject(name: string, description: string): Project {
