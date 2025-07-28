@@ -752,6 +752,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               minZoom: 0.001, // 거의 무제한 축소
               maxZoom: 1.5,
             }}
+            minZoom={0.001}
+            maxZoom={3}
             attributionPosition="bottom-left"
             deleteKeyCode={["Delete", "Backspace"]}
             multiSelectionKeyCode={["Meta", "Ctrl"]}
