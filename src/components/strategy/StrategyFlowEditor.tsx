@@ -253,7 +253,16 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     null
   );
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isReactFlowReady, setIsReactFlowReady] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+  // ReactFlow 초기화 완료 콜백
+  const onInit = useCallback(() => {
+    setIsReactFlowReady(true);
+  }, []);
+
+  // ReactFlow가 준비되지 않았다면 드래그 비활성화
+  const isDragDisabled = !isReactFlowReady;
 
   // 엣지 연결 핸들러
   const onConnect = useCallback(
@@ -308,7 +317,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     (event: React.DragEvent) => {
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
-      console.log("🔄 onDragOver", { draggedNodeType });
 
       // 드롭 영역 시각적 피드백
       if (reactFlowWrapper.current) {
@@ -321,7 +329,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   );
 
   const onDragLeave = useCallback((event: React.DragEvent) => {
-    console.log("🚪 onDragLeave");
     // 드롭 영역에서 벗어났을 때 스타일 복원
     if (
       reactFlowWrapper.current &&
@@ -336,7 +343,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
-      console.log("🎯 onDrop called", { draggedNodeType, isDragActive });
 
       // 드롭 영역 스타일 복원
       if (reactFlowWrapper.current) {
@@ -345,11 +351,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
       }
 
       if (!draggedNodeType || !reactFlowWrapper.current || !isDragActive) {
-        console.log("❌ onDrop failed", {
-          draggedNodeType,
-          hasWrapper: !!reactFlowWrapper.current,
-          isDragActive,
-        });
         return;
       }
 
@@ -359,8 +360,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       };
-
-      console.log("✅ Creating node", { nodeType: draggedNodeType, position });
 
       const newNode = createNode(draggedNodeType, position);
       setNodes((nds) => [...nds, newNode]);
@@ -526,7 +525,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
       p="xs"
       withBorder
       style={{
-        cursor: "grab",
+        cursor: isDragDisabled ? "not-allowed" : "grab",
         userSelect: "none",
         minWidth: "80px",
         maxWidth: "120px",
@@ -537,35 +536,40 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         position: "relative",
         borderWidth: "2px",
         borderStyle: "solid",
+        opacity: isDragDisabled ? 0.6 : 1,
       }}
       onDragStart={(event) => {
+        if (isDragDisabled) {
+          event.preventDefault();
+          return;
+        }
         event.dataTransfer.effectAllowed = "move";
         setDraggedNodeType(type);
         setIsDragActive(true);
-        console.log("🚀 Drag started", { type });
 
         // 드래그 중 커서 변경
         document.body.style.cursor = "grabbing";
       }}
       onDragEnd={() => {
-        console.log("🏁 Drag ended", { type });
         document.body.style.cursor = "";
         // onDrop이 완료될 때까지 대기
         setTimeout(() => {
-          console.log("🧹 Cleaning up drag state");
           setDraggedNodeType(null);
           setIsDragActive(false);
         }, 100);
       }}
       onMouseDown={(event) => {
+        if (isDragDisabled) return;
         // 마우스 다운 시 드래그 준비
         event.currentTarget.style.cursor = "grabbing";
       }}
       onMouseUp={(event) => {
+        if (isDragDisabled) return;
         // 마우스 업 시 커서 복원
         event.currentTarget.style.cursor = "grab";
       }}
       onMouseEnter={(event) => {
+        if (isDragDisabled) return;
         // 호버 시 시각적 피드백
         if (draggedNodeType !== type) {
           event.currentTarget.style.borderColor = "#3b82f6";
@@ -573,6 +577,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         }
       }}
       onMouseLeave={(event) => {
+        if (isDragDisabled) return;
         // 호버 해제 시 원래 스타일로 + 커서 복원
         if (draggedNodeType !== type) {
           event.currentTarget.style.borderColor = "#e9ecef";
@@ -580,7 +585,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         }
         event.currentTarget.style.cursor = "grab";
       }}
-      draggable
+      draggable={!isDragDisabled}
     >
       <Stack gap="xs" align="center" style={{ pointerEvents: "none" }}>
         <ThemeIcon color={color} size="md" radius="md">
@@ -726,6 +731,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               deleteKeyCode={["Delete", "Backspace"]}
               multiSelectionKeyCode={["Meta", "Ctrl"]}
               defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+              onInit={onInit}
             >
               <Background />
               <Controls />
