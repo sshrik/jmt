@@ -1,15 +1,94 @@
 import type { StockData, StockInfo, StockSummary } from "../types/backtest";
 
-// 주식 목록 조회
-export async function getStockList(): Promise<StockInfo[]> {
+// 새로운 자산 목록 구조
+interface AssetList {
+  categories: {
+    한국주식: StockInfo[];
+    미국주식: StockInfo[];
+    지수: StockInfo[];
+    암호화폐: StockInfo[];
+  };
+  metadata: {
+    generatedAt: string;
+    totalAssets: number;
+    successCount: number;
+    failureCount: number;
+    dataSource: string;
+    maxHistoryYears: number;
+  };
+}
+
+// 자산 목록 조회 (모든 카테고리)
+export async function getAssetList(): Promise<AssetList> {
   try {
-    const response = await fetch("/data/stocks/stock-list.json");
+    const response = await fetch("/data/stocks/asset-list.json");
     if (!response.ok) {
-      throw new Error(`주식 목록 조회 실패: ${response.status}`);
+      throw new Error(`자산 목록 조회 실패: ${response.status}`);
     }
     return await response.json();
   } catch (error) {
+    console.error("자산 목록 로드 실패:", error);
+    throw error;
+  }
+}
+
+// 주식 목록 조회 (기존 호환성을 위해 유지)
+export async function getStockList(): Promise<StockInfo[]> {
+  try {
+    const assetList = await getAssetList();
+    // 한국주식과 미국주식만 반환 (기존 호환성)
+    return [
+      ...assetList.categories["한국주식"],
+      ...assetList.categories["미국주식"],
+    ];
+  } catch (error) {
     console.error("주식 목록 로드 실패:", error);
+    throw error;
+  }
+}
+
+// 카테고리별 자산 목록 조회
+export async function getAssetsByCategory(
+  category: keyof AssetList["categories"]
+): Promise<StockInfo[]> {
+  try {
+    const assetList = await getAssetList();
+    return assetList.categories[category] || [];
+  } catch (error) {
+    console.error(`${category} 자산 목록 로드 실패:`, error);
+    throw error;
+  }
+}
+
+// 모든 자산 목록 조회 (평면화)
+export async function getAllAssets(): Promise<StockInfo[]> {
+  try {
+    const assetList = await getAssetList();
+    return [
+      ...assetList.categories["한국주식"],
+      ...assetList.categories["미국주식"],
+      ...assetList.categories["지수"],
+      ...assetList.categories["암호화폐"],
+    ];
+  } catch (error) {
+    console.error("전체 자산 목록 로드 실패:", error);
+    throw error;
+  }
+}
+
+// 자산 검색 (이름 또는 심볼로)
+export async function searchAssets(query: string): Promise<StockInfo[]> {
+  try {
+    const allAssets = await getAllAssets();
+    const lowerQuery = query.toLowerCase();
+
+    return allAssets.filter(
+      (asset) =>
+        asset.name.toLowerCase().includes(lowerQuery) ||
+        asset.symbol.toLowerCase().includes(lowerQuery)
+    );
+  } catch (error) {
+    console.error("자산 검색 실패:", error);
     throw error;
   }
 }
@@ -17,8 +96,8 @@ export async function getStockList(): Promise<StockInfo[]> {
 // 특정 종목 데이터 조회
 export async function getStockData(symbol: string): Promise<StockData> {
   try {
-    // 심볼에서 점(.)을 언더스코어(_)로 변경
-    const filename = symbol.replace(".", "_") + ".json";
+    // 심볼에서 특수문자를 언더스코어(_)로 변경
+    const filename = symbol.replace(/[\^.]/g, "_") + ".json";
     const response = await fetch(`/data/stocks/${filename}`);
 
     if (!response.ok) {
@@ -130,11 +209,26 @@ export function getStockDataSummary(stockData: StockData): StockSummary | null {
   };
 }
 
-// 주식 심볼 유효성 검사
-export function isValidStockSymbol(symbol: string): boolean {
-  // 기본적인 심볼 형식 검사
-  const symbolPattern = /^[A-Z0-9]+(\.[A-Z]{2})?$/;
-  return symbolPattern.test(symbol);
+// 자산 심볼 유효성 검사 (확장됨)
+export function isValidAssetSymbol(symbol: string): boolean {
+  // 주식, 지수, 암호화폐 심볼 형식 검사
+  const patterns = [
+    /^[A-Z0-9]+(\.[A-Z]{2})?$/, // 일반 주식 (AAPL, 005930.KS)
+    /^\^[A-Z0-9]+$/, // 지수 (^GSPC, ^KS11)
+    /^[A-Z]+-USD$/, // 암호화폐 (BTC-USD, ETH-USD)
+  ];
+
+  return patterns.some((pattern) => pattern.test(symbol));
+}
+
+// 자산 타입 판별
+export function getAssetType(
+  symbol: string
+): "stock" | "index" | "crypto" | "unknown" {
+  if (symbol.startsWith("^")) return "index";
+  if (symbol.includes("-USD")) return "crypto";
+  if (symbol.includes(".") || /^[A-Z0-9]+$/.test(symbol)) return "stock";
+  return "unknown";
 }
 
 // 주식 데이터 캐시 (간단한 메모리 캐시)
@@ -163,4 +257,25 @@ export async function getCachedStockData(symbol: string): Promise<StockData> {
 // 캐시 지우기
 export function clearStockDataCache(): void {
   stockDataCache.clear();
+}
+
+// S&P 500 지수 데이터 조회 (편의 함수)
+export async function getSP500Data(): Promise<StockData> {
+  return await getStockData("^GSPC");
+}
+
+// KOSPI 지수 데이터 조회 (편의 함수)
+export async function getKOSPIData(): Promise<StockData> {
+  return await getStockData("^KS11");
+}
+
+// 데이터 메타데이터 조회
+export async function getDataMetadata() {
+  try {
+    const assetList = await getAssetList();
+    return assetList.metadata;
+  } catch (error) {
+    console.error("데이터 메타데이터 로드 실패:", error);
+    throw error;
+  }
 }

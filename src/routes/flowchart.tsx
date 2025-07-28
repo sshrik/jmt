@@ -34,7 +34,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { getStockList, getStockData } from "../utils/stockDataLoader";
+import { getStockData, getAllAssets } from "../utils/stockDataLoader";
 import type { StockInfo, StockData } from "../types/backtest";
 
 export const Route = createFileRoute("/flowchart")({
@@ -50,20 +50,23 @@ function StockTrendPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 주식 목록 로드
+  // 컴포넌트 마운트 시 주식 목록 로드
   useEffect(() => {
     const loadStockList = async () => {
       try {
-        const stocks = await getStockList();
+        const stocks = await getAllAssets(); // 모든 자산 로드 (주식 + 지수 + 암호화폐)
         setStockList(stocks);
         if (stocks.length > 0) {
-          setSelectedStock(stocks[0].symbol);
+          // S&P 500이 있으면 기본 선택, 없으면 첫 번째 항목 선택
+          const sp500 = stocks.find((stock) => stock.symbol === "^GSPC");
+          setSelectedStock(sp500?.symbol || stocks[0].symbol);
         }
       } catch (err) {
-        setError("주식 목록을 불러오는데 실패했습니다.");
-        console.error(err);
+        console.error("주식 목록 로드 실패:", err);
+        setError("주식 목록을 불러올 수 없습니다.");
       }
     };
+
     loadStockList();
   }, []);
 

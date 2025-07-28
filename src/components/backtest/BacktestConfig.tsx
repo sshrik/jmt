@@ -24,9 +24,9 @@ import type {
   StockSummary,
 } from "../../types/backtest";
 import {
-  getStockList,
   getStockDataSummary,
   getStockData,
+  getAllAssets,
 } from "../../utils/stockDataLoader";
 import type { StockInfo } from "../../types/backtest";
 
@@ -64,7 +64,7 @@ export const BacktestConfig = ({
     const loadStockList = async () => {
       try {
         setLoadingStocks(true);
-        const stocks = await getStockList();
+        const stocks = await getAllAssets();
         setStockList(stocks);
 
         // 초기 선택된 종목이 있다면 찾기

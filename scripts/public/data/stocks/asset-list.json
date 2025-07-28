@@ -1,0 +1,236 @@
+{
+  "categories": {
+    "한국주식": [
+      {
+        "symbol": "005930.KS",
+        "name": "삼성전자",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "1975-06-11",
+        "dataFile": "005930_KS.json"
+      },
+      {
+        "symbol": "000660.KS",
+        "name": "SK하이닉스",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "1996-12-26",
+        "dataFile": "000660_KS.json"
+      },
+      {
+        "symbol": "035420.KS",
+        "name": "NAVER",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "2002-10-29",
+        "dataFile": "035420_KS.json"
+      },
+      {
+        "symbol": "005380.KS",
+        "name": "현대차",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "1974-02-26",
+        "dataFile": "005380_KS.json"
+      },
+      {
+        "symbol": "051910.KS",
+        "name": "LG화학",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "2001-04-19",
+        "dataFile": "051910_KS.json"
+      },
+      {
+        "symbol": "035720.KS",
+        "name": "카카오",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "2017-07-10",
+        "dataFile": "035720_KS.json"
+      },
+      {
+        "symbol": "373220.KS",
+        "name": "LG에너지솔루션",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "2022-01-27",
+        "dataFile": "373220_KS.json"
+      },
+      {
+        "symbol": "207940.KS",
+        "name": "삼성바이오로직스",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "2016-11-10",
+        "dataFile": "207940_KS.json"
+      },
+      {
+        "symbol": "068270.KS",
+        "name": "셀트리온",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "2002-07-15",
+        "dataFile": "068270_KS.json"
+      },
+      {
+        "symbol": "006400.KS",
+        "name": "삼성SDI",
+        "market": "KOSPI",
+        "currency": "KRW",
+        "since": "1979-05-08",
+        "dataFile": "006400_KS.json"
+      }
+    ],
+    "미국주식": [
+      {
+        "symbol": "AAPL",
+        "name": "Apple Inc.",
+        "market": "NASDAQ",
+        "currency": "USD",
+        "since": "1980-12-12",
+        "dataFile": "AAPL.json"
+      },
+      {
+        "symbol": "MSFT",
+        "name": "Microsoft Corporation",
+        "market": "NASDAQ",
+        "currency": "USD",
+        "since": "1986-03-13",
+        "dataFile": "MSFT.json"
+      },
+      {
+        "symbol": "GOOGL",
+        "name": "Alphabet Inc.",
+        "market": "NASDAQ",
+        "currency": "USD",
+        "since": "2004-08-19",
+        "dataFile": "GOOGL.json"
+      },
+      {
+        "symbol": "TSLA",
+        "name": "Tesla, Inc.",
+        "market": "NASDAQ",
+        "currency": "USD",
+        "since": "2010-06-29",
+        "dataFile": "TSLA.json"
+      },
+      {
+        "symbol": "NVDA",
+        "name": "NVIDIA Corporation",
+        "market": "NASDAQ",
+        "currency": "USD",
+        "since": "1999-01-22",
+        "dataFile": "NVDA.json"
+      },
+      {
+        "symbol": "AMZN",
+        "name": "Amazon.com, Inc.",
+        "market": "NASDAQ",
+        "currency": "USD",
+        "since": "1997-05-15",
+        "dataFile": "AMZN.json"
+      },
+      {
+        "symbol": "META",
+        "name": "Meta Platforms, Inc.",
+        "market": "NASDAQ",
+        "currency": "USD",
+        "since": "2012-05-18",
+        "dataFile": "META.json"
+      },
+      {
+        "symbol": "BRK-B",
+        "name": "Berkshire Hathaway Inc.",
+        "market": "NYSE",
+        "currency": "USD",
+        "since": "1996-05-09",
+        "dataFile": "BRK-B.json"
+      },
+      {
+        "symbol": "JNJ",
+        "name": "Johnson & Johnson",
+        "market": "NYSE",
+        "currency": "USD",
+        "since": "1970-01-01",
+        "dataFile": "JNJ.json"
+      },
+      {
+        "symbol": "V",
+        "name": "Visa Inc.",
+        "market": "NYSE",
+        "currency": "USD",
+        "since": "2008-03-19",
+        "dataFile": "V.json"
+      }
+    ],
+    "지수": [
+      {
+        "symbol": "^GSPC",
+        "name": "S&P 500",
+        "market": "INDEX",
+        "currency": "USD",
+        "since": "1957-03-04",
+        "dataFile": "_GSPC.json"
+      },
+      {
+        "symbol": "^DJI",
+        "name": "Dow Jones Industrial Average",
+        "market": "INDEX",
+        "currency": "USD",
+        "since": "1896-05-26",
+        "dataFile": "_DJI.json"
+      },
+      {
+        "symbol": "^IXIC",
+        "name": "NASDAQ Composite",
+        "market": "INDEX",
+        "currency": "USD",
+        "since": "1971-02-05",
+        "dataFile": "_IXIC.json"
+      },
+      {
+        "symbol": "^KS11",
+        "name": "KOSPI",
+        "market": "INDEX",
+        "currency": "KRW",
+        "since": "1983-01-04",
+        "dataFile": "_KS11.json"
+      },
+      {
+        "symbol": "^KQ11",
+        "name": "KOSDAQ",
+        "market": "INDEX",
+        "currency": "KRW",
+        "since": "1996-07-01",
+        "dataFile": "_KQ11.json"
+      }
+    ],
+    "암호화폐": [
+      {
+        "symbol": "BTC-USD",
+        "name": "Bitcoin USD",
+        "market": "CRYPTO",
+        "currency": "USD",
+        "since": "2014-09-17",
+        "dataFile": "BTC-USD.json"
+      },
+      {
+        "symbol": "ETH-USD",
+        "name": "Ethereum USD",
+        "market": "CRYPTO",
+        "currency": "USD",
+        "since": "2017-11-09",
+        "dataFile": "ETH-USD.json"
+      }
+    ]
+  },
+  "metadata": {
+    "generatedAt": "2025-07-28T09:41:12.817Z",
+    "totalAssets": 27,
+    "successCount": 27,
+    "failureCount": 0,
+    "dataSource": "yahoo-finance2",
+    "maxHistoryYears": 30
+  }
+}

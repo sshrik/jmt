@@ -13,8 +13,10 @@ export interface StockPrice {
 export interface StockInfo {
   symbol: string; // 종목 코드
   name: string; // 종목명
-  market: string; // 시장 (KOSPI, KOSDAQ 등)
+  market: string; // 시장 (KOSPI, KOSDAQ, NASDAQ, NYSE, INDEX, CRYPTO 등)
   currency: string; // 통화
+  since?: string; // 상장일 (YYYY-MM-DD)
+  dataFile?: string; // 데이터 파일명
 }
 
 // 주식 데이터 (가격 + 정보)
