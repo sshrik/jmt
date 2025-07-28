@@ -111,6 +111,9 @@ export const ActionBlock = ({
     }
   };
 
+  // 삭제 가능 여부 확인 (onDelete가 실제 삭제 로직을 가지고 있는지)
+  const canDelete = onDelete.toString().includes("onDeleteAction");
+
   // 액션별 파라미터 UI 렌더링
   const renderActionParams = () => {
     switch (actionType) {
@@ -284,7 +287,7 @@ export const ActionBlock = ({
           </div>
         </Group>
 
-        {!readOnly && (
+        {!readOnly && canDelete && (
           <Group gap="xs">
             <Tooltip label="블록 삭제">
               <ActionIcon

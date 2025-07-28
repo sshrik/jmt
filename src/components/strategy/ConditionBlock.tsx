@@ -93,6 +93,9 @@ export const ConditionBlock = ({
     }
   };
 
+  // 삭제 가능 여부 확인 (onDelete가 실제 삭제 로직을 가지고 있는지)
+  const canDelete = onDelete.toString().includes("onDeleteCondition");
+
   // 조건 파라미터 UI 렌더링
   const renderConditionParams = () => {
     return (
@@ -144,7 +147,7 @@ export const ConditionBlock = ({
             <IconComponent size={20} color={config.color} />
             <Title order={5}>{config.label}</Title>
           </Group>
-          {!readOnly && (
+          {!readOnly && canDelete && (
             <Tooltip label="조건 삭제">
               <ActionIcon
                 color="red"
