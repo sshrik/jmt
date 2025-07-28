@@ -67,18 +67,27 @@ const SidebarItem = ({
           "--button-hover": "var(--mantine-color-gray-0)",
         }}
       >
-        <Group gap="sm" wrap="nowrap">
+        <Group gap="sm" wrap="nowrap" align="center">
           <div
             style={{
               color: isActive
                 ? "var(--mantine-color-blue-6)"
                 : "var(--mantine-color-gray-6)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minWidth: rem(18),
+              height: rem(18),
             }}
           >
             {icon}
           </div>
           <div style={{ flex: 1 }}>
-            <Text size="sm" fw={isActive ? 600 : 400}>
+            <Text
+              size="sm"
+              fw={isActive ? 600 : 400}
+              style={{ lineHeight: 1.4 }}
+            >
               {label}
             </Text>
           </div>
