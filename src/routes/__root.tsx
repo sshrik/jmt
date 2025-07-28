@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { createRootRoute, Outlet, useLocation } from "@tanstack/react-router";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { AppShell, Title, Group, Button, Burger } from "@mantine/core";
-import { IconChartLine, IconPlus } from "@tabler/icons-react";
+import { AppShell, Title, Group, Burger } from "@mantine/core";
+import { IconChartLine } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import { CreateProjectModal } from "../components/CreateProjectModal";
 import { Sidebar } from "../components/layout/Sidebar";
@@ -13,7 +13,6 @@ const RootComponent = () => {
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const { createProject } = useProjectStore();
-  const location = useLocation();
 
   const handleCreateProject = async (name: string, description: string) => {
     await createProject(name, description);
@@ -21,21 +20,7 @@ const RootComponent = () => {
 
   // 현재 경로에 따라 헤더 버튼 결정
   const getHeaderButton = () => {
-    const pathname = location.pathname;
-
-    if (pathname === "/" || pathname.startsWith("/projects")) {
-      // 메인 화면이나 프로젝트 관련 페이지: 새 프로젝트 만들기
-      return (
-        <Button
-          leftSection={<IconPlus size={16} />}
-          variant="filled"
-          onClick={() => setCreateModalOpened(true)}
-        >
-          새 프로젝트 만들기
-        </Button>
-      );
-    }
-
+    // 헤더 버튼 제거됨
     return null;
   };
 
