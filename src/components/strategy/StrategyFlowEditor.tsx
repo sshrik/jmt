@@ -271,7 +271,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         _reactFlowInstance.current?.fitView({
           padding: 0.1,
           includeHiddenNodes: false,
-          minZoom: 0.02,
+          minZoom: 0.001, // 거의 무제한 축소
           maxZoom: 1,
           duration: 300,
         });
@@ -749,13 +749,13 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             fitViewOptions={{
               padding: 0.1,
               includeHiddenNodes: false,
-              minZoom: 0.02, // 더 많이 축소 가능
+              minZoom: 0.001, // 거의 무제한 축소
               maxZoom: 1.5,
             }}
             attributionPosition="bottom-left"
             deleteKeyCode={["Delete", "Backspace"]}
             multiSelectionKeyCode={["Meta", "Ctrl"]}
-            defaultViewport={{ x: 0, y: 0, zoom: 0.3 }}
+            defaultViewport={{ x: 0, y: 0, zoom: 0.2 }}
           >
             <Background />
             <Controls />
