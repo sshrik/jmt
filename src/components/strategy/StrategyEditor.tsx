@@ -97,25 +97,29 @@ export const StrategyEditor = ({
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
 
-    // 조건과 액션을 쌍으로 묶어서 룰 생성
+    // 조건-액션 패턴을 기반으로 룰 생성
     const newRules: StrategyRule[] = [];
     let currentConditions: StrategyBlock[] = [];
     let currentActions: StrategyBlock[] = [];
 
-    for (const block of sortedBlocks) {
+    for (let i = 0; i < sortedBlocks.length; i++) {
+      const block = sortedBlocks[i];
+
       if (block.type === "condition") {
-        // 이전 룰이 있으면 완료하고 새 룰 시작
-        if (currentActions.length > 0) {
+        // 현재 액션이 있고 새로운 조건이 나오면 이전 룰 완료
+        if (currentActions.length > 0 && currentConditions.length > 0) {
           newRules.push({
             id: `rule-${newRules.length}`,
-            conditions: currentConditions,
-            actions: currentActions,
+            conditions: [...currentConditions],
+            actions: [...currentActions],
           });
           currentConditions = [];
           currentActions = [];
         }
         currentConditions.push(block);
       } else if (block.type === "action") {
+        // 조건 없이 액션이 나오면 이전 룰에 액션 추가
+        // 단, 이미 액션이 있고 새로운 액션 그룹이 시작되는 경우 구분 필요
         currentActions.push(block);
       }
     }
@@ -124,8 +128,8 @@ export const StrategyEditor = ({
     if (currentConditions.length > 0 && currentActions.length > 0) {
       newRules.push({
         id: `rule-${newRules.length}`,
-        conditions: currentConditions,
-        actions: currentActions,
+        conditions: [...currentConditions],
+        actions: [...currentActions],
       });
     }
 
@@ -484,13 +488,36 @@ export const StrategyEditor = ({
           ...actionNodes.map((n) => n.id),
         ]);
 
-        // ID가 모두 동일하면 스킵
+        // ID가 모두 동일하면 추가로 순서도 확인
         const allIdsMatch =
           currentBlockIds.size === flowBlockIds.size &&
           [...currentBlockIds].every((id) => flowBlockIds.has(id));
 
         if (allIdsMatch) {
-          return;
+          // blockOrder도 동일한지 확인
+          const currentOrder = strategy.blockOrder || [];
+          const expectedOrder: string[] = [];
+
+          // 조건-액션 쌍 순서로 예상 순서 생성
+          const minLength = Math.min(conditionNodes.length, actionNodes.length);
+          for (let i = 0; i < minLength; i++) {
+            expectedOrder.push(conditionNodes[i].id, actionNodes[i].id);
+          }
+          for (let i = minLength; i < conditionNodes.length; i++) {
+            expectedOrder.push(conditionNodes[i].id);
+          }
+          for (let i = minLength; i < actionNodes.length; i++) {
+            expectedOrder.push(actionNodes[i].id);
+          }
+
+          // 순서가 동일하면 업데이트 스킵
+          const orderMatches =
+            currentOrder.length === expectedOrder.length &&
+            currentOrder.every((id, index) => id === expectedOrder[index]);
+
+          if (orderMatches) {
+            return;
+          }
         }
       }
 
@@ -498,41 +525,82 @@ export const StrategyEditor = ({
       const newBlocks: StrategyBlock[] = [];
       const newBlockOrder: string[] = [];
 
-      // 조건 노드들을 블록으로 변환
-      conditionNodes.forEach((node) => {
-        const block: StrategyBlock = {
-          id: node.id,
-          type: "condition",
-          name: node.data.label,
-          enabled: node.data.enabled || true,
-          createdAt: node.data.createdAt || new Date(),
-          updatedAt: new Date(),
-          position: node.position,
-          connections: [],
-          conditionType: node.data.conditionType,
-          conditionParams: node.data.conditionParams,
-        };
-        newBlocks.push(block);
-        newBlockOrder.push(node.id);
-      });
+      // 조건과 액션을 쌍으로 매칭하여 올바른 순서로 변환
+      const minLength = Math.min(conditionNodes.length, actionNodes.length);
 
-      // 액션 노드들을 블록으로 변환
-      actionNodes.forEach((node) => {
-        const block: StrategyBlock = {
-          id: node.id,
-          type: "action",
-          name: node.data.label,
-          enabled: node.data.enabled || true,
-          createdAt: node.data.createdAt || new Date(),
+      for (let i = 0; i < minLength; i++) {
+        // 조건 블록 추가
+        const conditionNode = conditionNodes[i];
+        const conditionBlock: StrategyBlock = {
+          id: conditionNode.id,
+          type: "condition",
+          name: conditionNode.data.label,
+          enabled: conditionNode.data.enabled || true,
+          createdAt: conditionNode.data.createdAt || new Date(),
           updatedAt: new Date(),
-          position: node.position,
+          position: conditionNode.position,
           connections: [],
-          actionType: node.data.actionType as ActionType,
-          actionParams: node.data.actionParams,
+          conditionType: conditionNode.data.conditionType,
+          conditionParams: conditionNode.data.conditionParams,
         };
-        newBlocks.push(block);
-        newBlockOrder.push(node.id);
-      });
+        newBlocks.push(conditionBlock);
+        newBlockOrder.push(conditionNode.id);
+
+        // 액션 블록 추가
+        const actionNode = actionNodes[i];
+        const actionBlock: StrategyBlock = {
+          id: actionNode.id,
+          type: "action",
+          name: actionNode.data.label,
+          enabled: actionNode.data.enabled || true,
+          createdAt: actionNode.data.createdAt || new Date(),
+          updatedAt: new Date(),
+          position: actionNode.position,
+          connections: [],
+          actionType: actionNode.data.actionType as ActionType,
+          actionParams: actionNode.data.actionParams,
+        };
+        newBlocks.push(actionBlock);
+        newBlockOrder.push(actionNode.id);
+      }
+
+      // 남은 조건들 추가 (액션보다 조건이 많은 경우)
+      for (let i = minLength; i < conditionNodes.length; i++) {
+        const conditionNode = conditionNodes[i];
+        const conditionBlock: StrategyBlock = {
+          id: conditionNode.id,
+          type: "condition",
+          name: conditionNode.data.label,
+          enabled: conditionNode.data.enabled || true,
+          createdAt: conditionNode.data.createdAt || new Date(),
+          updatedAt: new Date(),
+          position: conditionNode.position,
+          connections: [],
+          conditionType: conditionNode.data.conditionType,
+          conditionParams: conditionNode.data.conditionParams,
+        };
+        newBlocks.push(conditionBlock);
+        newBlockOrder.push(conditionNode.id);
+      }
+
+      // 남은 액션들 추가 (조건보다 액션이 많은 경우)
+      for (let i = minLength; i < actionNodes.length; i++) {
+        const actionNode = actionNodes[i];
+        const actionBlock: StrategyBlock = {
+          id: actionNode.id,
+          type: "action",
+          name: actionNode.data.label,
+          enabled: actionNode.data.enabled || true,
+          createdAt: actionNode.data.createdAt || new Date(),
+          updatedAt: new Date(),
+          position: actionNode.position,
+          connections: [],
+          actionType: actionNode.data.actionType as ActionType,
+          actionParams: actionNode.data.actionParams,
+        };
+        newBlocks.push(actionBlock);
+        newBlockOrder.push(actionNode.id);
+      }
 
       // 전략 업데이트
       const updatedStrategy: Strategy = {
