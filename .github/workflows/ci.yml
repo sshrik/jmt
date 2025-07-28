@@ -31,6 +31,9 @@ jobs:
       - name: 🔍 Type check
         run: yarn tsc --noEmit
 
+      - name: 🧪 Run tests
+        run: yarn test
+
       - name: 🧹 ESLint check
         run: yarn lint
 
