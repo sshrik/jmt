@@ -199,38 +199,47 @@ function DashboardPage() {
                   position: "relative",
                 }}
               >
-                {/* 순위 배지 */}
-                {index < 3 &&
-                  project.latestReturn &&
-                  project.latestReturn > 0 && (
-                    <Badge
-                      variant="filled"
-                      color={
-                        index === 0 ? "yellow" : index === 1 ? "gray" : "orange"
-                      }
+                <Group justify="space-between" mb="xs" align="flex-start">
+                  <Group gap="xs" style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      fw={600}
+                      size="lg"
+                      lineClamp={2}
                       style={{
-                        position: "absolute",
-                        top: 12,
-                        right: 12,
-                        zIndex: 1,
+                        flex: 1,
+                        minWidth: 0,
+                        maxWidth: "calc(100% - 60px)", // ... 버튼과 칩을 위한 공간 확보
                       }}
                     >
-                      #{index + 1}
-                    </Badge>
-                  )}
-
-                <Group justify="space-between" mb="xs" align="flex-start">
-                  <Text
-                    fw={600}
-                    size="lg"
-                    lineClamp={1}
-                    style={{ flex: 1, marginRight: 8 }}
-                  >
-                    {project.name}
-                  </Text>
+                      {project.name}
+                    </Text>
+                    {/* 순위 배지 - 이름 옆으로 이동 */}
+                    {index < 3 &&
+                      project.latestReturn &&
+                      project.latestReturn > 0 && (
+                        <Badge
+                          variant="filled"
+                          color={
+                            index === 0
+                              ? "yellow"
+                              : index === 1
+                                ? "gray"
+                                : "orange"
+                          }
+                          size="sm"
+                          style={{ flexShrink: 0 }}
+                        >
+                          #{index + 1}
+                        </Badge>
+                      )}
+                  </Group>
                   <Menu shadow="md" width={200}>
                     <Menu.Target>
-                      <ActionIcon variant="subtle" color="gray">
+                      <ActionIcon
+                        variant="subtle"
+                        color="gray"
+                        style={{ flexShrink: 0 }}
+                      >
                         <IconDots size={16} />
                       </ActionIcon>
                     </Menu.Target>
