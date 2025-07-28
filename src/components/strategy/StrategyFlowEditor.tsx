@@ -308,46 +308,20 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      // dataTransfer에서 노드 타입 가져오기
-      const nodeType = event.dataTransfer.getData(
-        "application/reactflow-nodetype"
-      ) as FlowNodeType;
-
-      if (!nodeType || !reactFlowWrapper.current) {
-        return;
-      }
+      if (!draggedNodeType || !reactFlowWrapper.current) return;
 
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
 
-      // ReactFlow의 viewport를 고려한 정확한 위치 계산
       const position = {
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       };
 
-      // 위치가 컨테이너 경계를 벗어나지 않도록 제한
-      const containerWidth = reactFlowBounds.width;
-      const containerHeight = reactFlowBounds.height;
-      const nodeWidth = 200; // 대략적인 노드 너비
-      const nodeHeight = 100; // 대략적인 노드 높이
-
-      const clampedPosition = {
-        x: Math.max(50, Math.min(position.x, containerWidth - nodeWidth - 50)),
-        y: Math.max(
-          50,
-          Math.min(position.y, containerHeight - nodeHeight - 50)
-        ),
-      };
-
-      const newNode = createNode(nodeType, clampedPosition);
+      const newNode = createNode(draggedNodeType, position);
       setNodes((nds) => [...nds, newNode]);
-
-      // 드래그 상태 정리 (만약 아직 정리되지 않았다면)
-      if (draggedNodeType) {
-        setDraggedNodeType(null);
-      }
+      setDraggedNodeType(null);
     },
-    [setNodes, draggedNodeType]
+    [draggedNodeType, setNodes]
   );
 
   // 노드 삭제
@@ -415,7 +389,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
+    event.dataTransfer.dropEffect = "move";
   }, []);
 
   // 플로우 내보내기 - 제거됨 (상위 컴포넌트에서 자동 저장)
@@ -515,21 +489,13 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         maxWidth: "120px",
         textAlign: "center",
         transition: "all 0.2s",
-        backgroundColor: draggedNodeType === type ? "#e3f2fd" : "white",
-        borderColor: draggedNodeType === type ? "#2196f3" : undefined,
-        transform: draggedNodeType === type ? "scale(0.95)" : "scale(1)",
+        backgroundColor: draggedNodeType === type ? "#f0f9ff" : "white",
       }}
       onDragStart={(event) => {
         event.dataTransfer.effectAllowed = "move";
-        event.dataTransfer.setData("application/reactflow-nodetype", type);
         setDraggedNodeType(type);
       }}
-      onDragEnd={() => {
-        // 드롭 이벤트가 완료된 후 상태 정리
-        setTimeout(() => {
-          setDraggedNodeType(null);
-        }, 100);
-      }}
+      onDragEnd={() => setDraggedNodeType(null)}
       draggable
     >
       <Stack gap="xs" align="center">
@@ -550,7 +516,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
 
   return (
     <Card withBorder p="lg" style={{ height: "100%" }}>
-      <Stack gap="lg" style={{ height: "100%", minHeight: "500px" }}>
+      <Stack gap="lg" style={{ height: "100%", minHeight: "600px" }}>
         {/* 헤더와 통계 */}
         <Group justify="space-between" align="flex-start">
           <div>
@@ -595,7 +561,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             <Text size="sm" fw={500} c="dimmed" mb="sm">
               노드 추가 (드래그하여 차트에 추가)
             </Text>
-            <Group gap="md">
+            <Group gap="md" mb="lg">
               {DRAGGABLE_NODES.map((nodeType) => (
                 <DraggableNode key={nodeType.type} {...nodeType} />
               ))}
@@ -603,46 +569,51 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
           </div>
         )}
 
-        {/* 메인 컨텐츠 - ReactFlow 차트 */}
-        <div style={{ flexGrow: 1, position: "relative" }}>
-          {/* 단축키 안내 (읽기 전용이 아닐 때만 표시) */}
-          {!readOnly && (
-            <Paper
-              withBorder
-              p="sm"
-              style={{
-                position: "absolute",
-                top: "10px",
-                right: "10px",
-                zIndex: 10,
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                minWidth: "200px",
-                flexShrink: 0,
-              }}
-            >
-              <Alert icon={<IconInfoCircle size="1rem" />} color="blue">
-                <Text size="xs" mb="xs">
-                  <strong>단축키:</strong>
-                </Text>
-                <Text size="xs">• Del/Backspace: 노드 삭제</Text>
-                <Text size="xs">• Ctrl/Cmd + 클릭: 다중 선택</Text>
-                <Text size="xs">• 마우스 휠: 확대/축소</Text>
-              </Alert>
-            </Paper>
-          )}
-
+        {/* 메인 컨텐츠 - 원래 Group 구조로 복원 */}
+        <Group
+          align="flex-start"
+          style={{ flexGrow: 1, height: "100%" }}
+          gap="lg"
+        >
           {/* React Flow 차트 */}
           <div
             ref={reactFlowWrapper}
             style={{
+              flexGrow: 1,
               width: "100%",
-              height: "400px", // 고정 높이로 변경
-              minHeight: "400px",
+              height: "500px", // 높이 증가
+              minHeight: "500px",
               border: "1px solid #e0e7ff",
               borderRadius: "8px",
               overflow: "hidden",
+              position: "relative",
             }}
           >
+            {/* 단축키 안내 오버레이 */}
+            {!readOnly && (
+              <Paper
+                withBorder
+                p="sm"
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  zIndex: 10,
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  minWidth: "200px",
+                }}
+              >
+                <Alert icon={<IconInfoCircle size="1rem" />} color="blue">
+                  <Text size="xs" mb="xs">
+                    <strong>단축키:</strong>
+                  </Text>
+                  <Text size="xs">• Del/Backspace: 노드 삭제</Text>
+                  <Text size="xs">• Ctrl/Cmd + 클릭: 다중 선택</Text>
+                  <Text size="xs">• 마우스 휠: 확대/축소</Text>
+                </Alert>
+              </Paper>
+            )}
+
             <ReactFlow
               nodes={nodes.map((node) => ({
                 ...node,
@@ -661,7 +632,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               nodeTypes={FLOW_NODE_TYPES}
               fitView
               fitViewOptions={{
-                padding: 0.2, // 패딩 증가로 노드가 경계에 너무 가지 않도록
+                padding: 0.2,
                 includeHiddenNodes: false,
                 minZoom: 0.1,
                 maxZoom: 2,
@@ -669,7 +640,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               attributionPosition="bottom-left"
               deleteKeyCode={["Delete", "Backspace"]}
               multiSelectionKeyCode={["Meta", "Ctrl"]}
-              defaultViewport={{ x: 0, y: 0, zoom: 0.8 }} // 기본 뷰포트 설정
+              defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
             >
               <Background />
               <Controls />
@@ -681,7 +652,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               />
             </ReactFlow>
           </div>
-        </div>
+        </Group>
 
         {/* 유효성 검사 */}
         {!flowStats.isValid && (
