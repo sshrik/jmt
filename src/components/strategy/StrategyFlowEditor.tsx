@@ -55,7 +55,7 @@ const createDefaultFlow = (): {
   const startNode: StrategyFlowNode = {
     id: "start-1",
     type: "start",
-    position: { x: 250, y: 50 },
+    position: { x: 300, y: 100 },
     data: {
       id: "start-1",
       label: "전략 시작",
@@ -67,7 +67,7 @@ const createDefaultFlow = (): {
   const scheduleNode: StrategyFlowNode = {
     id: "schedule-1",
     type: "schedule",
-    position: { x: 250, y: 250 },
+    position: { x: 300, y: 350 },
     data: {
       id: "schedule-1",
       label: "실행 일정",
@@ -83,7 +83,7 @@ const createDefaultFlow = (): {
   const endNode: StrategyFlowNode = {
     id: "end-1",
     type: "end",
-    position: { x: 250, y: 450 },
+    position: { x: 300, y: 600 },
     data: {
       id: "end-1",
       label: "전략 종료",
@@ -245,14 +245,23 @@ export const StrategyFlowEditor = ({
       if (!draggedNodeType) return;
 
       // React Flow 컨테이너의 경계를 고려한 정확한 위치 계산
-      const reactFlowBounds = (event.target as Element).closest(".react-flow");
-      if (!reactFlowBounds) return;
+      const reactFlowBounds = (
+        event.currentTarget as Element
+      ).getBoundingClientRect();
 
-      const boundingRect = reactFlowBounds.getBoundingClientRect();
+      // 화면 좌표를 React Flow 내부 좌표로 변환
       const position = {
-        x: event.clientX - boundingRect.left - 150, // 노드 중앙 정렬을 위한 오프셋
-        y: event.clientY - boundingRect.top - 100,
+        x: event.clientX - reactFlowBounds.left - 150, // 노드 중앙 정렬을 위한 오프셋
+        y: event.clientY - reactFlowBounds.top - 100,
       };
+
+      console.log("드래그앤드롭 위치:", {
+        clientX: event.clientX,
+        clientY: event.clientY,
+        boundsLeft: reactFlowBounds.left,
+        boundsTop: reactFlowBounds.top,
+        finalPosition: position,
+      });
 
       const newNode = createNode(draggedNodeType, position);
       setNodes((nds) => [...nds, newNode]);
@@ -481,6 +490,7 @@ export const StrategyFlowEditor = ({
               onDragOver={onDragOver}
               nodeTypes={FLOW_NODE_TYPES}
               fitView
+              fitViewOptions={{ padding: 0.1 }}
               attributionPosition="bottom-left"
               deleteKeyCode={["Delete", "Backspace"]}
               multiSelectionKeyCode={["Meta", "Ctrl"]}

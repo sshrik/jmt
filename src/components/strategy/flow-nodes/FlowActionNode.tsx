@@ -100,17 +100,19 @@ const ACTION_CONFIG = {
   },
 } as const;
 
-interface FlowActionNodeProps extends NodeProps<FlowNodeData> {
+// 확장된 노드 데이터 타입
+interface ExtendedFlowNodeData extends FlowNodeData {
   onUpdate?: (data: FlowNodeData) => void;
   onDelete?: () => void;
 }
 
 export const FlowActionNode = memo(
-  ({ data, selected, onUpdate, onDelete }: FlowActionNodeProps) => {
+  ({ data, selected }: NodeProps<ExtendedFlowNodeData>) => {
     const actionType = data.actionType || "buy_percent_cash";
     const params = data.actionParams || {};
     const config = ACTION_CONFIG[actionType];
     const IconComponent = config.icon;
+    const { onUpdate, onDelete } = data;
 
     const updateActionData = (updates: Partial<FlowNodeData>) => {
       if (onUpdate) {
@@ -283,7 +285,10 @@ export const FlowActionNode = memo(
                 color="red"
                 variant="subtle"
                 size="sm"
-                onClick={onDelete}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
               >
                 <IconTrash size={14} />
               </ActionIcon>

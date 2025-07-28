@@ -61,16 +61,18 @@ const SCHEDULE_CONFIG = {
   },
 } as const;
 
-interface ScheduleNodeProps extends NodeProps<FlowNodeData> {
+// 확장된 노드 데이터 타입
+interface ExtendedFlowNodeData extends FlowNodeData {
   onUpdate?: (data: FlowNodeData) => void;
   onDelete?: () => void;
 }
 
 export const ScheduleNode = memo(
-  ({ data, selected, onUpdate, onDelete }: ScheduleNodeProps) => {
+  ({ data, selected }: NodeProps<ExtendedFlowNodeData>) => {
     const scheduleType = data.scheduleParams?.scheduleType || "market_open";
     const config = SCHEDULE_CONFIG[scheduleType];
     const IconComponent = config.icon;
+    const { onUpdate, onDelete } = data;
 
     const updateScheduleParams = (
       updates: Partial<typeof data.scheduleParams>
@@ -131,7 +133,10 @@ export const ScheduleNode = memo(
                 color="red"
                 variant="subtle"
                 size="sm"
-                onClick={onDelete}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
               >
                 <IconTrash size={14} />
               </ActionIcon>

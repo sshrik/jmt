@@ -46,17 +46,19 @@ const CONDITION_CONFIG = {
   },
 } as const;
 
-interface FlowConditionNodeProps extends NodeProps<FlowNodeData> {
+// 확장된 노드 데이터 타입
+interface ExtendedFlowNodeData extends FlowNodeData {
   onUpdate?: (data: FlowNodeData) => void;
   onDelete?: () => void;
 }
 
 export const FlowConditionNode = memo(
-  ({ data, selected, onUpdate, onDelete }: FlowConditionNodeProps) => {
+  ({ data, selected }: NodeProps<ExtendedFlowNodeData>) => {
     const conditionType = data.conditionType || "close_price_change";
     const params = data.conditionParams || {};
     const config = CONDITION_CONFIG[conditionType];
     const IconComponent = config.icon;
+    const { onUpdate, onDelete } = data;
 
     const updateConditionData = (updates: Partial<FlowNodeData>) => {
       if (onUpdate) {
@@ -125,7 +127,10 @@ export const FlowConditionNode = memo(
                 color="red"
                 variant="subtle"
                 size="sm"
-                onClick={onDelete}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
               >
                 <IconTrash size={14} />
               </ActionIcon>
