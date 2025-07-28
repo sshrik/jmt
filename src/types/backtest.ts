@@ -26,6 +26,22 @@ export interface StockData {
   dataSource: "yahoo" | "mock" | "api";
 }
 
+// 주식 데이터 요약 정보
+export interface StockSummary {
+  symbol: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  startPrice: number;
+  endPrice: number;
+  totalReturn: number;
+  high: number;
+  low: number;
+  avgVolume: number;
+  volatility: number;
+  dataPoints: number;
+}
+
 // 백테스트 설정
 export interface BacktestConfig {
   symbol: string;

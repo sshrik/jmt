@@ -1,4 +1,4 @@
-import type { StockData, StockInfo } from "../types/backtest";
+import type { StockData, StockInfo, StockSummary } from "../types/backtest";
 
 // 주식 목록 조회
 export async function getStockList(): Promise<StockInfo[]> {
@@ -85,7 +85,7 @@ export function filterStockDataByDateRange(
 }
 
 // 주식 데이터 요약 정보
-export function getStockDataSummary(stockData: StockData) {
+export function getStockDataSummary(stockData: StockData): StockSummary | null {
   const prices = stockData.prices;
   if (prices.length === 0) {
     return null;

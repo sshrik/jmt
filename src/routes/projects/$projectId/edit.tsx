@@ -35,12 +35,14 @@ import {
   IconHistory,
   IconCheck,
   IconAlertTriangle,
+  IconTrendingUp,
 } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { useHotkeys, useDisclosure, useInterval } from "@mantine/hooks";
 import { useProjectStore } from "../../../hooks/useProjectStore";
 import { ProjectStore } from "../../../stores/projectStore";
 import { StrategyEditor } from "../../../components/strategy/StrategyEditor";
+import { BacktestRunner } from "../../../components/backtest/BacktestRunner";
 import type { Strategy } from "../../../types/strategy";
 import { notifications } from "@mantine/notifications";
 
@@ -208,7 +210,7 @@ function ProjectEdit() {
       title: "백테스트 실행",
       message: "백테스트 기능은 곧 구현 예정입니다!",
       color: "blue",
-      icon: <IconChartLine size={16} />,
+      icon: <IconTrendingUp size={16} />,
     });
   }, [strategy]);
 
@@ -631,6 +633,9 @@ function ProjectEdit() {
           <Tabs.Tab value="strategy" leftSection={<IconChartLine size={16} />}>
             투자 전략
           </Tabs.Tab>
+          <Tabs.Tab value="backtest" leftSection={<IconTrendingUp size={16} />}>
+            백테스트
+          </Tabs.Tab>
           <Tabs.Tab value="history" leftSection={<IconHistory size={16} />}>
             버전 히스토리
           </Tabs.Tab>
@@ -699,6 +704,24 @@ function ProjectEdit() {
                 readOnly={isSaving}
               />
             </div>
+          </Stack>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="backtest" pt="lg">
+          <Stack gap="lg">
+            <Alert
+              icon={<IconInfoCircle size={16} />}
+              color="blue"
+              variant="light"
+              mb="lg"
+            >
+              <Text size="sm">
+                <strong>백테스트 기능:</strong> 설정한 투자 전략을 실제 주식
+                데이터로 테스트해보세요. 과거 데이터를 기반으로 전략의 성과를
+                분석할 수 있습니다.
+              </Text>
+            </Alert>
+            <BacktestRunner strategy={strategy} />
           </Stack>
         </Tabs.Panel>
 
