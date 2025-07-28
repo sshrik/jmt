@@ -311,7 +311,7 @@ function DashboardPage() {
                 <Button
                   fullWidth
                   variant="light"
-                  onClick={() => navigate({ to: `/projects/${project.id}` })}
+                  onClick={() => navigate({ to: `/projects/${project.id}/` })}
                 >
                   상세 보기
                 </Button>

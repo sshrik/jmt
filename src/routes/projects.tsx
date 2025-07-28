@@ -64,7 +64,7 @@ function ProjectsPage() {
   };
 
   const handleViewProject = (projectId: string) => {
-    navigate({ to: `/projects/${projectId}` });
+    navigate({ to: `/projects/${projectId}/` });
   };
 
   if (error) {

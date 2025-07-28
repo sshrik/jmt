@@ -56,7 +56,7 @@ const RootComponent = () => {
         </Group>
       </AppShell.Header>
 
-      <Sidebar _opened={desktopOpened} />
+      <Sidebar />
 
       <AppShell.Main>
         <Outlet />

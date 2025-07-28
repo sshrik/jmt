@@ -102,11 +102,7 @@ const SidebarItem = ({
   );
 };
 
-interface SidebarProps {
-  _opened?: boolean; // 향후 확장용
-}
-
-export const Sidebar = ({ _opened }: SidebarProps) => {
+export const Sidebar = () => {
   return (
     <AppShell.Navbar p="md">
       <Stack gap="xs">

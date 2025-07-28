@@ -372,7 +372,7 @@ function ProjectEdit() {
         icon: <IconCheck size={16} />,
       });
 
-      navigate({ to: `/projects/${projectId}` });
+      navigate({ to: `/projects/${projectId}/` });
     } catch (error) {
       console.error("저장 실패:", error);
       notifications.show({
@@ -404,13 +404,13 @@ function ProjectEdit() {
     if (hasUnsavedChanges) {
       openExitConfirm();
     } else {
-      navigate({ to: `/projects/${projectId}` });
+      navigate({ to: `/projects/${projectId}/` });
     }
   }, [hasUnsavedChanges, navigate, projectId, openExitConfirm]);
 
   // 강제 종료
   const handleForceExit = useCallback(() => {
-    navigate({ to: `/projects/${projectId}` });
+    navigate({ to: `/projects/${projectId}/` });
   }, [navigate, projectId]);
 
   // 키보드 단축키
@@ -529,7 +529,7 @@ function ProjectEdit() {
       <Group mb="lg">
         <Breadcrumbs>
           <Anchor onClick={() => navigate({ to: "/" })}>프로젝트 목록</Anchor>
-          <Anchor onClick={() => navigate({ to: `/projects/${projectId}` })}>
+          <Anchor onClick={() => navigate({ to: `/projects/${projectId}/` })}>
             {project.name}
           </Anchor>
           <Text>편집</Text>
