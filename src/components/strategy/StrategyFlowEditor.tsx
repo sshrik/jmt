@@ -495,33 +495,37 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     description,
   }: DraggableNodeProps) => (
     <Card
-      p="sm"
+      p="xs"
       withBorder
       style={{
         cursor: "grab",
+        userSelect: "none",
+        minWidth: "80px",
+        maxWidth: "120px",
+        textAlign: "center",
         transition: "all 0.2s",
         backgroundColor: draggedNodeType === type ? "#f0f9ff" : "white",
       }}
-      onDragStart={(e) => {
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = "move";
         setDraggedNodeType(type);
-        e.dataTransfer.effectAllowed = "move";
       }}
       onDragEnd={() => setDraggedNodeType(null)}
       draggable
     >
-      <Group gap="sm">
-        <ThemeIcon color={color} variant="light" size="sm">
+      <Stack gap="xs" align="center">
+        <ThemeIcon color={color} size="md" radius="md">
           <Icon size={16} />
         </ThemeIcon>
         <div>
-          <Text size="sm" fw={500}>
+          <Text size="xs" fw={500} lineClamp={1}>
             {label}
           </Text>
-          <Text size="xs" c="dimmed">
+          <Text size="xs" c="dimmed" lineClamp={2}>
             {description}
           </Text>
         </div>
-      </Group>
+      </Stack>
     </Card>
   );
 
@@ -566,24 +570,22 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
           </div>
         </Group>
 
-        {/* 메인 컨텐츠 - flexGrow로 남은 공간 차지 */}
-        <Group
-          align="flex-start"
-          style={{ flexGrow: 1, minHeight: "400px" }}
-          gap="lg"
-        >
-          {/* 노드 팔레트 - 읽기 전용이 아닐 때만 표시 */}
-          {!readOnly && (
-            <Stack gap="md" style={{ minWidth: "200px", flexShrink: 0 }}>
-              <Text size="sm" fw={500} c="dimmed">
-                노드 추가
-              </Text>
+        {/* 노드 팔레트 - 가로 배치 (편집 모드에서만 표시) */}
+        {!readOnly && (
+          <div>
+            <Text size="sm" fw={500} c="dimmed" mb="sm">
+              노드 추가 (드래그하여 차트에 추가)
+            </Text>
+            <Group gap="md">
               {DRAGGABLE_NODES.map((nodeType) => (
                 <DraggableNode key={nodeType.type} {...nodeType} />
               ))}
-            </Stack>
-          )}
+            </Group>
+          </div>
+        )}
 
+        {/* 메인 컨텐츠 - ReactFlow 차트 */}
+        <div style={{ flexGrow: 1, position: "relative" }}>
           {/* 단축키 안내 (읽기 전용이 아닐 때만 표시) */}
           {!readOnly && (
             <Paper
@@ -614,7 +616,6 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
           <div
             ref={reactFlowWrapper}
             style={{
-              flexGrow: 1,
               width: "100%",
               height: "400px", // 고정 높이로 변경
               minHeight: "400px",
@@ -661,7 +662,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               />
             </ReactFlow>
           </div>
-        </Group>
+        </div>
 
         {/* 유효성 검사 */}
         {!flowStats.isValid && (
