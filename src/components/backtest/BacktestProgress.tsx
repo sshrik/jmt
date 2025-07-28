@@ -166,9 +166,7 @@ export const BacktestProgress = ({
 
         {progress.status === "completed" && (
           <Alert color="green" variant="light">
-            <Text size="sm">
-              백테스트가 성공적으로 완료되었습니다! 결과를 확인해보세요.
-            </Text>
+            <Text size="sm">백테스트가 성공적으로 완료되었습니다!</Text>
           </Alert>
         )}
 

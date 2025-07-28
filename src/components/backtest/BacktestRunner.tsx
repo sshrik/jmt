@@ -136,6 +136,7 @@ export const BacktestRunner = ({ strategy }: BacktestRunnerProps) => {
         onConfigChange={handleConfigChange}
         onRunBacktest={handleRunBacktest}
         isRunning={isRunning}
+        strategy={strategy}
       />
 
       {/* 오류 표시 */}
@@ -160,20 +161,6 @@ export const BacktestRunner = ({ strategy }: BacktestRunnerProps) => {
         onClose={handleCloseProgress}
         onCancel={isRunning ? handleCancelBacktest : undefined}
       />
-
-      {/* 전략 정보가 없는 경우 */}
-      {!strategy.blocks ||
-        (strategy.blocks.length === 0 && (
-          <Alert
-            icon={<IconAlertCircle size={16} />}
-            color="yellow"
-            variant="light"
-            title="전략이 설정되지 않았습니다"
-          >
-            백테스트를 실행하려면 먼저 투자 전략을 설정해야 합니다. '전략 설정'
-            탭에서 조건과 액션을 추가해주세요.
-          </Alert>
-        ))}
     </Stack>
   );
 };

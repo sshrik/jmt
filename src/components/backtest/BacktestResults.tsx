@@ -10,6 +10,7 @@ import {
   Tabs,
   Table,
   Progress,
+  Tooltip as MantineTooltip,
 } from "@mantine/core";
 import {
   LineChart,
@@ -94,32 +95,41 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
     <Stack gap="xl">
       {/* 헤더 */}
       <Card withBorder>
-        <Group justify="space-between" align="flex-start">
+        <Group justify="space-between" align="flex-start" mb="md">
           <div>
             <Title order={2}>백테스트 결과</Title>
             <Text size="sm" c="dimmed" mt="xs">
-              {config.symbol} | {config.startDate} ~ {config.endDate}
+              {config.symbol} | {config.startDate} ~ {config.endDate} (총{" "}
+              {result.duration}일)
             </Text>
           </div>
-          <Group gap="xs">
-            <Badge
-              color={getPerformanceColor(stats.totalReturnPct)}
-              size="lg"
-              variant="light"
-            >
-              {stats.totalReturnPct > 0 ? "+" : ""}
-              {formatNumber(stats.totalReturnPct, 2)}%
-            </Badge>
-            <Badge variant="outline">{result.duration}일</Badge>
-          </Group>
+          <Badge
+            color={getPerformanceColor(stats.totalReturnPct)}
+            size="lg"
+            variant="light"
+          >
+            {stats.totalReturnPct > 0 ? "+" : ""}
+            {formatNumber(stats.totalReturnPct, 2)}%
+          </Badge>
         </Group>
+
+        {/* 백테스트 요약 */}
+        <Alert color="blue" variant="light" title="백테스트 요약">
+          <Text size="sm">
+            {result.duration}일 동안 {stats.totalTrades}회 거래를 통해{" "}
+            {stats.totalReturnPct > 0 ? "" : "-"}₩
+            {formatNumber(Math.abs(stats.totalReturn))}의{" "}
+            {stats.totalReturnPct > 0 ? "수익" : "손실"}을 기록했습니다. (실행
+            시간: {result.executionTime}ms)
+          </Text>
+        </Alert>
       </Card>
 
       {/* 핵심 성과 지표 */}
       <Grid>
         <Grid.Col span={{ base: 12, md: 3 }}>
           <StatCard
-            title="총 수익률"
+            title="기간 내 변화량"
             value={stats.totalReturnPct}
             suffix="%"
             icon={
@@ -134,7 +144,7 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 3 }}>
           <StatCard
-            title="연간 수익률"
+            title="연간 변화율"
             value={stats.annualizedReturn}
             suffix="%"
             icon={<IconChartLine />}
@@ -201,10 +211,17 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                     }
                   />
                   <YAxis
+                    yAxisId="left"
                     tick={{ fontSize: 12 }}
                     tickFormatter={(value) =>
-                      `${(value / 1000000).toFixed(1)}M`
+                      `₩${(value / 1000000).toFixed(1)}M`
                     }
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => `${value.toFixed(1)}%`}
                   />
                   <Tooltip
                     formatter={(value: number, name: string) => [
@@ -225,6 +242,7 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                     strokeWidth={2}
                     name="포트폴리오 가치"
                     dot={false}
+                    yAxisId="left"
                   />
                   <Line
                     type="monotone"
@@ -257,7 +275,7 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                     </Text>
                   </Group>
                   <Group justify="space-between">
-                    <Text size="sm">총 수익률</Text>
+                    <Text size="sm">기간 내 변화량</Text>
                     <Text
                       fw={500}
                       c={getPerformanceColor(stats.totalReturnPct)}
@@ -266,7 +284,7 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                     </Text>
                   </Group>
                   <Group justify="space-between">
-                    <Text size="sm">연간 수익률</Text>
+                    <Text size="sm">연간 변화율</Text>
                     <Text
                       fw={500}
                       c={getPerformanceColor(stats.annualizedReturn)}
@@ -275,7 +293,7 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                     </Text>
                   </Group>
                   <Group justify="space-between">
-                    <Text size="sm">승률</Text>
+                    <Text size="sm">수익 거래 비율</Text>
                     <Text fw={500}>{formatNumber(stats.winRate, 1)}%</Text>
                   </Group>
                 </Stack>
@@ -289,11 +307,37 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                 </Title>
                 <Stack gap="sm">
                   <Group justify="space-between">
-                    <Text size="sm">변동성 (연간)</Text>
+                    <MantineTooltip
+                      label="주가의 연간 변동성으로, 높을수록 가격 변동이 큰 위험한 투자입니다."
+                      position="top"
+                      withArrow
+                      multiline
+                      w={250}
+                    >
+                      <Text
+                        size="sm"
+                        style={{ cursor: "help", borderBottom: "1px dotted" }}
+                      >
+                        변동성 (연간)
+                      </Text>
+                    </MantineTooltip>
                     <Text fw={500}>{formatNumber(stats.volatility, 2)}%</Text>
                   </Group>
                   <Group justify="space-between">
-                    <Text size="sm">샤프 비율</Text>
+                    <MantineTooltip
+                      label="수익률 대비 위험도를 나타내는 지표입니다. 1.0 이상이면 양호, 2.0 이상이면 우수한 투자 성과입니다."
+                      position="top"
+                      withArrow
+                      multiline
+                      w={250}
+                    >
+                      <Text
+                        size="sm"
+                        style={{ cursor: "help", borderBottom: "1px dotted" }}
+                      >
+                        샤프 비율
+                      </Text>
+                    </MantineTooltip>
                     <Text
                       fw={500}
                       c={stats.sharpeRatio > 1 ? "green" : "orange"}
@@ -302,14 +346,40 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                     </Text>
                   </Group>
                   <Group justify="space-between">
-                    <Text size="sm">최대 낙폭</Text>
+                    <MantineTooltip
+                      label="투자 기간 중 최고점 대비 최대 하락폭입니다. 낮을수록 안정적인 투자입니다."
+                      position="top"
+                      withArrow
+                      multiline
+                      w={250}
+                    >
+                      <Text
+                        size="sm"
+                        style={{ cursor: "help", borderBottom: "1px dotted" }}
+                      >
+                        최대 낙폭
+                      </Text>
+                    </MantineTooltip>
                     <Text fw={500} c="red">
                       -{formatNumber(stats.maxDrawdown, 2)}%
                     </Text>
                   </Group>
                   <div>
                     <Group justify="space-between" mb="xs">
-                      <Text size="sm">리스크 점수</Text>
+                      <MantineTooltip
+                        label="샤프 비율을 기준으로 계산된 투자 위험도입니다. 낮을수록 위험 대비 수익이 좋은 투자입니다."
+                        position="top"
+                        withArrow
+                        multiline
+                        w={250}
+                      >
+                        <Text
+                          size="sm"
+                          style={{ cursor: "help", borderBottom: "1px dotted" }}
+                        >
+                          리스크 점수
+                        </Text>
+                      </MantineTooltip>
                       <Text size="xs" c="dimmed">
                         {stats.sharpeRatio > 1.5
                           ? "낮음"
@@ -356,7 +426,7 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                   </Grid.Col>
                   <Grid.Col span={{ base: 6, md: 3 }}>
                     <Text size="xs" c="dimmed">
-                      승률
+                      수익 거래 비율
                     </Text>
                     <Text size="lg" fw={700}>
                       {formatNumber(stats.winRate, 1)}%
@@ -446,18 +516,6 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
           </Card>
         </Tabs.Panel>
       </Tabs>
-
-      {/* 요약 및 주의사항 */}
-      <Alert color="blue" variant="light">
-        <Text size="sm">
-          <strong>백테스트 요약:</strong>
-          {result.duration}일 동안 {stats.totalTrades}회 거래를 통해
-          {stats.totalReturnPct > 0 ? "" : "-"}₩
-          {formatNumber(Math.abs(stats.totalReturn))}의
-          {stats.totalReturnPct > 0 ? "수익" : "손실"}을 기록했습니다. (실행
-          시간: {result.executionTime}ms)
-        </Text>
-      </Alert>
     </Stack>
   );
 };

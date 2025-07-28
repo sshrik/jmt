@@ -11,6 +11,7 @@ import {
   Badge,
   Alert,
   LoadingOverlay,
+  Tooltip,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import {
@@ -29,12 +30,14 @@ import {
   getAllAssets,
 } from "../../utils/stockDataLoader";
 import type { StockInfo } from "../../types/backtest";
+import type { Strategy } from "../../types/strategy";
 
 interface BacktestConfigProps {
   initialConfig?: Partial<BacktestConfigType>;
   onConfigChange: (config: BacktestConfigType) => void;
   onRunBacktest: (config: BacktestConfigType) => void;
   isRunning?: boolean;
+  strategy?: Strategy;
 }
 
 export const BacktestConfig = ({
@@ -42,6 +45,7 @@ export const BacktestConfig = ({
   onConfigChange,
   onRunBacktest,
   isRunning = false,
+  strategy,
 }: BacktestConfigProps) => {
   const [stockList, setStockList] = useState<StockInfo[]>([]);
   const [selectedStock, setSelectedStock] = useState<StockInfo | null>(null);
@@ -129,6 +133,18 @@ export const BacktestConfig = ({
     config.initialCash > 0 &&
     config.commission >= 0 &&
     config.slippage >= 0;
+
+  const hasStrategy = strategy && strategy.blocks && strategy.blocks.length > 0;
+
+  const getTooltipLabel = () => {
+    if (!hasStrategy) {
+      return "백테스트를 실행하려면 먼저 투자 전략을 설정해야 합니다. '투자 전략' 탭에서 조건과 액션을 추가해주세요.";
+    }
+    if (!isConfigValid) {
+      return "백테스트를 실행하려면 모든 필드를 채워야 합니다.";
+    }
+    return null;
+  };
 
   return (
     <Card withBorder>
@@ -278,13 +294,10 @@ export const BacktestConfig = ({
             <Group gap="md">
               <Text size="xs">
                 <strong>기간:</strong> {stockSummary.startDate} ~{" "}
-                {stockSummary.endDate}
+                {stockSummary.endDate} ({stockSummary.dataPoints}일)
               </Text>
               <Text size="xs">
-                <strong>데이터:</strong> {stockSummary.dataPoints}일
-              </Text>
-              <Text size="xs">
-                <strong>총 수익률:</strong>{" "}
+                <strong>기간 내 변화량:</strong>{" "}
                 {stockSummary.totalReturn.toFixed(2)}%
               </Text>
               <Text size="xs">
@@ -295,24 +308,22 @@ export const BacktestConfig = ({
         )}
 
         {/* 실행 버튼 */}
-        <Button
-          size="lg"
-          onClick={handleRunBacktest}
-          disabled={!isConfigValid || isRunning}
-          loading={isRunning}
-          leftSection={<IconChartLine size={18} />}
+        <Tooltip
+          label={getTooltipLabel()}
+          position="top"
+          withArrow
+          disabled={!getTooltipLabel()}
         >
-          {isRunning ? "백테스트 실행 중..." : "백테스트 실행"}
-        </Button>
-
-        {/* 경고사항 */}
-        <Alert color="orange" variant="light">
-          <Text size="xs">
-            <strong>주의사항:</strong> 백테스트 결과는 과거 데이터를 기반으로 한
-            시뮬레이션이며, 실제 투자 결과와 다를 수 있습니다. 투자 결정 시
-            신중하게 판단하시기 바랍니다.
-          </Text>
-        </Alert>
+          <Button
+            size="lg"
+            onClick={handleRunBacktest}
+            disabled={!isConfigValid || isRunning || !hasStrategy}
+            loading={isRunning}
+            leftSection={<IconChartLine size={18} />}
+          >
+            {isRunning ? "백테스트 실행 중..." : "백테스트 실행"}
+          </Button>
+        </Tooltip>
       </Stack>
     </Card>
   );

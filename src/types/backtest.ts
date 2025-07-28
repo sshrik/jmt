@@ -35,7 +35,6 @@ export interface StockSummary {
   startDate: string;
   endDate: string;
   startPrice: number;
-  endPrice: number;
   totalReturn: number;
   high: number;
   low: number;
