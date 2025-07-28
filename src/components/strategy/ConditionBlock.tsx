@@ -31,19 +31,19 @@ interface ConditionBlockProps {
 const CONDITION_CONFIG = {
   close_price_change: {
     label: "전일 종가 대비 변화",
-    description: "전일 종가 대비 주가 변화율로 조건 설정",
+    description: "전일 종가 대비 주가 변화율이 임계값 이상/이하일 때 조건 만족",
     icon: IconTrendingUp,
     color: "blue",
   },
   high_price_change: {
     label: "전일 고가 대비 변화",
-    description: "전일 고가 대비 주가 변화율로 조건 설정",
+    description: "전일 고가 대비 주가 변화율이 임계값 이상/이하일 때 조건 만족",
     icon: IconTrendingUp,
     color: "green",
   },
   low_price_change: {
     label: "전일 저가 대비 변화",
-    description: "전일 저가 대비 주가 변화율로 조건 설정",
+    description: "전일 저가 대비 주가 변화율이 임계값 이상/이하일 때 조건 만족",
     icon: IconTrendingDown,
     color: "orange",
   },
@@ -115,7 +115,7 @@ export const ConditionBlock = ({
             disabled={readOnly}
           />
           <NumberInput
-            label="변화율 (%)"
+            label="임계값 (%)"
             placeholder="예: 5"
             value={params.priceChangePercent || 0}
             onChange={(value) =>
@@ -132,7 +132,9 @@ export const ConditionBlock = ({
           {conditionType === "high_price_change" && "전일 고가"}
           {conditionType === "low_price_change" && "전일 저가"} 대비{" "}
           {params.priceChangeDirection === "down" ? "하락" : "상승"}{" "}
-          {params.priceChangePercent || 0}%일 때 조건 만족
+          {params.priceChangePercent || 0}%{" "}
+          {params.priceChangeDirection === "down" ? "이하" : "이상"}일 때 조건
+          만족
         </Text>
       </Stack>
     );
