@@ -250,34 +250,50 @@ export const BacktestConfig = ({
             step={1000000}
           />
           <Group grow>
-            <NumberInput
-              label="수수료율 (%)"
-              value={(config.commission || 0) * 100}
-              onChange={(value) =>
-                handleConfigChange(
-                  "commission",
-                  typeof value === "number" ? value / 100 : 0
-                )
-              }
-              decimalScale={3}
-              step={0.001}
-              min={0}
-              max={1}
-            />
-            <NumberInput
-              label="슬리피지율 (%)"
-              value={(config.slippage || 0) * 100}
-              onChange={(value) =>
-                handleConfigChange(
-                  "slippage",
-                  typeof value === "number" ? value / 100 : 0
-                )
-              }
-              decimalScale={3}
-              step={0.001}
-              min={0}
-              max={1}
-            />
+            <Tooltip
+              label="거래 시 발생하는 수수료 비율입니다. 일반적으로 0.15%~0.25% 수준이며, 증권사마다 다를 수 있습니다."
+              position="top"
+              withArrow
+              multiline
+              w={300}
+            >
+              <NumberInput
+                label="수수료율 (%)"
+                value={(config.commission || 0) * 100}
+                onChange={(value) =>
+                  handleConfigChange(
+                    "commission",
+                    typeof value === "number" ? value / 100 : 0
+                  )
+                }
+                decimalScale={3}
+                step={0.001}
+                min={0}
+                max={1}
+              />
+            </Tooltip>
+            <Tooltip
+              label="주문 가격과 실제 체결 가격의 차이를 반영하는 비율입니다. 시장 상황과 거래량에 따라 0.05%~0.1% 수준에서 발생합니다."
+              position="top"
+              withArrow
+              multiline
+              w={300}
+            >
+              <NumberInput
+                label="슬리피지율 (%)"
+                value={(config.slippage || 0) * 100}
+                onChange={(value) =>
+                  handleConfigChange(
+                    "slippage",
+                    typeof value === "number" ? value / 100 : 0
+                  )
+                }
+                decimalScale={3}
+                step={0.001}
+                min={0}
+                max={1}
+              />
+            </Tooltip>
           </Group>
         </Group>
 
