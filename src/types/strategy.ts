@@ -154,3 +154,151 @@ export const STRATEGY_TEMPLATES = {
     blocks: [],
   },
 } as const;
+
+// ===== React Flow 기반 플로우 차트 타입 정의 =====
+
+// 플로우 노드 타입
+export type FlowNodeType =
+  | "start" // 전략 시작점
+  | "schedule" // 매수-매도 일정 (언제 실행할지)
+  | "condition" // 조건 블록
+  | "action" // 액션 블록
+  | "end" // 전략 종료점
+  | "decision"; // 분기점 (조건에 따른 흐름 분할)
+
+// 스케줄 타입 (언제 실행할지)
+export type ScheduleType =
+  | "market_open" // 장 시작 시
+  | "market_close" // 장 마감 시
+  | "interval" // 주기적 (몇 분마다)
+  | "daily" // 매일 특정 시간
+  | "weekly" // 주간
+  | "manual"; // 수동 트리거
+
+// 스케줄 파라미터
+export interface ScheduleParameters {
+  scheduleType?: ScheduleType;
+  intervalMinutes?: number; // interval 타입에서 사용
+  executionTime?: string; // "09:30", "15:20" 형태
+  weekday?: number; // 0(일요일) ~ 6(토요일)
+  description?: string;
+}
+
+// 향상된 액션 타입 (투자 종료 포함)
+export type EnhancedActionType =
+  | ActionType
+  | "exit_all" // 모든 포지션 정리 후 투자 종료
+  | "pause_strategy" // 전략 일시 정지
+  | "alert" // 알림만 발송
+  | "log"; // 로그 기록
+
+// 플로우 노드 데이터
+export interface FlowNodeData {
+  id: string;
+  label: string;
+  type: FlowNodeType;
+
+  // 노드별 특화 데이터
+  scheduleParams?: ScheduleParameters;
+  conditionType?: ConditionType;
+  conditionParams?: ConditionParameters;
+  actionType?: EnhancedActionType;
+  actionParams?: ActionParameters;
+
+  // 메타데이터
+  description?: string;
+  enabled?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// React Flow 노드 (React Flow 라이브러리와 호환)
+export interface StrategyFlowNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: FlowNodeData;
+  width?: number;
+  height?: number;
+}
+
+// React Flow 엣지 (노드 간 연결)
+export interface StrategyFlowEdge {
+  id: string;
+  source: string; // 소스 노드 ID
+  target: string; // 타겟 노드 ID
+  label?: string; // 엣지 라벨 ("조건 만족", "조건 불만족" 등)
+  type?: string; // 엣지 타입
+  animated?: boolean;
+  style?: Record<string, string | number | boolean>;
+}
+
+// 전략 플로우 (React Flow 기반)
+export interface StrategyFlow {
+  id: string;
+  projectId: string;
+  versionId: string;
+  name: string;
+  description?: string;
+
+  // React Flow 데이터
+  nodes: StrategyFlowNode[];
+  edges: StrategyFlowEdge[];
+
+  // 실행 설정
+  executionSettings?: {
+    maxConcurrentActions?: number; // 동시 실행 가능한 액션 수
+    errorHandling?: "stop" | "continue" | "retry";
+    retryCount?: number;
+  };
+
+  // 메타데이터
+  createdAt: Date;
+  updatedAt: Date;
+  isActive: boolean;
+}
+
+// 플로우 실행 컨텍스트
+export interface FlowExecutionContext {
+  flowId: string;
+  currentMarketData?: {
+    price: number;
+    timestamp: Date;
+    volume?: number;
+  };
+  portfolio?: {
+    cash: number;
+    holdings: { symbol: string; quantity: number; value: number }[];
+  };
+  executionHistory?: {
+    nodeId: string;
+    timestamp: Date;
+    result: "success" | "failure" | "skipped";
+    data?: Record<string, unknown>;
+  }[];
+}
+
+// 플로우 실행 결과
+export interface FlowExecutionResult {
+  executionId: string;
+  flowId: string;
+  startTime: Date;
+  endTime?: Date;
+  status: "running" | "completed" | "failed" | "paused";
+
+  nodeResults: {
+    nodeId: string;
+    nodeType: FlowNodeType;
+    executed: boolean;
+    result?: Record<string, unknown>;
+    error?: string;
+    executionTime: Date;
+  }[];
+
+  finalActions?: {
+    type: EnhancedActionType;
+    params: Record<string, unknown>;
+    executed: boolean;
+    result?: Record<string, unknown>;
+  }[];
+}
