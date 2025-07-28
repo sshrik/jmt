@@ -64,6 +64,8 @@ function ProjectsPage() {
   };
 
   const handleViewProject = (projectId: string) => {
+    console.log("🚀 프로젝트 상세보기로 이동:", projectId);
+    console.log("🎯 이동할 경로:", `/projects/${projectId}/`);
     navigate({ to: `/projects/${projectId}/` });
   };
 
@@ -186,7 +188,7 @@ function ProjectsPage() {
                 <Button
                   variant="light"
                   size="sm"
-                  flex={1}
+                  fullWidth
                   onClick={() => handleViewProject(project.id)}
                 >
                   상세보기
