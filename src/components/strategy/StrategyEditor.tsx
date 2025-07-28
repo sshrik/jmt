@@ -140,10 +140,12 @@ export const StrategyEditor = ({
     const conditionBlock = createBlock("condition");
     const actionBlock = createBlock("action");
 
+    const currentBlockOrder = strategy.blockOrder || [];
+
     const updatedStrategy = {
       ...strategy,
       blocks: [...strategy.blocks, conditionBlock, actionBlock],
-      blockOrder: [...strategy.blockOrder, conditionBlock.id, actionBlock.id],
+      blockOrder: [...currentBlockOrder, conditionBlock.id, actionBlock.id],
       updatedAt: new Date(),
     };
 
@@ -157,12 +159,13 @@ export const StrategyEditor = ({
       if (!rule) return;
 
       const conditionBlock = createBlock("condition");
+      const currentBlockOrder = strategy.blockOrder || [];
 
       // 해당 룰의 마지막 조건 뒤에 새 조건 삽입
       const lastConditionId = rule.conditions[rule.conditions.length - 1].id;
-      const insertIndex = strategy.blockOrder.indexOf(lastConditionId) + 1;
+      const insertIndex = currentBlockOrder.indexOf(lastConditionId) + 1;
 
-      const newBlockOrder = [...strategy.blockOrder];
+      const newBlockOrder = [...currentBlockOrder];
       newBlockOrder.splice(insertIndex, 0, conditionBlock.id);
 
       const updatedStrategy = {
@@ -184,12 +187,13 @@ export const StrategyEditor = ({
       if (!rule) return;
 
       const actionBlock = createBlock("action");
+      const currentBlockOrder = strategy.blockOrder || [];
 
       // 해당 룰의 마지막 액션 뒤에 새 액션 삽입
       const lastActionId = rule.actions[rule.actions.length - 1].id;
-      const insertIndex = strategy.blockOrder.indexOf(lastActionId) + 1;
+      const insertIndex = currentBlockOrder.indexOf(lastActionId) + 1;
 
-      const newBlockOrder = [...strategy.blockOrder];
+      const newBlockOrder = [...currentBlockOrder];
       newBlockOrder.splice(insertIndex, 0, actionBlock.id);
 
       const updatedStrategy = {
@@ -212,13 +216,14 @@ export const StrategyEditor = ({
 
       const blocksToDelete = [...rule.conditions, ...rule.actions];
       const blockIdsToDelete = blocksToDelete.map((block) => block.id);
+      const currentBlockOrder = strategy.blockOrder || [];
 
       const updatedStrategy = {
         ...strategy,
         blocks: strategy.blocks.filter(
           (block) => !blockIdsToDelete.includes(block.id)
         ),
-        blockOrder: strategy.blockOrder.filter(
+        blockOrder: currentBlockOrder.filter(
           (id) => !blockIdsToDelete.includes(id)
         ),
         updatedAt: new Date(),
@@ -247,10 +252,12 @@ export const StrategyEditor = ({
   // 블록 삭제
   const deleteBlock = useCallback(
     (blockId: string) => {
+      const currentBlockOrder = strategy.blockOrder || [];
+
       const updatedStrategy = {
         ...strategy,
         blocks: strategy.blocks.filter((block) => block.id !== blockId),
-        blockOrder: strategy.blockOrder.filter((id) => id !== blockId),
+        blockOrder: currentBlockOrder.filter((id) => id !== blockId),
         updatedAt: new Date(),
       };
       onStrategyUpdate(updatedStrategy);
