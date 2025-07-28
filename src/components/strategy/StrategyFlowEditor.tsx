@@ -246,21 +246,23 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   // 현재 플로우 또는 기본 플로우 사용
   const currentFlow = flow || defaultFlow;
 
-  // 디버깅 정보 추가
-  console.log("🎯 StrategyFlowEditor Debug Info:", {
-    flow: flow ? "provided" : "null",
-    currentFlow: currentFlow ? "valid" : "invalid",
-    flowNodes: currentFlow?.nodes?.length || 0,
-    flowEdges: currentFlow?.edges?.length || 0,
-    readOnly,
-  });
-
   const [nodes, setNodes, onNodesChange] = useNodesState(
     currentFlow.nodes || defaultFlow.nodes
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(
     currentFlow.edges || defaultFlow.edges
   );
+
+  // 디버깅 정보 추가 (nodes, edges 정의 후)
+  console.log("🎯 StrategyFlowEditor Debug Info:", {
+    flow: flow ? "provided" : "null",
+    currentFlow: currentFlow ? "valid" : "invalid",
+    flowNodes: currentFlow?.nodes?.length || 0,
+    flowEdges: currentFlow?.edges?.length || 0,
+    readOnly,
+    actualNodes: nodes.length,
+    actualEdges: edges.length,
+  });
 
   const [draggedNodeType, setDraggedNodeType] = useState<FlowNodeType | null>(
     null
@@ -719,87 +721,85 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
           </div>
         )}
 
-        {/* 메인 컨텐츠 - 원래 Group 구조로 복원 */}
-        <Group
-          align="flex-start"
-          style={{ flexGrow: 1, height: "100%" }}
-          gap="lg"
+        {/* 메인 컨텐츠 - ReactFlow 차트 */}
+        <div
+          ref={reactFlowWrapper}
+          style={{
+            width: "100%",
+            height: "500px",
+            minHeight: "500px",
+            border: "2px dashed #e0e7ff",
+            borderRadius: "8px",
+            position: "relative",
+            flexGrow: 1,
+          }}
         >
-          {/* React Flow 차트 */}
-          <div
-            ref={reactFlowWrapper}
-            style={{
-              height: "500px",
-              minHeight: "500px",
-              border: "2px dashed #e0e7ff",
-              borderRadius: "8px",
-              position: "relative",
-            }}
-          >
-            {/* 단축키 안내 오버레이 */}
-            {!readOnly && (
-              <Paper
-                withBorder
-                p="sm"
-                style={{
-                  position: "absolute",
-                  top: "10px",
-                  right: "10px",
-                  zIndex: 10,
-                  backgroundColor: "rgba(255, 255, 255, 0.9)",
-                  minWidth: "200px",
-                }}
-              >
-                <Alert icon={<IconInfoCircle size="1rem" />} color="blue">
-                  <Text size="xs" mb="xs">
-                    <strong>단축키:</strong>
-                  </Text>
-                  <Text size="xs">• Del/Backspace: 노드 삭제</Text>
-                  <Text size="xs">• Ctrl/Cmd + 클릭: 다중 선택</Text>
-                  <Text size="xs">• 마우스 휠: 확대/축소</Text>
-                </Alert>
-              </Paper>
-            )}
-
-            <ReactFlow
-              nodes={nodes.map((node) => ({
-                ...node,
-                data: {
-                  ...node.data,
-                  onUpdate: (data: FlowNodeData) => onNodeUpdate(node.id, data),
-                  onDelete: () => deleteNode(node.id),
-                },
-              }))}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onInit={onReactFlowInit}
-              nodeTypes={FLOW_NODE_TYPES}
-              fitView
-              fitViewOptions={{
-                padding: 0.2,
-                includeHiddenNodes: false,
-                minZoom: 0.1,
-                maxZoom: 2,
+          {/* 단축키 안내 오버레이 */}
+          {!readOnly && (
+            <Paper
+              withBorder
+              p="sm"
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                zIndex: 10,
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                minWidth: "200px",
               }}
-              attributionPosition="bottom-left"
-              deleteKeyCode={["Delete", "Backspace"]}
-              multiSelectionKeyCode={["Meta", "Ctrl"]}
-              defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
             >
-              <Background />
-              <Controls />
-              <MiniMap
-                nodeStrokeColor="#374151"
-                nodeColor="#f3f4f6"
-                nodeBorderRadius={8}
-                position="bottom-right"
-              />
-            </ReactFlow>
-            <DragCursor />
-          </div>
-        </Group>
+              <Alert icon={<IconInfoCircle size="1rem" />} color="blue">
+                <Text size="xs" mb="xs">
+                  <strong>단축키:</strong>
+                </Text>
+                <Text size="xs">• Del/Backspace: 노드 삭제</Text>
+                <Text size="xs">• Ctrl/Cmd + 클릭: 다중 선택</Text>
+                <Text size="xs">• 마우스 휠: 확대/축소</Text>
+              </Alert>
+            </Paper>
+          )}
+
+          <ReactFlow
+            nodes={nodes.map((node) => ({
+              ...node,
+              data: {
+                ...node.data,
+                onUpdate: (data: FlowNodeData) => onNodeUpdate(node.id, data),
+                onDelete: () => deleteNode(node.id),
+              },
+            }))}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={(reactFlowInstance) => {
+              console.log("🎪 ReactFlow initialized:", reactFlowInstance);
+              onReactFlowInit();
+            }}
+            nodeTypes={FLOW_NODE_TYPES}
+            fitView
+            fitViewOptions={{
+              padding: 0.2,
+              includeHiddenNodes: false,
+              minZoom: 0.1,
+              maxZoom: 2,
+            }}
+            attributionPosition="bottom-left"
+            deleteKeyCode={["Delete", "Backspace"]}
+            multiSelectionKeyCode={["Meta", "Ctrl"]}
+            defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+          >
+            <Background />
+            <Controls />
+            <MiniMap
+              nodeStrokeColor="#374151"
+              nodeColor="#f3f4f6"
+              nodeBorderRadius={8}
+              position="bottom-right"
+            />
+          </ReactFlow>
+          <DragCursor />
+        </div>
 
         {/* 유효성 검사 */}
         {!flowStats.isValid && (
