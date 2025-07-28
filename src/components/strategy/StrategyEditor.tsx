@@ -75,6 +75,11 @@ export const StrategyEditor = ({
         blockOrder: [...strategy.blockOrder, newBlock.id],
         updatedAt: new Date(),
       };
+      console.log("➕ 블록 추가 후 전략:", {
+        blocksCount: updatedStrategy.blocks.length,
+        blockOrderCount: updatedStrategy.blockOrder.length,
+        newBlockId: newBlock.id,
+      });
       onStrategyUpdate(updatedStrategy);
     },
     [strategy, createBlock, onStrategyUpdate]

@@ -81,6 +81,10 @@ function ProjectDetail() {
 
     console.log("✅ 마이그레이션된 블록들:", migratedBlocks);
 
+    // blockOrder가 없으면 blocks의 id로 자동 생성
+    const blockOrder = migratedBlocks.map((block) => block.id);
+    console.log("🔧 상세 페이지 blockOrder 생성:", blockOrder);
+
     return {
       id: `strategy-${project.id}`,
       projectId: project.id,
@@ -88,7 +92,7 @@ function ProjectDetail() {
       name: `${project.name} 전략`,
       description: project.description,
       blocks: migratedBlocks, // 마이그레이션된 전략 데이터
-      blockOrder: [],
+      blockOrder: blockOrder, // 블록 ID 순서대로 자동 생성
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
       isActive: true,
