@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Container,
@@ -35,7 +35,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { getStockData, getAllAssets } from "../utils/stockDataLoader";
-import type { StockInfo, StockData } from "../types/backtest";
+import type { StockInfo, StockData, StockPrice } from "../types/backtest";
 
 export const Route = createFileRoute("/flowchart")({
   component: StockTrendPage,
@@ -49,6 +49,14 @@ function StockTrendPage() {
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 차트 기간 선택 state 추가
+  const [chartStartDate, setChartStartDate] = useState<Date | null>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 90); // 기본 90일 전
+    return date;
+  });
+  const [chartEndDate, setChartEndDate] = useState<Date | null>(new Date());
 
   // 컴포넌트 마운트 시 주식 목록 로드
   useEffect(() => {
@@ -70,7 +78,7 @@ function StockTrendPage() {
     loadStockList();
   }, []);
 
-  // 선택된 주식 데이터 로드
+  // 선택된 주식이 변경될 때마다 데이터 로드
   useEffect(() => {
     if (selectedStock) {
       const loadStockData = async () => {
@@ -98,21 +106,128 @@ function StockTrendPage() {
     return stockData.prices.find((price) => price.date === dateStr);
   }, [stockData, selectedDate]);
 
-  // 차트 데이터 (최근 90일)
-  const chartData = useMemo(() => {
-    if (!stockData) return [];
+  // 데이터 샘플링 함수
+  const sampleData = useCallback(
+    (data: StockPrice[], startDate: Date, endDate: Date) => {
+      if (!data || data.length === 0) return [];
 
-    return stockData.prices
-      .slice(-90) // 최근 90일
-      .map((price) => ({
-        date: price.date,
-        close: price.close,
-        high: price.high,
-        low: price.low,
-        open: price.open,
-        volume: price.volume,
-      }));
-  }, [stockData]);
+      // 날짜 범위로 필터링
+      const startDateStr = startDate.toISOString().split("T")[0];
+      const endDateStr = endDate.toISOString().split("T")[0];
+
+      const filteredData = data.filter(
+        (item) => item.date >= startDateStr && item.date <= endDateStr
+      );
+
+      if (filteredData.length === 0) return [];
+
+      const daysDiff = Math.ceil(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // 기간에 따른 스마트 샘플링
+      if (daysDiff <= 365) {
+        // 1년 이하: 모든 데이터 (일별)
+        return filteredData;
+      } else if (daysDiff <= 1095) {
+        // 1-3년: 주별 샘플링 (매주 마지막 거래일)
+        const sampled = [];
+        let lastWeek = -1;
+
+        for (const item of filteredData) {
+          const date = new Date(item.date);
+          const weekOfYear = Math.floor(
+            date.getTime() / (1000 * 60 * 60 * 24 * 7)
+          );
+
+          if (weekOfYear !== lastWeek) {
+            sampled.push(item);
+            lastWeek = weekOfYear;
+          }
+        }
+        return sampled;
+      } else if (daysDiff <= 3650) {
+        // 3-10년: 월별 샘플링 (매월 마지막 거래일)
+        const sampled = [];
+        let lastMonth = -1;
+
+        for (const item of filteredData) {
+          const date = new Date(item.date);
+          const monthKey = date.getFullYear() * 12 + date.getMonth();
+
+          if (monthKey !== lastMonth) {
+            sampled.push(item);
+            lastMonth = monthKey;
+          }
+        }
+        return sampled;
+      } else {
+        // 10년 이상: 분기별 샘플링
+        const sampled = [];
+        let lastQuarter = -1;
+
+        for (const item of filteredData) {
+          const date = new Date(item.date);
+          const quarterKey =
+            date.getFullYear() * 4 + Math.floor(date.getMonth() / 3);
+
+          if (quarterKey !== lastQuarter) {
+            sampled.push(item);
+            lastQuarter = quarterKey;
+          }
+        }
+        return sampled;
+      }
+    },
+    []
+  );
+
+  // 차트 데이터 (기간 및 샘플링 적용)
+  const chartData = useMemo(() => {
+    if (!stockData || !chartStartDate || !chartEndDate) return [];
+
+    const sampledData = sampleData(
+      stockData.prices,
+      chartStartDate,
+      chartEndDate
+    );
+
+    return sampledData.map((price) => ({
+      date: price.date,
+      close: price.close,
+      high: price.high,
+      low: price.low,
+      open: price.open,
+      volume: price.volume,
+    }));
+  }, [stockData, chartStartDate, chartEndDate, sampleData]);
+
+  // 차트 기간 정보
+  const chartPeriodInfo = useMemo(() => {
+    if (!chartStartDate || !chartEndDate) return null;
+
+    const daysDiff = Math.ceil(
+      (chartEndDate.getTime() - chartStartDate.getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    let samplingType = "";
+
+    if (daysDiff <= 365) {
+      samplingType = "일별";
+    } else if (daysDiff <= 1095) {
+      samplingType = "주별";
+    } else if (daysDiff <= 3650) {
+      samplingType = "월별";
+    } else {
+      samplingType = "분기별";
+    }
+
+    return {
+      days: daysDiff,
+      sampling: samplingType,
+      dataPoints: chartData.length,
+    };
+  }, [chartStartDate, chartEndDate, chartData.length]);
 
   // 가격 변동 계산
   const priceChange = useMemo(() => {
@@ -148,6 +263,15 @@ function StockTrendPage() {
       };
       loadStockData();
     }
+  };
+
+  // 기간 프리셋 함수들
+  const setPresetPeriod = (days: number) => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - days);
+    setChartStartDate(startDate);
+    setChartEndDate(endDate);
   };
 
   return (
@@ -375,9 +499,92 @@ function StockTrendPage() {
 
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Card withBorder p="lg" h="100%">
-            <Text fw={500} mb="md">
-              최근 90일 종가 추이
-            </Text>
+            <Group justify="space-between" mb="md">
+              <div>
+                <Text fw={500}>주가 추이 차트</Text>
+                {chartPeriodInfo && (
+                  <Text size="xs" c="dimmed">
+                    {chartPeriodInfo.days}일간 • {chartPeriodInfo.sampling}{" "}
+                    샘플링 • {chartPeriodInfo.dataPoints}개 데이터
+                  </Text>
+                )}
+              </div>
+            </Group>
+
+            {/* 기간 선택 UI */}
+            <Stack gap="sm" mb="md">
+              <Group gap="xs" wrap="wrap">
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={() => setPresetPeriod(30)}
+                >
+                  1개월
+                </Button>
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={() => setPresetPeriod(90)}
+                >
+                  3개월
+                </Button>
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={() => setPresetPeriod(365)}
+                >
+                  1년
+                </Button>
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={() => setPresetPeriod(1095)}
+                >
+                  3년
+                </Button>
+                <Button
+                  size="xs"
+                  variant="light"
+                  onClick={() => setPresetPeriod(3650)}
+                >
+                  10년
+                </Button>
+              </Group>
+
+              <Group gap="xs">
+                <DatePickerInput
+                  size="xs"
+                  placeholder="시작일"
+                  value={chartStartDate}
+                  onChange={(value: string | null) => {
+                    if (value) {
+                      setChartStartDate(new Date(value));
+                    } else {
+                      setChartStartDate(null);
+                    }
+                  }}
+                  maxDate={chartEndDate || undefined}
+                  w="48%"
+                />
+                <DatePickerInput
+                  size="xs"
+                  placeholder="종료일"
+                  value={chartEndDate}
+                  onChange={(value: string | null) => {
+                    if (value) {
+                      setChartEndDate(new Date(value));
+                    } else {
+                      setChartEndDate(null);
+                    }
+                  }}
+                  minDate={chartStartDate || undefined}
+                  maxDate={new Date()}
+                  w="48%"
+                />
+              </Group>
+            </Stack>
+
+            {/* 차트 */}
             {chartData.length > 0 ? (
               <div style={{ height: 200 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -388,7 +595,17 @@ function StockTrendPage() {
                       tick={{ fontSize: 10 }}
                       tickFormatter={(value) => {
                         const date = new Date(value);
-                        return `${date.getMonth() + 1}/${date.getDate()}`;
+                        // 기간에 따라 표시 형식 변경
+                        if (chartPeriodInfo && chartPeriodInfo.days > 1095) {
+                          return `${date.getFullYear()}`;
+                        } else if (
+                          chartPeriodInfo &&
+                          chartPeriodInfo.days > 365
+                        ) {
+                          return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}`;
+                        } else {
+                          return `${date.getMonth() + 1}/${date.getDate()}`;
+                        }
                       }}
                     />
                     <YAxis tick={{ fontSize: 10 }} />
@@ -419,7 +636,9 @@ function StockTrendPage() {
                 }}
               >
                 <Text c="dimmed" size="sm">
-                  데이터가 없습니다
+                  {loading
+                    ? "데이터 로딩 중..."
+                    : "선택한 기간에 데이터가 없습니다"}
                 </Text>
               </div>
             )}
