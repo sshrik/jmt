@@ -133,10 +133,10 @@ export const Sidebar = ({ _opened }: SidebarProps) => {
           <Stack gap={4}>
             <SidebarItem
               icon={<IconChartLine size={18} />}
-              label="주식 흐름도"
+              label="주식 추이 확인"
               path="/flowchart"
               badge="New"
-              description="시각적 전략 설계 도구"
+              description="종목별 주가 정보 및 차트"
             />
             <SidebarItem
               icon={<IconTrendingUp size={18} />}
