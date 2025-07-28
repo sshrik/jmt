@@ -1,0 +1,188 @@
+name: 🚀 Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  NODE_VERSION: 18.x
+
+jobs:
+  deploy:
+    name: 🏗️ Build & Deploy Production
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || 'production' }}
+      url: https://${{ secrets.CLOUDFRONT_DOMAIN }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "yarn"
+
+      - name: 📥 Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🔍 Pre-deploy validation
+        run: |
+          echo "🔍 Running pre-deployment checks..."
+          yarn tsc --noEmit
+          yarn lint
+          echo "✅ All checks passed!"
+
+      - name: 🏗️ Build for production
+        run: yarn build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}
+          VITE_APP_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
+          VITE_APP_ENVIRONMENT: ${{ inputs.environment || 'production' }}
+
+      - name: 📊 Build analysis
+        run: |
+          echo "## 🚀 Production Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: $(git describe --tags --exact-match 2>/dev/null || echo 'No tag')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Size**: $(du -sh dist/ | cut -f1)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files Count**: $(find dist -type f | wc -l)" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 📁 Build Contents" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ls -la dist/ >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔧 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🚀 Deploy to S3 Production
+        run: |
+          echo "🚀 Deploying to production S3 bucket..."
+
+          # S3에 파일 동기화 (루트 경로에)
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }}/ \
+            --delete \
+            --cache-control "public, max-age=31536000" \
+            --metadata-directive REPLACE \
+            --exclude "*.html"
+            
+          # HTML 파일은 별도로 캐시 설정
+          find dist -name "*.html" -type f | while read file; do
+            key=$(echo $file | sed 's|dist/||')
+            aws s3 cp "$file" s3://${{ secrets.S3_BUCKET_NAME }}/$key \
+              --cache-control "no-cache, no-store, must-revalidate" \
+              --content-type "text/html" \
+              --metadata-directive REPLACE
+          done
+
+          echo "✅ Production deployment completed!"
+
+      - name: 🔄 Invalidate CloudFront cache
+        run: |
+          echo "🔄 Invalidating CloudFront cache for production..."
+
+          # 전체 캐시 무효화
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+            
+          echo "⏳ Invalidation ID: $INVALIDATION_ID"
+
+          # 무효화 완료 대기 (최대 10분)
+          echo "⏳ Waiting for invalidation to complete..."
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --id $INVALIDATION_ID
+            
+          echo "✅ CloudFront cache invalidation completed!"
+
+      - name: 🏷️ Create deployment tag
+        if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+        run: |
+          TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+          TAG_NAME="deploy-${TIMESTAMP}"
+
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git tag -a $TAG_NAME -m "Production deployment on $TIMESTAMP"
+          git push origin $TAG_NAME
+
+          echo "🏷️ Created deployment tag: $TAG_NAME"
+
+      - name: 📝 Create deployment summary
+        run: |
+          echo "## 🎉 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Live URL**: https://${{ secrets.CLOUDFRONT_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+          echo "⏰ **Deployed at**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Version**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Deployment Actions Completed:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Build successful" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Deployed to S3" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ CloudFront cache invalidated" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Deployment tag created" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔔 Slack notification (if configured)
+        if: always() && secrets.SLACK_WEBHOOK_URL
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: "#deployments"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: |
+            🚀 Production deployment ${{ job.status }}!
+            Environment: ${{ inputs.environment || 'production' }}
+            URL: https://${{ secrets.CLOUDFRONT_DOMAIN }}
+
+  health-check:
+    name: 🏥 Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: 🏥 Check deployment health
+        run: |
+          echo "🏥 Performing health check..."
+
+          # 기본 접근성 체크
+          curl -f -s https://${{ secrets.CLOUDFRONT_DOMAIN }} > /dev/null
+
+          # HTTP 상태 코드 체크
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.CLOUDFRONT_DOMAIN }})
+
+          if [ $STATUS -eq 200 ]; then
+            echo "✅ Health check passed! (HTTP $STATUS)"
+            echo "## 🏥 Health Check Results" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **Status**: Healthy (HTTP $STATUS)" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **URL**: https://${{ secrets.CLOUDFRONT_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Health check failed! (HTTP $STATUS)"
+            echo "## 🚨 Health Check Results" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Status**: Unhealthy (HTTP $STATUS)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

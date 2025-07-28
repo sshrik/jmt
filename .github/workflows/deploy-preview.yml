@@ -1,0 +1,192 @@
+name: 🚀 Deploy Preview
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: 18.x
+
+jobs:
+  build-and-deploy:
+    name: 🏗️ Build & Deploy to S3
+    runs-on: ubuntu-latest
+
+    # PR에서만 실행되도록 보안 체크
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "yarn"
+
+      - name: 📥 Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🔍 Quick validation
+        run: |
+          yarn tsc --noEmit
+          yarn lint
+
+      - name: 🏗️ Build for production
+        run: yarn build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}
+          VITE_APP_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
+
+      - name: 📊 Build summary
+        run: |
+          echo "## 🚀 Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR Number**: #${{ github.event.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.head_ref }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Size**: $(du -sh dist/ | cut -f1)" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔧 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 📤 Deploy to S3 (Preview)
+        run: |
+          # PR 번호를 기반으로 한 프리뷰 경로 생성
+          PREVIEW_PATH="pr-${{ github.event.number }}"
+          echo "🚀 Deploying to preview path: $PREVIEW_PATH"
+
+          # S3에 업로드 (프리뷰 경로로)
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }}/$PREVIEW_PATH/ \
+            --delete \
+            --cache-control "public, max-age=3600" \
+            --metadata-directive REPLACE
+            
+          # index.html은 캐시 안함
+          aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/$PREVIEW_PATH/index.html \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --metadata-directive REPLACE
+            
+          echo "✅ Deployment completed!"
+          echo "🔗 Preview URL: https://${{ secrets.CLOUDFRONT_DOMAIN }}/$PREVIEW_PATH/"
+
+          # 환경변수로 URL 저장
+          echo "PREVIEW_URL=https://${{ secrets.CLOUDFRONT_DOMAIN }}/$PREVIEW_PATH/" >> $GITHUB_ENV
+
+      - name: 🔄 Invalidate CloudFront cache
+        run: |
+          echo "🔄 Invalidating CloudFront cache..."
+
+          # 프리뷰 경로의 모든 파일 무효화
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/pr-${{ github.event.number }}/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+            
+          echo "⏳ Invalidation ID: $INVALIDATION_ID"
+          echo "✅ CloudFront cache invalidation initiated!"
+
+      - name: 💬 Comment PR with preview link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = process.env.PREVIEW_URL;
+
+            const comment = `## 🚀 Preview Deployment
+
+            ✅ **Successfully deployed!**
+
+            📱 **Preview URL**: ${previewUrl}
+
+            ### 📊 Deployment Details
+            - **Commit**: \`${context.sha.slice(0, 7)}\`
+            - **Branch**: \`${context.payload.pull_request.head.ref}\`
+            - **Build Time**: \`${new Date().toISOString()}\`
+
+            ### 🔧 Actions Performed
+            - ✅ Build completed
+            - ✅ Deployed to S3
+            - ✅ CloudFront cache invalidated
+
+            ---
+
+            🔄 This preview will be updated automatically when you push new commits to this PR.
+            🗑️ Preview will be cleaned up when the PR is merged or closed.`;
+
+            // 기존 봇 댓글 찾기
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Preview Deployment')
+            );
+
+            if (botComment) {
+              // 기존 댓글 업데이트
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // 새 댓글 생성
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            }
+
+  cleanup-on-close:
+    name: 🗑️ Cleanup Preview
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+
+    steps:
+      - name: 🔧 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 🗑️ Remove preview files from S3
+        run: |
+          PREVIEW_PATH="pr-${{ github.event.number }}"
+          echo "🗑️ Cleaning up preview: $PREVIEW_PATH"
+
+          aws s3 rm s3://${{ secrets.S3_BUCKET_NAME }}/$PREVIEW_PATH/ --recursive
+
+          echo "✅ Preview cleanup completed!"
+
+      - name: 💬 Update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+
+            const comment = `## 🗑️ Preview Cleaned Up
+
+            ✅ **Preview deployment has been removed.**
+
+            The preview files have been cleaned up from S3 since this PR was ${context.payload.action}.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });

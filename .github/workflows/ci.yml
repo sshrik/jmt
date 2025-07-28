@@ -1,0 +1,110 @@
+name: 🧪 Continuous Integration
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: 🚀 Build & Lint Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+
+      - name: 📥 Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🔍 Type check
+        run: yarn tsc --noEmit
+
+      - name: 🧹 ESLint check
+        run: yarn lint
+
+      - name: 🏗️ Build production
+        run: yarn build
+
+      - name: 📊 Bundle analyzer (Node 18 only)
+        if: matrix.node-version == '18.x'
+        run: |
+          ls -la dist/
+          du -sh dist/
+
+      - name: ✅ Build artifact upload (Node 18 only)
+        if: matrix.node-version == '18.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-files
+          path: dist/
+          retention-days: 1
+
+  security:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: "yarn"
+
+      - name: 📥 Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🔒 Security audit
+        run: yarn audit --level moderate
+        continue-on-error: true
+
+      - name: 📋 Dependency review (PR only)
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v3
+
+  quality:
+    name: 📈 Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: "yarn"
+
+      - name: 📥 Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: 🔍 TypeScript strict check
+        run: yarn tsc --noEmit --strict
+
+      - name: 📊 Build size check
+        run: |
+          yarn build
+          echo "## 📦 Build Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          find dist -name "*.js" -o -name "*.css" | head -10 | while read file; do
+            size=$(ls -lh "$file" | awk '{print $5}')
+            echo "| $(basename $file) | $size |" >> $GITHUB_STEP_SUMMARY
+          done
