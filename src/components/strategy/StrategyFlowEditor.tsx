@@ -13,14 +13,12 @@ import "reactflow/dist/style.css";
 
 import {
   Card,
-  Title,
   Group,
   Stack,
-  Badge,
-  Text,
   Paper,
   Alert,
   ThemeIcon,
+  Text,
 } from "@mantine/core";
 import {
   IconPlayerPlay,
@@ -696,73 +694,9 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   return (
     <Card withBorder p="lg" style={{ height: "100%" }}>
       <Stack gap="lg" style={{ height: "100%", minHeight: "600px" }}>
-        {/* 헤더와 통계 */}
-        <Group justify="space-between" align="flex-start">
-          <div>
-            <Title order={3} mb="xs">
-              플로우 차트 에디터
-            </Title>
-            <Group gap="lg">
-              <Group gap="xs">
-                <Text size="sm" c="dimmed">
-                  노드:
-                </Text>
-                <Badge variant="light" color="blue">
-                  {flowStats.totalNodes}개
-                </Badge>
-              </Group>
-              <Group gap="xs">
-                <Text size="sm" c="dimmed">
-                  연결:
-                </Text>
-                <Badge variant="light" color="green">
-                  {flowStats.totalEdges}개
-                </Badge>
-              </Group>
-              <Group gap="xs">
-                <Text size="sm" c="dimmed">
-                  상태:
-                </Text>
-                <Badge
-                  variant="light"
-                  color={flowStats.isValid ? "green" : "orange"}
-                >
-                  {flowStats.isValid ? "완료" : "불완전"}
-                </Badge>
-              </Group>
-            </Group>
-          </div>
-        </Group>
-
-        {/* 디버그 정보 표시 */}
-        {/* {debugInfo.length > 0 && (
-          <Paper
-            withBorder
-            p="xs"
-            style={{ fontSize: "10px", maxHeight: "100px", overflow: "auto" }}
-          >
-            <Text size="xs" fw={500} mb="xs">
-              디버그 로그:
-            </Text>
-            {debugInfo.map((log, index) => (
-              <Text
-                key={index}
-                size="xs"
-                c="dimmed"
-                style={{ fontFamily: "monospace" }}
-              >
-                {log}
-              </Text>
-            ))}
-          </Paper>
-        )} */}
-
         {/* 노드 팔레트 - 가로 배치 (편집 모드에서만 표시) */}
         {!readOnly && (
           <div>
-            <Text size="sm" fw={500} c="dimmed" mb="sm">
-              노드 추가 (드래그하여 차트에 추가)
-            </Text>
             <Group gap="md" mb="lg">
               {DRAGGABLE_NODES.map((nodeType) => (
                 <DraggableNode key={nodeType.type} {...nodeType} />

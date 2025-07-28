@@ -631,14 +631,9 @@ export const StrategyEditor = ({
         {/* 헤더 */}
         <Group justify="space-between">
           <Title order={2}>투자 전략</Title>
-          <Group gap="sm">
-            <Badge variant="light" color="blue">
-              {activeTab === "rules" ? "룰 기반" : "플로우 차트"}
-            </Badge>
-            <Badge variant="light" color={isValidStrategy ? "green" : "orange"}>
-              {isValidStrategy ? "실행 가능" : "불완전한 전략"}
-            </Badge>
-          </Group>
+          <Badge variant="light" color={isValidStrategy ? "green" : "orange"}>
+            {isValidStrategy ? "실행 가능" : "불완전한 전략"}
+          </Badge>
         </Group>
 
         {/* 모드 선택 탭 */}
@@ -648,30 +643,15 @@ export const StrategyEditor = ({
         >
           <Tabs.List>
             <Tabs.Tab value="rules" leftSection={<IconListCheck size={16} />}>
-              룰 기반 에디터
+              룰 기반
             </Tabs.Tab>
             <Tabs.Tab value="flow" leftSection={<IconGitBranch size={16} />}>
-              플로우 차트 에디터
+              플로우 차트
             </Tabs.Tab>
           </Tabs.List>
 
           {/* 룰 기반 에디터 */}
           <Tabs.Panel value="rules" pt="lg">
-            {/* 통계 정보 */}
-            <Paper p="md" withBorder mb="lg">
-              <Group gap="md">
-                <Badge variant="light" color="blue">
-                  조건-액션 쌍 {rules.length}개
-                </Badge>
-                <Badge
-                  variant="light"
-                  color={isValidStrategy ? "green" : "orange"}
-                >
-                  {isValidStrategy ? "실행 가능" : "불완전한 전략"}
-                </Badge>
-              </Group>
-            </Paper>
-
             {/* 기존 룰 에디터 내용 */}
             <div>
               <Group justify="space-between" mb="xs">

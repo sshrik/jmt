@@ -6,7 +6,6 @@ import {
   Text,
   Group,
   Button,
-  Tooltip,
   LoadingOverlay,
   Card,
   Alert,
@@ -21,12 +20,13 @@ import {
   Modal,
   Tabs,
   Affix,
+  Menu,
+  ActionIcon,
 } from "@mantine/core";
 import {
   IconInfoCircle,
   IconChartLine,
   IconDeviceFloppy,
-  IconX,
   IconCloudCheck,
   IconCloudX,
   IconKeyboard,
@@ -36,6 +36,7 @@ import {
   IconCheck,
   IconAlertTriangle,
   IconTrendingUp,
+  IconDots,
 } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { useHotkeys, useDisclosure, useInterval } from "@mantine/hooks";
@@ -69,10 +70,6 @@ function ProjectEdit() {
     useDisclosure(false);
   const [helpOpened, { open: openHelp, close: closeHelp }] =
     useDisclosure(false);
-  const [
-    exitConfirmOpened,
-    { open: openExitConfirm, close: closeExitConfirm },
-  ] = useDisclosure(false);
 
   // 자동 저장 상태
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
@@ -399,20 +396,6 @@ function ProjectEdit() {
     navigate,
   ]);
 
-  // 취소 (변경사항 확인)
-  const handleCancel = useCallback(() => {
-    if (hasUnsavedChanges) {
-      openExitConfirm();
-    } else {
-      navigate({ to: `/projects/${projectId}/` });
-    }
-  }, [hasUnsavedChanges, navigate, projectId, openExitConfirm]);
-
-  // 강제 종료
-  const handleForceExit = useCallback(() => {
-    navigate({ to: `/projects/${projectId}/` });
-  }, [navigate, projectId]);
-
   // 키보드 단축키
   useHotkeys([
     [
@@ -427,12 +410,6 @@ function ProjectEdit() {
       (e) => {
         e.preventDefault();
         openHelp();
-      },
-    ],
-    [
-      "Escape",
-      () => {
-        handleCancel();
       },
     ],
     [
@@ -560,69 +537,60 @@ function ProjectEdit() {
         </div>
 
         <Group>
-          <Tooltip label="키보드 단축키 (⌘+K)">
-            <Button
-              variant="subtle"
-              onClick={openHelp}
-              leftSection={<IconKeyboard size={16} />}
-            >
-              도움말
-            </Button>
-          </Tooltip>
-          <Tooltip label="미리보기 (⌘+P)">
-            <Button
-              variant="subtle"
-              onClick={openPreview}
-              leftSection={<IconEye size={16} />}
-            >
-              미리보기
-            </Button>
-          </Tooltip>
+          <Menu shadow="md" width={250}>
+            <Menu.Target>
+              <ActionIcon variant="subtle" size="lg">
+                <IconDots size={16} />
+              </ActionIcon>
+            </Menu.Target>
 
-          <Group gap="sm">
-            <Button
-              variant="light"
-              color="red"
-              leftSection={<IconX size={16} />}
-              onClick={handleCancel}
-            >
-              취소
-            </Button>
-            <Button
-              leftSection={<IconDeviceFloppy size={16} />}
-              onClick={handleSaveAll}
-              loading={isSaving}
-            >
-              저장하기
-            </Button>
-          </Group>
+            <Menu.Dropdown>
+              <Menu.Label>도구</Menu.Label>
+              <Menu.Item
+                leftSection={<IconKeyboard size={16} />}
+                onClick={openHelp}
+              >
+                키보드 단축키 (⌘+K)
+              </Menu.Item>
+              <Menu.Item
+                leftSection={<IconEye size={16} />}
+                onClick={openPreview}
+              >
+                미리보기 (⌘+P)
+              </Menu.Item>
+
+              <Menu.Divider />
+
+              <Menu.Label>설정</Menu.Label>
+              <Menu.Item
+                leftSection={
+                  autoSaveEnabled ? (
+                    <IconCloudCheck size={16} />
+                  ) : (
+                    <IconCloudX size={16} />
+                  )
+                }
+                onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                rightSection={
+                  <Text size="xs" c="dimmed">
+                    {autoSaveEnabled ? "30초마다" : "비활성화"}
+                  </Text>
+                }
+              >
+                자동 저장
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+
+          <Button
+            leftSection={<IconDeviceFloppy size={16} />}
+            onClick={handleSaveAll}
+            loading={isSaving}
+          >
+            저장하기
+          </Button>
         </Group>
       </Group>
-
-      {/* 자동 저장 상태 */}
-      <Alert
-        variant="light"
-        color={autoSaveEnabled ? "green" : "gray"}
-        icon={
-          autoSaveEnabled ? (
-            <IconCloudCheck size={16} />
-          ) : (
-            <IconCloudX size={16} />
-          )
-        }
-        mb="lg"
-        style={{ cursor: "pointer" }}
-        onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
-      >
-        <Group justify="space-between">
-          <Text size="sm">
-            자동 저장: {autoSaveEnabled ? "활성화됨 (30초마다)" : "비활성화됨"}
-          </Text>
-          <Text size="xs" c="dimmed">
-            클릭하여 {autoSaveEnabled ? "비활성화" : "활성화"}
-          </Text>
-        </Group>
-      </Alert>
 
       {/* 탭 메뉴 */}
       <Tabs value={activeTab} onChange={setActiveTab} mb="xl">
@@ -803,28 +771,6 @@ function ProjectEdit() {
           <Group justify="space-between">
             <Text>취소</Text>
             <Kbd>Esc</Kbd>
-          </Group>
-        </Stack>
-      </Modal>
-
-      {/* 종료 확인 모달 */}
-      <Modal
-        opened={exitConfirmOpened}
-        onClose={closeExitConfirm}
-        title="저장되지 않은 변경사항"
-        centered
-      >
-        <Stack gap="md">
-          <Text>
-            저장되지 않은 변경사항이 있습니다. 정말로 편집을 종료하시겠습니까?
-          </Text>
-          <Group justify="flex-end">
-            <Button variant="subtle" onClick={closeExitConfirm}>
-              계속 편집
-            </Button>
-            <Button color="red" onClick={handleForceExit}>
-              변경사항 버리고 나가기
-            </Button>
           </Group>
         </Stack>
       </Modal>
