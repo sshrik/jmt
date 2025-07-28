@@ -21,7 +21,9 @@ import {
   IconEdit,
   IconTrash,
 } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
 import { useProjectStore } from "../hooks/useProjectStore";
+import { CreateProjectModal } from "../components/CreateProjectModal";
 
 export const Route = createFileRoute("/")({
   component: DashboardPage,
@@ -29,12 +31,17 @@ export const Route = createFileRoute("/")({
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { projects, loading, error, deleteProject } = useProjectStore();
+  const { projects, loading, error, deleteProject, createProject } =
+    useProjectStore();
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const [
+    createModalOpened,
+    { open: openCreateModal, close: closeCreateModal },
+  ] = useDisclosure(false);
 
   // 프로젝트를 수익률 순으로 정렬 (가장 효과 좋은 것이 상위)
   const sortedProjects = [...projects].sort((a, b) => {
@@ -59,6 +66,12 @@ function DashboardPage() {
   const handleCancelDelete = () => {
     setDeleteModalOpened(false);
     setProjectToDelete(null);
+  };
+
+  const handleCreateProject = async (name: string, description: string) => {
+    const newProject = await createProject(name, description);
+    closeCreateModal();
+    navigate({ to: `/projects/${newProject.id}/edit` });
   };
 
   const getReturnColor = (returnValue?: number) => {
@@ -95,7 +108,7 @@ function DashboardPage() {
         </div>
         <Button
           leftSection={<IconPlus size={16} />}
-          onClick={() => navigate({ to: "/projects" })}
+          onClick={openCreateModal}
           size="md"
         >
           새 프로젝트
@@ -346,6 +359,13 @@ function DashboardPage() {
           </Button>
         </Group>
       </Modal>
+
+      {/* 프로젝트 생성 모달 */}
+      <CreateProjectModal
+        opened={createModalOpened}
+        onClose={closeCreateModal}
+        onSubmit={handleCreateProject}
+      />
     </Container>
   );
 }

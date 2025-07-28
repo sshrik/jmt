@@ -27,7 +27,9 @@ import {
   IconTrash,
   IconEye,
 } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
 import { useProjectStore } from "../hooks/useProjectStore";
+import { CreateProjectModal } from "../components/CreateProjectModal";
 
 export const Route = createFileRoute("/projects")({
   component: ProjectsPage,
@@ -36,12 +38,17 @@ export const Route = createFileRoute("/projects")({
 function ProjectsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { projects, loading, error, deleteProject } = useProjectStore();
+  const { projects, loading, error, deleteProject, createProject } =
+    useProjectStore();
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const [
+    createModalOpened,
+    { open: openCreateModal, close: closeCreateModal },
+  ] = useDisclosure(false);
 
   // 자식 라우트인 경우 Outlet 렌더링
   if (location.pathname !== "/projects") {
@@ -67,7 +74,13 @@ function ProjectsPage() {
   };
 
   const handleCreateProject = () => {
-    navigate({ to: "/" }); // 대시보드로 이동하여 프로젝트 생성
+    openCreateModal();
+  };
+
+  const handleCreateNewProject = async (name: string, description: string) => {
+    const newProject = await createProject(name, description);
+    closeCreateModal();
+    navigate({ to: `/projects/${newProject.id}/edit` });
   };
 
   const handleEditProject = (projectId: string) => {
@@ -239,6 +252,13 @@ function ProjectsPage() {
           </Button>
         </Group>
       </Modal>
+
+      {/* 프로젝트 생성 모달 */}
+      <CreateProjectModal
+        opened={createModalOpened}
+        onClose={closeCreateModal}
+        onSubmit={handleCreateNewProject}
+      />
     </Container>
   );
 }
