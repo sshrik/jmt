@@ -24,6 +24,8 @@ import type {
   Strategy,
   StrategyFlow,
   ActionType,
+  StrategyFlowNode,
+  StrategyFlowEdge,
 } from "../../types/strategy";
 
 interface StrategyEditorProps {
@@ -281,170 +283,197 @@ export const StrategyEditor = ({
     [strategy, onStrategyUpdate]
   );
 
-  // 플로우 에디터용 데이터 변환
+  // 플로우 변환 함수
   const convertToFlow = useCallback((): StrategyFlow => {
-    // 기존 룰 기반 전략을 플로우로 변환하는 로직
-    const flowNodes = [];
-    const flowEdges = [];
+    const flowNodes: StrategyFlowNode[] = [];
+    const flowEdges: StrategyFlowEdge[] = [];
 
-    // 시작 노드 추가
+    // 시작 노드
     flowNodes.push({
-      id: "start-1",
+      id: "start",
       type: "start",
       position: { x: 400, y: 100 },
       data: {
-        id: "start-1",
+        id: "start",
         label: "전략 시작",
-        type: "start" as const,
-        description: "투자 전략이 시작되는 지점입니다.",
+        type: "start",
+        enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 
-    let yPosition = 300;
-    let prevNodeId = "start-1";
-
-    // 스케줄 노드 추가 (전략이 있는 경우에만)
-    if (rules.length > 0) {
-      const scheduleNodeId = "schedule-1";
-      flowNodes.push({
-        id: scheduleNodeId,
+    // 스케줄 노드
+    flowNodes.push({
+      id: "schedule",
+      type: "schedule",
+      position: { x: 400, y: 300 },
+      data: {
+        id: "schedule",
+        label: "실행 일정",
         type: "schedule",
-        position: { x: 400, y: yPosition },
-        data: {
-          id: scheduleNodeId,
-          label: "실행 일정",
-          type: "schedule" as const,
-          scheduleParams: {
-            scheduleType: "market_open" as const,
-            description: "장 시작 시 실행",
-          },
-          description: "전략 실행 일정을 설정합니다.",
+        enabled: true,
+        scheduleParams: {
+          scheduleType: "daily",
+          executionTime: "09:30",
+          description: "매일 09:30에 실행",
         },
-      });
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
 
-      // 이전 노드와 연결
-      flowEdges.push({
-        id: `${prevNodeId}-${scheduleNodeId}`,
-        source: prevNodeId,
-        target: scheduleNodeId,
-        animated: true,
-      });
-
-      prevNodeId = scheduleNodeId;
-      yPosition += 300;
-    }
-
-    // 기존 룰들을 플로우로 변환
+    // 기존 블록들을 플로우 노드로 변환
     rules.forEach((rule, ruleIndex) => {
-      const ruleStartY = yPosition;
+      const ruleY = 500 + ruleIndex * 400;
 
-      // 조건 노드들을 가로로 배치 (더 넓은 간격)
+      // 조건 노드들
       rule.conditions.forEach((condition, condIndex) => {
-        const conditionNodeId = `condition-${ruleIndex}-${condIndex}`;
-        const xPosition = 100 + condIndex * 400; // 400px 간격으로 배치
-
+        const nodeX = 100 + condIndex * 400;
         flowNodes.push({
-          id: conditionNodeId,
+          id: condition.id,
           type: "condition",
-          position: { x: xPosition, y: ruleStartY },
+          position: { x: nodeX, y: ruleY },
           data: {
-            id: conditionNodeId,
+            id: condition.id,
             label: condition.name,
-            type: "condition" as const,
+            type: "condition",
+            enabled: condition.enabled,
             conditionType: condition.conditionType,
             conditionParams: condition.conditionParams,
-            description: "투자 조건을 확인합니다.",
+            createdAt: condition.createdAt,
+            updatedAt: condition.updatedAt,
           },
         });
-
-        // 첫 번째 조건만 이전 노드와 연결
-        if (condIndex === 0) {
-          flowEdges.push({
-            id: `${prevNodeId}-${conditionNodeId}`,
-            source: prevNodeId,
-            target: conditionNodeId,
-            animated: true,
-          });
-        }
       });
 
-      // 액션 노드들을 조건 아래에 배치 (더 넓은 세로 간격)
-      const actionY = ruleStartY + 300; // 300px 아래로 배치
+      // 액션 노드들
       rule.actions.forEach((action, actionIndex) => {
-        const actionNodeId = `action-${ruleIndex}-${actionIndex}`;
-        const xPosition = 100 + actionIndex * 400; // 400px 간격으로 배치
-
+        const nodeX = 100 + actionIndex * 400;
+        const actionY = ruleY + 300;
         flowNodes.push({
-          id: actionNodeId,
+          id: action.id,
           type: "action",
-          position: { x: xPosition, y: actionY },
+          position: { x: nodeX, y: actionY },
           data: {
-            id: actionNodeId,
+            id: action.id,
             label: action.name,
-            type: "action" as const,
+            type: "action",
+            enabled: action.enabled,
             actionType: action.actionType,
             actionParams: action.actionParams,
-            description: "투자 액션을 실행합니다.",
+            createdAt: action.createdAt,
+            updatedAt: action.updatedAt,
           },
         });
-
-        // 첫 번째 조건에서 액션들로 연결
-        if (rule.conditions.length > 0) {
-          const firstConditionId = `condition-${ruleIndex}-0`;
-          flowEdges.push({
-            id: `${firstConditionId}-${actionNodeId}`,
-            source: firstConditionId,
-            target: actionNodeId,
-            animated: true,
-          });
-        }
       });
-
-      // 다음 룰이 있으면 현재 룰의 첫 번째 액션에서 다음 룰로 연결
-      if (ruleIndex < rules.length - 1 && rule.actions.length > 0) {
-        prevNodeId = `action-${ruleIndex}-0`;
-      } else if (rule.actions.length > 0) {
-        prevNodeId = `action-${ruleIndex}-0`;
-      }
-
-      yPosition = actionY + 300; // 다음 룰을 위한 Y 위치 조정 (300px 간격)
     });
 
-    // 종료 노드 추가
-    const endNodeId = "end-1";
+    // 종료 노드
     flowNodes.push({
-      id: endNodeId,
+      id: "end",
       type: "end",
-      position: { x: 400, y: yPosition },
+      position: { x: 400, y: 1000 },
       data: {
-        id: endNodeId,
+        id: "end",
         label: "전략 종료",
-        type: "end" as const,
-        description: "투자 전략이 종료되는 지점입니다.",
+        type: "end",
+        enabled: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     });
 
-    // 마지막 노드에서 종료 노드로 연결
-    if (prevNodeId !== "start-1") {
+    // 기본 연결 생성
+    flowEdges.push({
+      id: "start-schedule",
+      source: "start",
+      target: "schedule",
+      animated: true,
+    });
+
+    // 룰들 간의 연결 생성
+    if (rules.length > 0) {
+      // 스케줄 노드에서 첫 번째 룰의 첫 번째 조건으로 연결
+      const firstRule = rules[0];
+      if (firstRule.conditions.length > 0) {
+        flowEdges.push({
+          id: "schedule-first-condition",
+          source: "schedule",
+          target: firstRule.conditions[0].id,
+          animated: true,
+        });
+      }
+
+      // 각 룰 내에서 조건-액션 연결
+      rules.forEach((rule, ruleIndex) => {
+        // 각 조건에서 룰의 모든 액션으로 연결
+        rule.conditions.forEach((condition) => {
+          rule.actions.forEach((action, actionIndex) => {
+            flowEdges.push({
+              id: `${condition.id}-${action.id}`,
+              source: condition.id,
+              target: action.id,
+              animated: true,
+              label: actionIndex === 0 ? "조건 만족 시" : "", // 첫 번째 액션에만 라벨
+            });
+          });
+        });
+
+        // 다음 룰이 있다면 현재 룰의 첫 번째 액션에서 다음 룰의 첫 번째 조건으로 연결
+        if (ruleIndex < rules.length - 1) {
+          const nextRule = rules[ruleIndex + 1];
+          if (rule.actions.length > 0 && nextRule.conditions.length > 0) {
+            flowEdges.push({
+              id: `rule-${ruleIndex}-to-${ruleIndex + 1}`,
+              source: rule.actions[0].id, // 첫 번째 액션에서
+              target: nextRule.conditions[0].id, // 다음 룰의 첫 번째 조건으로
+              animated: true,
+              label: "다음 룰",
+              style: { strokeDasharray: "5,5" }, // 점선으로 구분
+            });
+          }
+        }
+      });
+
+      // 마지막 룰의 첫 번째 액션에서 종료 노드로 연결
+      const lastRule = rules[rules.length - 1];
+      if (lastRule.actions.length > 0) {
+        flowEdges.push({
+          id: "last-action-end",
+          source: lastRule.actions[0].id,
+          target: "end",
+          animated: true,
+          label: "전략 완료",
+        });
+      }
+    } else {
+      // 룰이 없다면 스케줄에서 바로 종료로 연결
       flowEdges.push({
-        id: `${prevNodeId}-${endNodeId}`,
-        source: prevNodeId,
-        target: endNodeId,
+        id: "schedule-end",
+        source: "schedule",
+        target: "end",
         animated: true,
+        label: "룰 없음",
       });
     }
 
     return {
-      id: strategy.id + "-flow",
-      projectId: strategy.projectId,
-      versionId: strategy.versionId,
-      name: strategy.name + " (플로우)",
+      id: `flow-${strategy.id}`,
+      projectId: strategy.projectId || "",
+      versionId: `v${Date.now()}`,
+      name: `${strategy.name} (플로우)`,
       description: strategy.description,
       nodes: flowNodes,
       edges: flowEdges,
+      executionSettings: {
+        maxConcurrentActions: 1,
+        errorHandling: "stop",
+        retryCount: 3,
+      },
       createdAt: strategy.createdAt,
       updatedAt: new Date(),
-      isActive: strategy.isActive,
+      isActive: true,
     };
   }, [strategy, rules]);
 
@@ -454,15 +483,22 @@ export const StrategyEditor = ({
       // 플로우를 기존 룰 기반 구조로 역변환하는 로직
       console.log("🔄 플로우 업데이트:", updatedFlow);
 
-      // 플로우에서 조건과 액션 블록들 추출
+      // 기존 블록 수와 새 노드 수가 같다면 메타데이터만 업데이트
       const conditionNodes = updatedFlow.nodes.filter(
         (node) => node.data.type === "condition"
       );
       const actionNodes = updatedFlow.nodes.filter(
         (node) => node.data.type === "action"
       );
+      const totalNewBlocks = conditionNodes.length + actionNodes.length;
 
-      // 새로운 블록 배열 생성
+      // 실제 블록 구조 변경이 없다면 업데이트 스킵
+      if (totalNewBlocks === strategy.blocks.length) {
+        console.log("📝 블록 구조 변경 없음 - 업데이트 스킵");
+        return;
+      }
+
+      // 플로우에서 조건과 액션 블록들 추출
       const newBlocks: StrategyBlock[] = [];
       const newBlockOrder: string[] = [];
 

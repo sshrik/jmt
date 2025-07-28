@@ -310,18 +310,42 @@ export const StrategyFlowEditor = ({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onKeyDown]);
 
-  // 플로우 변경사항 자동 저장
+  // 플로우 변경사항 자동 저장 (무한 루프 방지)
   useEffect(() => {
-    if (onFlowUpdate && flow) {
+    // 초기 로딩 시에는 저장하지 않음
+    if (!onFlowUpdate) return;
+
+    // 실제로 노드나 엣지가 변경되었을 때만 저장
+    const hasChanges = nodes.length > 0 || edges.length > 0;
+    if (!hasChanges) return;
+
+    // 디바운싱으로 빈번한 업데이트 방지
+    const timeoutId = setTimeout(() => {
       const updatedFlow: StrategyFlow = {
-        ...flow,
+        id: flow?.id || `flow-${Date.now()}`,
+        projectId: flow?.projectId || "",
+        versionId: flow?.versionId || "",
+        name: flow?.name || "새 플로우 전략",
+        description: flow?.description || "",
         nodes: nodes as StrategyFlowNode[],
         edges: edges as StrategyFlowEdge[],
+        executionSettings: flow?.executionSettings,
+        createdAt: flow?.createdAt || new Date(),
         updatedAt: new Date(),
+        isActive: flow?.isActive || true,
       };
+
+      console.log("💾 플로우 자동 저장:", {
+        노드수: nodes.length,
+        엣지수: edges.length,
+        저장시간: new Date().toLocaleTimeString(),
+      });
+
       onFlowUpdate(updatedFlow);
-    }
-  }, [nodes, edges, onFlowUpdate, flow]);
+    }, 500); // 500ms 디바운싱
+
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges, onFlowUpdate]); // flow 의존성 제거
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
