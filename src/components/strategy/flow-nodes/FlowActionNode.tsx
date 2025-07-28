@@ -12,6 +12,7 @@ import {
   Stack,
   ActionIcon,
   Tooltip,
+  TextInput,
 } from "@mantine/core";
 import {
   IconArrowUp,
@@ -21,6 +22,7 @@ import {
   IconBell,
   IconFileText,
   IconTrash,
+  IconMath,
 } from "@tabler/icons-react";
 import type {
   FlowNodeData,
@@ -71,6 +73,42 @@ const ACTION_CONFIG = {
     description: "보유 주식을 모두 매도",
     icon: IconArrowDown,
     color: "orange",
+  },
+  buy_formula_amount: {
+    label: "수식 기반 금액 매수",
+    description: "상승/하락 비율에 따른 수식으로 매수 금액 계산",
+    icon: IconMath,
+    color: "blue",
+  },
+  sell_formula_amount: {
+    label: "수식 기반 금액 매도",
+    description: "상승/하락 비율에 따른 수식으로 매도 금액 계산",
+    icon: IconMath,
+    color: "purple",
+  },
+  buy_formula_shares: {
+    label: "수식 기반 주식 수 매수",
+    description: "상승/하락 비율에 따른 수식으로 매수 주식 수 계산",
+    icon: IconMath,
+    color: "teal",
+  },
+  sell_formula_shares: {
+    label: "수식 기반 주식 수 매도",
+    description: "상승/하락 비율에 따른 수식으로 매도 주식 수 계산",
+    icon: IconMath,
+    color: "indigo",
+  },
+  buy_formula_percent: {
+    label: "수식 기반 비율 매수",
+    description: "상승/하락 비율에 따른 수식으로 매수 비율 계산",
+    icon: IconMath,
+    color: "cyan",
+  },
+  sell_formula_percent: {
+    label: "수식 기반 비율 매도",
+    description: "상승/하락 비율에 따른 수식으로 매도 비율 계산",
+    icon: IconMath,
+    color: "grape",
   },
   hold: {
     label: "대기",
@@ -232,6 +270,25 @@ export const FlowActionNode = memo(
             <Text size="xs" c="dimmed">
               보유한 모든 주식을 100% 매도합니다
             </Text>
+          );
+
+        case "buy_formula_amount":
+        case "sell_formula_amount":
+        case "buy_formula_shares":
+        case "sell_formula_shares":
+        case "buy_formula_percent":
+        case "sell_formula_percent":
+          return (
+            <TextInput
+              label="수식"
+              placeholder="예: 10000 * N + 2000"
+              value={params.formula || ""}
+              onChange={(event) =>
+                updateParams({ formula: event.currentTarget.value })
+              }
+              description="N = 상승/하락 비율(%). 예: N=5는 5% 변화"
+              size="sm"
+            />
           );
 
         case "exit_all":

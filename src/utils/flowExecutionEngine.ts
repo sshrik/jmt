@@ -9,6 +9,7 @@ import type {
   EnhancedActionType,
   ScheduleParameters,
 } from "../types/strategy";
+import { calculateFormula } from "./formulaCalculator";
 
 // 플로우 실행 엔진 클래스
 export class FlowExecutionEngine {
@@ -340,6 +341,120 @@ export class FlowExecutionEngine {
           amount: totalStocks * currentPrice,
           message: "보유 주식 100% 매도 주문 실행",
         };
+      }
+
+      case "buy_formula_amount":
+      case "sell_formula_amount":
+      case "buy_formula_shares":
+      case "sell_formula_shares":
+      case "buy_formula_percent":
+      case "sell_formula_percent": {
+        const formula = params?.formula || "";
+        if (!formula) {
+          return {
+            action: actionType,
+            error: "수식이 설정되지 않았습니다.",
+          };
+        }
+
+        // 간단한 가격 변화율 계산 (실제로는 이전 가격 데이터 필요)
+        const priceChangePercent = 5; // 테스트용 고정값
+        const formulaResult = calculateFormula(formula, priceChangePercent);
+
+        if (!formulaResult.isValid) {
+          return {
+            action: actionType,
+            error: `수식 계산 오류: ${formulaResult.error}`,
+          };
+        }
+
+        switch (actionType) {
+          case "buy_formula_amount": {
+            const amount = formulaResult.value;
+            const shares = Math.floor(amount / currentPrice);
+            return {
+              action: "buy",
+              shares,
+              price: currentPrice,
+              amount,
+              message: `수식 결과 ${amount.toLocaleString()}원으로 ${shares}주 매수`,
+            };
+          }
+
+          case "sell_formula_amount": {
+            const amount = formulaResult.value;
+            const shares = Math.min(
+              Math.floor(amount / currentPrice),
+              totalStocks
+            );
+            return {
+              action: "sell",
+              shares,
+              price: currentPrice,
+              amount: shares * currentPrice,
+              message: `수식 결과 ${amount.toLocaleString()}원 상당의 ${shares}주 매도`,
+            };
+          }
+
+          case "buy_formula_shares": {
+            const shares = Math.floor(formulaResult.value);
+            const amount = shares * currentPrice;
+            return {
+              action: "buy",
+              shares,
+              price: currentPrice,
+              amount,
+              message: `수식 결과 ${shares}주 매수`,
+            };
+          }
+
+          case "sell_formula_shares": {
+            const shares = Math.min(
+              Math.floor(formulaResult.value),
+              totalStocks
+            );
+            const amount = shares * currentPrice;
+            return {
+              action: "sell",
+              shares,
+              price: currentPrice,
+              amount,
+              message: `수식 결과 ${shares}주 매도`,
+            };
+          }
+
+          case "buy_formula_percent": {
+            const percent = Math.min(100, Math.max(0, formulaResult.value));
+            const amount = (portfolio.cash * percent) / 100;
+            const shares = Math.floor(amount / currentPrice);
+            return {
+              action: "buy",
+              shares,
+              price: currentPrice,
+              amount,
+              message: `수식 결과 현금의 ${percent.toFixed(1)}%로 ${shares}주 매수`,
+            };
+          }
+
+          case "sell_formula_percent": {
+            const percent = Math.min(100, Math.max(0, formulaResult.value));
+            const shares = Math.floor((totalStocks * percent) / 100);
+            const amount = shares * currentPrice;
+            return {
+              action: "sell",
+              shares,
+              price: currentPrice,
+              amount,
+              message: `수식 결과 보유 주식의 ${percent.toFixed(1)}%인 ${shares}주 매도`,
+            };
+          }
+
+          default:
+            return {
+              action: actionType,
+              error: "알 수 없는 수식 기반 액션",
+            };
+        }
       }
 
       case "exit_all": {
