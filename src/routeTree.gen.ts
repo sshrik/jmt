@@ -9,10 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as FlowchartRouteImport } from './routes/flowchart'
+import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsProjectIdIndexRouteImport } from './routes/projects/$projectId.index'
 import { Route as ProjectsProjectIdEditRouteImport } from './routes/projects/$projectId/edit'
 
+const FlowchartRoute = FlowchartRouteImport.update({
+  id: '/flowchart',
+  path: '/flowchart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BacktestRoute = BacktestRouteImport.update({
+  id: '/backtest',
+  path: '/backtest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,36 +43,74 @@ const ProjectsProjectIdEditRoute = ProjectsProjectIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/backtest': typeof BacktestRoute
+  '/flowchart': typeof FlowchartRoute
   '/projects/$projectId/edit': typeof ProjectsProjectIdEditRoute
   '/projects/$projectId': typeof ProjectsProjectIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/backtest': typeof BacktestRoute
+  '/flowchart': typeof FlowchartRoute
   '/projects/$projectId/edit': typeof ProjectsProjectIdEditRoute
   '/projects/$projectId': typeof ProjectsProjectIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/backtest': typeof BacktestRoute
+  '/flowchart': typeof FlowchartRoute
   '/projects/$projectId/edit': typeof ProjectsProjectIdEditRoute
   '/projects/$projectId/': typeof ProjectsProjectIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/projects/$projectId/edit' | '/projects/$projectId'
+  fullPaths:
+    | '/'
+    | '/backtest'
+    | '/flowchart'
+    | '/projects/$projectId/edit'
+    | '/projects/$projectId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/projects/$projectId/edit' | '/projects/$projectId'
-  id: '__root__' | '/' | '/projects/$projectId/edit' | '/projects/$projectId/'
+  to:
+    | '/'
+    | '/backtest'
+    | '/flowchart'
+    | '/projects/$projectId/edit'
+    | '/projects/$projectId'
+  id:
+    | '__root__'
+    | '/'
+    | '/backtest'
+    | '/flowchart'
+    | '/projects/$projectId/edit'
+    | '/projects/$projectId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BacktestRoute: typeof BacktestRoute
+  FlowchartRoute: typeof FlowchartRoute
   ProjectsProjectIdEditRoute: typeof ProjectsProjectIdEditRoute
   ProjectsProjectIdIndexRoute: typeof ProjectsProjectIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/flowchart': {
+      id: '/flowchart'
+      path: '/flowchart'
+      fullPath: '/flowchart'
+      preLoaderRoute: typeof FlowchartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/backtest': {
+      id: '/backtest'
+      path: '/backtest'
+      fullPath: '/backtest'
+      preLoaderRoute: typeof BacktestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +137,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BacktestRoute: BacktestRoute,
+  FlowchartRoute: FlowchartRoute,
   ProjectsProjectIdEditRoute: ProjectsProjectIdEditRoute,
   ProjectsProjectIdIndexRoute: ProjectsProjectIdIndexRoute,
 }

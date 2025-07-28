@@ -1,13 +1,17 @@
 import { useState } from "react";
 import { createRootRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { AppShell, Title, Group, Button } from "@mantine/core";
+import { AppShell, Title, Group, Button, Burger } from "@mantine/core";
 import { IconChartLine, IconPlus } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
 import { CreateProjectModal } from "../components/CreateProjectModal";
+import { Sidebar } from "../components/layout/Sidebar";
 import { useProjectStore } from "../hooks/useProjectStore";
 
 const RootComponent = () => {
   const [createModalOpened, setCreateModalOpened] = useState(false);
+  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
+  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
   const { createProject } = useProjectStore();
   const location = useLocation();
 
@@ -19,8 +23,8 @@ const RootComponent = () => {
   const getHeaderButton = () => {
     const pathname = location.pathname;
 
-    if (pathname === "/") {
-      // 메인 화면: 새 프로젝트 만들기
+    if (pathname === "/" || pathname.startsWith("/projects")) {
+      // 메인 화면이나 프로젝트 관련 페이지: 새 프로젝트 만들기
       return (
         <Button
           leftSection={<IconPlus size={16} />}
@@ -36,16 +40,38 @@ const RootComponent = () => {
   };
 
   return (
-    <AppShell header={{ height: 60 }} padding="md">
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{
+        width: 280,
+        breakpoint: "md",
+        collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
+      }}
+      padding="md"
+    >
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
           <Group>
+            <Burger
+              opened={mobileOpened}
+              onClick={toggleMobile}
+              hiddenFrom="md"
+              size="sm"
+            />
+            <Burger
+              opened={desktopOpened}
+              onClick={toggleDesktop}
+              visibleFrom="md"
+              size="sm"
+            />
             <IconChartLine size={28} />
             <Title order={3}>JMT</Title>
           </Group>
           <Group>{getHeaderButton()}</Group>
         </Group>
       </AppShell.Header>
+
+      <Sidebar _opened={desktopOpened} />
 
       <AppShell.Main>
         <Outlet />
