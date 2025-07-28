@@ -7,6 +7,7 @@ import type {
   ConditionParameters,
   ActionParameters,
   EnhancedActionType,
+  ScheduleParameters,
 } from "../types/strategy";
 
 // 플로우 실행 엔진 클래스
@@ -119,6 +120,7 @@ export class FlowExecutionEngine {
 
   // 시작 노드 실행
   private async executeStartNode(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     data: FlowNodeData
   ): Promise<Record<string, unknown>> {
     return {
@@ -133,7 +135,6 @@ export class FlowExecutionEngine {
     data: FlowNodeData
   ): Promise<Record<string, unknown>> {
     const params = data.scheduleParams;
-    console.log("⏰ 스케줄 확인:", params);
 
     // 실제 구현에서는 현재 시간과 스케줄을 비교
     const shouldExecute = this.checkSchedule(params);
@@ -155,15 +156,12 @@ export class FlowExecutionEngine {
     const conditionType = data.conditionType;
     const params = data.conditionParams;
 
-    console.log("🔍 조건 확인:", { conditionType, params });
-
     const conditionMet = this.evaluateCondition(conditionType, params);
 
     return {
       type: "condition",
       conditionMet,
       conditionType,
-      params,
       message: conditionMet
         ? "조건을 만족합니다."
         : "조건을 만족하지 않습니다.",
@@ -177,39 +175,33 @@ export class FlowExecutionEngine {
     const actionType = data.actionType;
     const params = data.actionParams;
 
-    console.log("⚡ 액션 실행:", { actionType, params });
-
     const actionResult = await this.executeAction(actionType, params);
 
-    // 최종 액션 목록에 추가
-    if (actionResult.executed) {
-      this.executionResult.finalActions?.push({
-        type: actionType!,
-        params: (params as Record<string, unknown>) || {},
-        executed: true,
-        result: actionResult,
-      });
-    }
-
-    return actionResult;
+    return {
+      type: "action",
+      actionType,
+      executed: true,
+      result: actionResult,
+      message: `${actionType} 액션을 실행했습니다.`,
+    };
   }
 
   // 종료 노드 실행
   private async executeEndNode(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     data: FlowNodeData
   ): Promise<Record<string, unknown>> {
-    console.log("🏁 전략 종료:", data.label);
     return {
       type: "end",
-      message: "전략이 종료되었습니다.",
+      message: "전략 실행이 완료되었습니다.",
       timestamp: new Date(),
     };
   }
 
-  // 다음 노드들 실행
+  // 다음 노드들 실행 (엣지를 따라)
   private async executeNextNodes(
     currentNode: StrategyFlowNode,
-    result: Record<string, unknown>
+    nodeResult: Record<string, unknown>
   ): Promise<void> {
     const outgoingEdges = this.flow.edges.filter(
       (edge) => edge.source === currentNode.id
@@ -218,13 +210,11 @@ export class FlowExecutionEngine {
     for (const edge of outgoingEdges) {
       let shouldFollowEdge = true;
 
-      // 조건 노드의 경우 결과에 따라 분기
+      // 조건 노드의 경우 결과에 따라 엣지 선택
       if (currentNode.data.type === "condition") {
-        const conditionMet = result.conditionMet as boolean;
-        shouldFollowEdge =
-          (edge.sourceHandle === "true" && conditionMet) ||
-          (edge.sourceHandle === "false" && !conditionMet) ||
-          !edge.sourceHandle; // 기본 연결
+        const conditionMet = nodeResult.conditionMet as boolean;
+        // 기본적으로 조건이 만족되면 연결을 따라감
+        shouldFollowEdge = conditionMet;
       }
 
       if (shouldFollowEdge) {
@@ -234,10 +224,12 @@ export class FlowExecutionEngine {
   }
 
   // 스케줄 조건 확인
-  private checkSchedule(params?: Record<string, unknown>): boolean {
+  private checkSchedule(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    params?: ScheduleParameters
+  ): boolean {
     // 실제 구현에서는 현재 시간, 시장 상태 등을 확인
     // 여기서는 데모용으로 항상 true 반환
-    console.log("📅 스케줄 체크:", params);
     return true;
   }
 
@@ -246,39 +238,27 @@ export class FlowExecutionEngine {
     conditionType?: string,
     params?: ConditionParameters
   ): boolean {
-    if (!conditionType || !params) return false;
-
-    // 현재 마켓 데이터 가져오기
+    // 실제 구현에서는 시장 데이터를 기반으로 조건 평가
+    // 여기서는 데모용 로직
     const currentPrice = this.context.currentMarketData?.price || 100000;
     const mockPreviousPrice = 95000; // 실제로는 과거 데이터에서 가져옴
 
-    console.log("📊 조건 평가:", {
-      conditionType,
-      currentPrice,
-      mockPreviousPrice,
-      params,
-    });
-
     switch (conditionType) {
       case "close_price_change": {
-        const changePercent =
+        const priceChangePercent = params?.priceChangePercent || 5;
+        const direction = params?.priceChangeDirection || "up";
+        const actualChangePercent =
           ((currentPrice - mockPreviousPrice) / mockPreviousPrice) * 100;
-        const targetPercent = params.priceChangePercent || 0;
 
-        if (params.priceChangeDirection === "up") {
-          return changePercent >= targetPercent;
+        if (direction === "up") {
+          return actualChangePercent >= priceChangePercent;
         } else {
-          return changePercent <= -targetPercent;
+          return actualChangePercent <= -priceChangePercent;
         }
       }
 
-      case "high_price_change":
-      case "low_price_change":
-        // 유사한 로직으로 구현
-        return Math.random() > 0.5; // 데모용
-
       default:
-        return false;
+        return true; // 기본적으로 조건 만족
     }
   }
 
@@ -287,98 +267,63 @@ export class FlowExecutionEngine {
     actionType?: EnhancedActionType,
     params?: ActionParameters
   ): Promise<Record<string, unknown>> {
-    if (!actionType) {
-      throw new Error("액션 타입이 정의되지 않았습니다.");
-    }
-
+    // 실제 구현에서는 브로커 API를 통해 주문 실행
+    // 여기서는 데모용 로직
     const portfolio = this.context.portfolio;
     const currentPrice = this.context.currentMarketData?.price || 100000;
 
-    console.log("💰 액션 실행:", {
-      actionType,
-      params,
-      portfolio,
-      currentPrice,
-    });
+    if (!portfolio) {
+      return {
+        action: actionType || "unknown",
+        error: "포트폴리오 정보가 없습니다.",
+      };
+    }
+
+    // 보유 주식 수량 계산
+    const totalStocks = portfolio.holdings.reduce(
+      (sum, holding) => sum + holding.quantity,
+      0
+    );
 
     switch (actionType) {
       case "buy_percent_cash": {
-        const cashToBuy =
-          (portfolio?.cash || 0) * ((params?.percentCash || 0) / 100);
-        const sharesToBuy = Math.floor(cashToBuy / currentPrice);
-
+        const buyPercent = params?.percentCash || 30;
+        const buyAmount = (portfolio.cash * buyPercent) / 100;
         return {
-          executed: true,
-          actionType,
-          amount: cashToBuy,
-          shares: sharesToBuy,
+          action: "buy",
+          amount: buyAmount,
           price: currentPrice,
-          message: `현금 ${params?.percentCash}% (${cashToBuy.toLocaleString()}원)로 ${sharesToBuy}주 매수`,
+          shares: Math.floor(buyAmount / currentPrice),
+          message: `현금의 ${buyPercent}%로 매수 주문 실행`,
         };
       }
 
       case "sell_percent_stock": {
-        const currentHoldings = portfolio?.holdings?.[0]?.quantity || 0;
-        const sharesToSell = Math.floor(
-          currentHoldings * ((params?.percentStock || 0) / 100)
-        );
-        const cashToReceive = sharesToSell * currentPrice;
-
+        const sellPercent = params?.percentStock || 50;
+        const sellShares = Math.floor((totalStocks * sellPercent) / 100);
         return {
-          executed: true,
-          actionType,
-          shares: sharesToSell,
-          amount: cashToReceive,
+          action: "sell",
+          shares: sellShares,
           price: currentPrice,
-          message: `보유 주식 ${params?.percentStock}% (${sharesToSell}주) 매도로 ${cashToReceive.toLocaleString()}원 확보`,
+          amount: sellShares * currentPrice,
+          message: `보유 주식의 ${sellPercent}%를 매도 주문 실행`,
         };
       }
 
-      case "exit_all":
+      case "exit_all": {
         return {
-          executed: true,
-          actionType,
-          message: "모든 포지션을 정리하고 투자를 종료합니다.",
-        };
-
-      case "pause_strategy":
-        return {
-          executed: true,
-          actionType,
-          message: "전략 실행을 일시정지합니다.",
-        };
-
-      case "alert":
-        return {
-          executed: true,
-          actionType,
-          message: "조건 만족 알림을 발송했습니다.",
-        };
-
-      case "log": {
-        const logData = {
-          timestamp: new Date(),
-          portfolio,
-          marketData: this.context.currentMarketData,
-        };
-
-        return {
-          executed: true,
-          actionType,
-          message: "현재 상황을 로그에 기록했습니다.",
-          data: logData,
+          action: "exit_all",
+          sellShares: totalStocks,
+          amount: totalStocks * currentPrice,
+          message: "모든 포지션 청산 완료",
         };
       }
-
-      case "hold":
-        return {
-          executed: true,
-          actionType,
-          message: "현재 포지션을 유지합니다.",
-        };
 
       default:
-        throw new Error(`지원하지 않는 액션 타입: ${actionType}`);
+        return {
+          action: actionType || "unknown",
+          message: `${actionType} 액션 실행 완료`,
+        };
     }
   }
 }
