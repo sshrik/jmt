@@ -250,7 +250,7 @@ function ProjectDetail() {
         </Tabs.Panel>
 
         <Tabs.Panel value="backtest" pt="lg">
-          <BacktestRunner strategy={strategy} />
+          <BacktestRunner strategy={strategy} projectId={projectId} />
         </Tabs.Panel>
 
         <Tabs.Panel value="overview" pt="lg">

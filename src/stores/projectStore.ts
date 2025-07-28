@@ -228,11 +228,34 @@ export class ProjectStore {
     const projects = this.getAllProjects();
     const filteredProjects = projects.filter((p) => p.id !== projectId);
 
-    if (filteredProjects.length === projects.length) {
+    saveProjectsToStorage(filteredProjects); // 이 함수가 이벤트를 발생시킴
+  }
+
+  static saveBacktestResult(
+    projectId: string,
+    backtestResult: any // eslint-disable-line @typescript-eslint/no-explicit-any
+  ): void {
+    const projects = this.getAllProjects();
+    const projectIndex = projects.findIndex((p) => p.id === projectId);
+
+    if (projectIndex === -1) {
       throw new Error("프로젝트를 찾을 수 없습니다.");
     }
 
-    saveProjectsToStorage(filteredProjects); // 이 함수가 이벤트를 발생시킴
+    // 가장 최신 버전(첫 번째 버전)에 백테스트 결과 저장
+    if (projects[projectIndex].versions.length === 0) {
+      throw new Error("프로젝트에 버전이 없습니다.");
+    }
+
+    projects[projectIndex].versions[0].backtestResults = {
+      id: generateId(),
+      versionId: projects[projectIndex].versions[0].id,
+      executedAt: new Date(),
+      ...backtestResult,
+    };
+    projects[projectIndex].updatedAt = new Date();
+
+    saveProjectsToStorage(projects);
   }
 
   // 개발용 Mock 데이터 생성

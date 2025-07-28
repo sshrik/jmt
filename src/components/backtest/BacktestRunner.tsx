@@ -6,6 +6,7 @@ import { BacktestResults } from "./BacktestResults";
 import { BacktestProgress } from "./BacktestProgress";
 import { runBacktest } from "../../utils/backtestEngine";
 import { getStockData } from "../../utils/stockDataLoader";
+import { ProjectStore } from "../../stores/projectStore";
 import type {
   BacktestConfig as BacktestConfigType,
   BacktestResult,
@@ -15,9 +16,13 @@ import type { Strategy } from "../../types/strategy";
 
 interface BacktestRunnerProps {
   strategy: Strategy;
+  projectId?: string;
 }
 
-export const BacktestRunner = ({ strategy }: BacktestRunnerProps) => {
+export const BacktestRunner = ({
+  strategy,
+  projectId,
+}: BacktestRunnerProps) => {
   const [result, setResult] = useState<BacktestResult | null>(null);
   const [progress, setProgress] = useState<BacktestProgressType | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +83,16 @@ export const BacktestRunner = ({ strategy }: BacktestRunnerProps) => {
         });
 
         setResult(backtestResult);
+
+        // 프로젝트가 있는 경우 백테스트 결과 저장
+        if (projectId) {
+          try {
+            ProjectStore.saveBacktestResult(projectId, backtestResult);
+          } catch (saveError) {
+            console.error("백테스트 결과 저장 실패:", saveError);
+            // 저장 실패해도 결과는 표시
+          }
+        }
       } catch (err) {
         const errorMessage =
           err instanceof Error
@@ -97,7 +112,7 @@ export const BacktestRunner = ({ strategy }: BacktestRunnerProps) => {
         setIsRunning(false);
       }
     },
-    [strategy]
+    [strategy, projectId]
   );
 
   // 백테스트 취소

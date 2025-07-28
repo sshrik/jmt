@@ -678,7 +678,7 @@ function ProjectEdit() {
                 분석할 수 있습니다.
               </Text>
             </Alert>
-            <BacktestRunner strategy={strategy} />
+            <BacktestRunner strategy={strategy} projectId={projectId} />
           </Stack>
         </Tabs.Panel>
 
