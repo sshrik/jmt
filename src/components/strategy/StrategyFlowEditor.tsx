@@ -254,31 +254,31 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   );
 
   // 디버깅 정보 추가 (nodes, edges 정의 후)
-  console.log("🎯 StrategyFlowEditor Debug Info:", {
-    flow: flow ? "provided" : "null",
-    currentFlow: currentFlow ? "valid" : "invalid",
-    flowNodes: currentFlow?.nodes?.length || 0,
-    flowEdges: currentFlow?.edges?.length || 0,
-    readOnly,
-    actualNodes: nodes.length,
-    actualEdges: edges.length,
-  });
+  // console.log("🎯 StrategyFlowEditor Debug Info:", {
+  //   flow: flow ? "provided" : "null",
+  //   currentFlow: currentFlow ? "valid" : "invalid",
+  //   flowNodes: currentFlow?.nodes?.length || 0,
+  //   flowEdges: currentFlow?.edges?.length || 0,
+  //   readOnly,
+  //   actualNodes: nodes.length,
+  //   actualEdges: edges.length,
+  // });
 
   const [draggedNodeType, setDraggedNodeType] = useState<FlowNodeType | null>(
     null
   );
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  // const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
-  // 디버그 로그 추가 함수
-  const addDebugLog = useCallback((message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    const logMessage = `[${timestamp}] ${message}`;
-    console.log(logMessage);
-    setDebugInfo((prev) => [...prev.slice(-4), logMessage]); // 최근 5개만 유지
-  }, []);
+  // 디버그 로그 추가 함수 (현재 비활성화)
+  // const addDebugLog = useCallback((message: string) => {
+  //   const timestamp = new Date().toLocaleTimeString();
+  //   const logMessage = `[${timestamp}] ${message}`;
+  //   // console.log(logMessage);
+  //   setDebugInfo(prev => [...prev.slice(-4), logMessage]); // 최근 5개만 유지
+  // }, []);
 
   // 마우스 기반 드래그 핸들러
   const handleMouseDown = useCallback(
@@ -288,23 +288,17 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
       setIsDragging(true);
       setMousePosition({ x: event.clientX, y: event.clientY });
       document.body.style.cursor = "grabbing";
-      addDebugLog(
-        `🎯 Mouse drag started: ${nodeType} at (${event.clientX}, ${event.clientY})`
-      );
     },
-    [addDebugLog]
+    []
   );
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
       if (isDragging && draggedNodeType) {
         setMousePosition({ x: event.clientX, y: event.clientY });
-        addDebugLog(
-          `🖱️ Dragging ${draggedNodeType} to (${event.clientX}, ${event.clientY})`
-        );
       }
     },
-    [isDragging, draggedNodeType, addDebugLog]
+    [isDragging, draggedNodeType]
   );
 
   const handleMouseUp = useCallback(
@@ -324,17 +318,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             y: event.clientY - bounds.top,
           };
 
-          addDebugLog(
-            `✅ Dropping ${draggedNodeType} at (${position.x}, ${position.y})`
-          );
-
           const newNode = createNode(draggedNodeType, position);
           setNodes((nds) => [...nds, newNode]);
-          addDebugLog(
-            `📋 Node created successfully! Total nodes: ${nodes.length + 1}`
-          );
-        } else {
-          addDebugLog(`❌ Drop outside ReactFlow area`);
         }
       }
 
@@ -342,9 +327,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
       setIsDragging(false);
       setDraggedNodeType(null);
       document.body.style.cursor = "";
-      addDebugLog(`🏁 Drag ended`);
     },
-    [isDragging, draggedNodeType, addDebugLog, setNodes, nodes.length]
+    [isDragging, draggedNodeType, setNodes, nodes.length]
   );
 
   // 전역 마우스 이벤트 리스너
@@ -365,8 +349,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
 
   // ReactFlow 초기화 콜백
   const onReactFlowInit = useCallback(() => {
-    addDebugLog("🎪 ReactFlow fully initialized and ready");
-  }, [addDebugLog]);
+    // ReactFlow 준비 완료
+  }, []);
 
   // 엣지 연결 핸들러
   const onConnect = useCallback(
@@ -450,13 +434,13 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     // ReactFlow 컨테이너가 DOM에 마운트되었는지 확인
     const checkMount = () => {
       if (reactFlowWrapper.current) {
-        addDebugLog("✅ ReactFlow container mounted");
+        // 컨테이너 준비 완료
       } else {
         setTimeout(checkMount, 100);
       }
     };
     checkMount();
-  }, [addDebugLog]);
+  }, []);
 
   // 플로우 변경사항 자동 저장 (개선된 무한 루프 방지)
   useEffect(() => {
@@ -588,29 +572,59 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         minWidth: "80px",
         maxWidth: "120px",
         textAlign: "center",
-        transition: "all 0.2s",
-        backgroundColor: draggedNodeType === type ? "#f0f9ff" : "white",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        backgroundColor: draggedNodeType === type ? "#eff6ff" : "white",
         borderColor: draggedNodeType === type ? "#3b82f6" : "#e9ecef",
         position: "relative",
-        borderWidth: "2px",
+        borderWidth: draggedNodeType === type ? "3px" : "2px",
         borderStyle: "solid",
-        opacity: isDragging && draggedNodeType === type ? 0.7 : 1,
+        opacity: isDragging && draggedNodeType === type ? 0.6 : 1,
         transform:
-          isDragging && draggedNodeType === type ? "scale(0.95)" : "scale(1)",
+          isDragging && draggedNodeType === type
+            ? "scale(0.9) rotate(1deg)"
+            : "scale(1)",
+        boxShadow:
+          draggedNodeType === type
+            ? "0 8px 25px rgba(59, 130, 246, 0.3)"
+            : "0 1px 3px rgba(0, 0, 0, 0.1)",
       }}
       onMouseDown={(event) => handleMouseDown(type, event)}
       // HTML5 드래그 API 완전 비활성화
       draggable={false}
     >
       <Stack gap="xs" align="center">
-        <ThemeIcon color={color} size="md" radius="md">
+        <ThemeIcon
+          color={color}
+          size="md"
+          radius="md"
+          style={{
+            transition: "all 0.3s ease",
+            transform: draggedNodeType === type ? "scale(1.1)" : "scale(1)",
+          }}
+        >
           <Icon size={16} />
         </ThemeIcon>
         <div>
-          <Text size="xs" fw={500} lineClamp={1}>
+          <Text
+            size="xs"
+            fw={draggedNodeType === type ? 600 : 500}
+            lineClamp={1}
+            style={{
+              color: draggedNodeType === type ? "#1e40af" : "inherit",
+              transition: "all 0.3s ease",
+            }}
+          >
             {label}
           </Text>
-          <Text size="xs" c="dimmed" lineClamp={2}>
+          <Text
+            size="xs"
+            c="dimmed"
+            lineClamp={2}
+            style={{
+              fontSize: draggedNodeType === type ? "11px" : "10px",
+              transition: "all 0.3s ease",
+            }}
+          >
             {description}
           </Text>
         </div>
@@ -618,27 +632,64 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     </Card>
   );
 
-  // 드래깅 중 시각적 커서 표시 (옵션)
+  // 드래깅 중 시각적 커서 표시 (개선된 버전)
   const DragCursor = () => {
     if (!isDragging || !draggedNodeType) return null;
+
+    // 노드 타입에 따른 정보 매핑
+    const nodeInfo = DRAGGABLE_NODES.find(
+      (node) => node.type === draggedNodeType
+    );
+    const Icon = nodeInfo?.icon;
 
     return (
       <div
         style={{
           position: "fixed",
-          left: mousePosition.x + 10,
-          top: mousePosition.y + 10,
+          left: mousePosition.x + 15,
+          top: mousePosition.y - 10,
           zIndex: 1000,
           pointerEvents: "none",
-          padding: "4px 8px",
-          backgroundColor: "#3b82f6",
+          padding: "8px 12px",
+          backgroundColor: "rgba(59, 130, 246, 0.95)",
           color: "white",
-          borderRadius: "4px",
-          fontSize: "12px",
+          borderRadius: "8px",
+          fontSize: "13px",
           fontWeight: 500,
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.2)",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          backdropFilter: "blur(4px)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
         }}
       >
-        {draggedNodeType} 노드 드래그 중...
+        {Icon && (
+          <Icon
+            size={16}
+            style={{
+              filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.1))",
+            }}
+          />
+        )}
+        <span>{nodeInfo?.label} 노드 추가</span>
+        <div
+          style={{
+            width: "6px",
+            height: "6px",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            borderRadius: "50%",
+            animation: "pulse 1.5s ease-in-out infinite",
+          }}
+        />
+        <style>
+          {`
+            @keyframes pulse {
+              0%, 100% { opacity: 0.8; transform: scale(1); }
+              50% { opacity: 1; transform: scale(1.2); }
+            }
+          `}
+        </style>
       </div>
     );
   };
@@ -685,7 +736,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         </Group>
 
         {/* 디버그 정보 표시 */}
-        {debugInfo.length > 0 && (
+        {/* {debugInfo.length > 0 && (
           <Paper
             withBorder
             p="xs"
@@ -705,7 +756,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               </Text>
             ))}
           </Paper>
-        )}
+        )} */}
 
         {/* 노드 팔레트 - 가로 배치 (편집 모드에서만 표시) */}
         {!readOnly && (
@@ -772,8 +823,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onInit={(reactFlowInstance) => {
-              console.log("🎪 ReactFlow initialized:", reactFlowInstance);
+            onInit={(_reactFlowInstance) => {
+              // console.log("🎪 ReactFlow initialized:", reactFlowInstance);
               onReactFlowInit();
             }}
             nodeTypes={FLOW_NODE_TYPES}

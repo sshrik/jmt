@@ -269,12 +269,6 @@ export const StrategyEditor = ({
 
   // 플로우 변환 함수
   const convertToFlow = useCallback((): StrategyFlow => {
-    console.log("🔄 convertToFlow called with strategy:", {
-      id: strategy.id,
-      blocksCount: strategy.blocks.length,
-      blockOrder: strategy.blockOrder,
-    });
-
     const flowNodes: StrategyFlowNode[] = [];
     const flowEdges: StrategyFlowEdge[] = [];
 
@@ -780,11 +774,7 @@ export const StrategyEditor = ({
             </Alert>
 
             <StrategyFlowEditor
-              flow={(() => {
-                const flowData = convertToFlow();
-                console.log("📊 Passing flow to StrategyFlowEditor:", flowData);
-                return flowData;
-              })()}
+              flow={convertToFlow()}
               onFlowUpdate={handleFlowUpdate}
               readOnly={readOnly}
             />
