@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import {
   ReactFlow,
-  Controls,
   Background,
+  Controls,
+  MiniMap,
   useNodesState,
   useEdgesState,
   addEdge,
-  MiniMap,
 } from "reactflow";
 import type { Edge, Connection } from "reactflow";
 import "reactflow/dist/style.css";
@@ -311,12 +311,28 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
       if (!draggedNodeType || !reactFlowWrapper.current) return;
 
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+
+      // ReactFlow의 viewport를 고려한 정확한 위치 계산
       const position = {
         x: event.clientX - reactFlowBounds.left,
         y: event.clientY - reactFlowBounds.top,
       };
 
-      const newNode = createNode(draggedNodeType, position);
+      // 위치가 컨테이너 경계를 벗어나지 않도록 제한
+      const containerWidth = reactFlowBounds.width;
+      const containerHeight = reactFlowBounds.height;
+      const nodeWidth = 200; // 대략적인 노드 너비
+      const nodeHeight = 100; // 대략적인 노드 높이
+
+      const clampedPosition = {
+        x: Math.max(50, Math.min(position.x, containerWidth - nodeWidth - 50)),
+        y: Math.max(
+          50,
+          Math.min(position.y, containerHeight - nodeHeight - 50)
+        ),
+      };
+
+      const newNode = createNode(draggedNodeType, clampedPosition);
       setNodes((nds) => [...nds, newNode]);
       setDraggedNodeType(null);
     },
@@ -425,128 +441,165 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     };
   }, [nodes, edges]);
 
+  const DRAGGABLE_NODES = [
+    {
+      type: "start" as FlowNodeType,
+      icon: IconPlayerPlay,
+      color: "green",
+      label: "시작",
+      description: "전략 시작점",
+    },
+    {
+      type: "schedule" as FlowNodeType,
+      icon: IconClock,
+      color: "blue",
+      label: "실행 일정",
+      description: "언제 실행할지 설정",
+    },
+    {
+      type: "condition" as FlowNodeType,
+      icon: IconGitBranch,
+      color: "orange",
+      label: "조건",
+      description: "매매 조건 설정",
+    },
+    {
+      type: "action" as FlowNodeType,
+      icon: IconTarget,
+      color: "red",
+      label: "액션",
+      description: "실행할 행동 설정",
+    },
+    {
+      type: "end" as FlowNodeType,
+      icon: IconPlayerStop,
+      color: "gray",
+      label: "종료",
+      description: "전략 종료점",
+    },
+  ];
+
+  interface DraggableNodeProps {
+    type: FlowNodeType;
+    icon: React.ComponentType<{ size?: number | string }>;
+    color: string;
+    label: string;
+    description: string;
+  }
+
+  const DraggableNode = ({
+    type,
+    icon: Icon,
+    color,
+    label,
+    description,
+  }: DraggableNodeProps) => (
+    <Card
+      p="sm"
+      withBorder
+      style={{
+        cursor: "grab",
+        transition: "all 0.2s",
+        backgroundColor: draggedNodeType === type ? "#f0f9ff" : "white",
+      }}
+      onDragStart={(e) => {
+        setDraggedNodeType(type);
+        e.dataTransfer.effectAllowed = "move";
+      }}
+      onDragEnd={() => setDraggedNodeType(null)}
+      draggable
+    >
+      <Group gap="sm">
+        <ThemeIcon color={color} variant="light" size="sm">
+          <Icon size={16} />
+        </ThemeIcon>
+        <div>
+          <Text size="sm" fw={500}>
+            {label}
+          </Text>
+          <Text size="xs" c="dimmed">
+            {description}
+          </Text>
+        </div>
+      </Group>
+    </Card>
+  );
+
   return (
-    <Card withBorder p="lg" style={{ height: "800px" }}>
+    <Card withBorder p="lg" style={{ height: "100%" }}>
       <Stack gap="lg" style={{ height: "100%" }}>
-        {/* 헤더 */}
-        <Group justify="space-between">
-          <Title order={2}>투자 전략 플로우 차트</Title>
-          <Group gap="sm">
-            <Badge variant="light" color="blue">
-              노드 {flowStats.totalNodes}개
-            </Badge>
-            <Badge variant="light" color="green">
-              연결 {flowStats.totalEdges}개
-            </Badge>
-            <Badge
-              variant="light"
-              color={flowStats.isValid ? "green" : "orange"}
-            >
-              {flowStats.isValid ? "유효함" : "불완전"}
-            </Badge>
-          </Group>
+        {/* 헤더와 통계 */}
+        <Group justify="space-between" align="flex-start">
+          <div>
+            <Title order={3} mb="xs">
+              플로우 차트 에디터
+            </Title>
+            <Group gap="lg">
+              <Group gap="xs">
+                <Text size="sm" c="dimmed">
+                  노드:
+                </Text>
+                <Badge variant="light" color="blue">
+                  {flowStats.totalNodes}개
+                </Badge>
+              </Group>
+              <Group gap="xs">
+                <Text size="sm" c="dimmed">
+                  연결:
+                </Text>
+                <Badge variant="light" color="green">
+                  {flowStats.totalEdges}개
+                </Badge>
+              </Group>
+              <Group gap="xs">
+                <Text size="sm" c="dimmed">
+                  상태:
+                </Text>
+                <Badge
+                  variant="light"
+                  color={flowStats.isValid ? "green" : "orange"}
+                >
+                  {flowStats.isValid ? "완료" : "불완전"}
+                </Badge>
+              </Group>
+            </Group>
+          </div>
         </Group>
 
-        {/* 설명 */}
-        {!readOnly && (
-          <Alert icon={<IconInfoCircle size="1rem" />} color="blue">
-            <Text size="sm">
-              <strong>사용 방법:</strong> 왼쪽 패널에서 노드를 드래그하여 차트에
-              추가하고, 노드 간을 연결하여 투자 전략 플로우를 구성하세요.
-            </Text>
-          </Alert>
-        )}
-
-        <Group align="flex-start" style={{ height: "100%", flexGrow: 1 }}>
+        {/* 메인 컨텐츠 - flexGrow로 남은 공간 차지 */}
+        <Group align="flex-start" style={{ flexGrow: 1, height: 0 }} gap="lg">
           {/* 노드 팔레트 */}
-          {!readOnly && (
-            <Paper p="md" withBorder style={{ width: 250, minHeight: 400 }}>
-              <Title order={4} mb="md">
-                노드 추가
-              </Title>
-              <Text size="xs" c="dimmed" mb="md">
-                노드를 드래그하여 차트에 추가하세요
-              </Text>
-              <Stack gap="sm">
-                {[
-                  {
-                    type: "start" as FlowNodeType,
-                    icon: IconPlayerPlay,
-                    color: "green",
-                    label: "시작",
-                    description: "전략 시작점",
-                  },
-                  {
-                    type: "schedule" as FlowNodeType,
-                    icon: IconClock,
-                    color: "blue",
-                    label: "일정",
-                    description: "실행 일정 설정",
-                  },
-                  {
-                    type: "condition" as FlowNodeType,
-                    icon: IconGitBranch,
-                    color: "purple",
-                    label: "조건",
-                    description: "투자 조건 확인",
-                  },
-                  {
-                    type: "action" as FlowNodeType,
-                    icon: IconTarget,
-                    color: "orange",
-                    label: "액션",
-                    description: "투자 액션 실행",
-                  },
-                  {
-                    type: "end" as FlowNodeType,
-                    icon: IconPlayerStop,
-                    color: "red",
-                    label: "종료",
-                    description: "전략 종료점",
-                  },
-                ].map(({ type, icon: Icon, color, label, description }) => (
-                  <Card
-                    key={type}
-                    p="sm"
-                    withBorder
-                    style={{
-                      cursor: "grab",
-                      transition: "all 0.2s",
-                      backgroundColor:
-                        draggedNodeType === type ? "#f0f9ff" : "white",
-                    }}
-                    onDragStart={(e) => {
-                      setDraggedNodeType(type);
-                      e.dataTransfer.effectAllowed = "move";
-                    }}
-                    onDragEnd={() => setDraggedNodeType(null)}
-                    draggable
-                  >
-                    <Group gap="sm">
-                      <ThemeIcon color={color} variant="light" size="sm">
-                        <Icon size={16} />
-                      </ThemeIcon>
-                      <div>
-                        <Text size="sm" fw={500}>
-                          {label}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          {description}
-                        </Text>
-                      </div>
-                    </Group>
-                  </Card>
-                ))}
-              </Stack>
+          <Stack gap="md" style={{ minWidth: "200px", flexShrink: 0 }}>
+            <Text size="sm" fw={500} c="dimmed">
+              노드 추가
+            </Text>
+            {DRAGGABLE_NODES.map((nodeType) => (
+              <DraggableNode key={nodeType.type} {...nodeType} />
+            ))}
+          </Stack>
 
-              <Alert color="blue" variant="light" mt="md">
-                <Text size="xs">
-                  <strong>사용 팁:</strong>
-                  <br />• 노드를 끌어서 차트에 추가
-                  <br />• 노드 클릭으로 설정 변경
-                  <br />• 연결점을 드래그하여 노드 연결
-                  <br />• 시작/종료 노드는 삭제 불가
+          {/* 단축키 안내 (읽기 전용이 아닐 때만 표시) */}
+          {!readOnly && (
+            <Paper
+              withBorder
+              p="sm"
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                zIndex: 10,
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                minWidth: "200px",
+                flexShrink: 0,
+              }}
+            >
+              <Alert icon={<IconInfoCircle size="1rem" />} color="blue">
+                <Text size="xs" mb="xs">
+                  <strong>단축키:</strong>
                 </Text>
+                <Text size="xs">• Del/Backspace: 노드 삭제</Text>
+                <Text size="xs">• Ctrl/Cmd + 클릭: 다중 선택</Text>
+                <Text size="xs">• 마우스 휠: 확대/축소</Text>
               </Alert>
             </Paper>
           )}
@@ -557,8 +610,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             style={{
               flexGrow: 1,
               width: "100%",
-              height: "calc(100vh - 200px)", // 명시적인 height 설정
-              minHeight: "600px",
+              height: "100%", // 부모 컨테이너에 맞춤
+              minHeight: "400px", // 최소 높이 설정
               border: "1px solid #e0e7ff",
               borderRadius: "8px",
               overflow: "hidden",
@@ -581,10 +634,16 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               onDragOver={onDragOver}
               nodeTypes={FLOW_NODE_TYPES}
               fitView
-              fitViewOptions={{ padding: 0.1 }}
+              fitViewOptions={{
+                padding: 0.2, // 패딩 증가로 노드가 경계에 너무 가지 않도록
+                includeHiddenNodes: false,
+                minZoom: 0.1,
+                maxZoom: 2,
+              }}
               attributionPosition="bottom-left"
               deleteKeyCode={["Delete", "Backspace"]}
               multiSelectionKeyCode={["Meta", "Ctrl"]}
+              defaultViewport={{ x: 0, y: 0, zoom: 0.8 }} // 기본 뷰포트 설정
             >
               <Background />
               <Controls />

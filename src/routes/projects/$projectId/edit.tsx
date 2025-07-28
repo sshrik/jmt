@@ -697,7 +697,9 @@ function ProjectEdit() {
               </Text>
             </Alert>
 
-            <div style={{ height: "calc(100vh - 400px)", minHeight: "600px" }}>
+            <div
+              style={{ height: "70vh", minHeight: "500px", maxHeight: "800px" }}
+            >
               <StrategyEditor
                 strategy={strategy}
                 onStrategyUpdate={handleStrategyUpdate}
