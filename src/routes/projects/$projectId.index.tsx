@@ -217,10 +217,11 @@ function ProjectDetail() {
       </Card>
 
       {/* 투자 전략 (읽기 전용) */}
-      {/* 투자 전략 (읽기 전용) */}
       <div>
         <Text size="sm" c="dimmed" mb="sm">
-          현재 전략 블록 수: {strategy.blocks.length}개
+          현재 전략 블록 수: {strategy.blocks.length}개 (조건:{" "}
+          {strategy.blocks.filter((b) => b.type === "condition").length}개,
+          액션: {strategy.blocks.filter((b) => b.type === "action").length}개)
         </Text>
         <StrategyEditor
           strategy={strategy}

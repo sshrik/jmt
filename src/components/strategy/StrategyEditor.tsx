@@ -135,16 +135,32 @@ export const StrategyEditor = ({
     [strategy, onStrategyUpdate]
   );
 
-  // 순서대로 정렬된 블록들
+  // 순서대로 정렬된 블록들 (디버깅 로그 추가)
   const orderedBlocks = strategy.blockOrder
     .map((id) => strategy.blocks.find((block) => block.id === id))
     .filter(Boolean) as StrategyBlock[];
 
-  // 조건 블록과 액션 블록 분리
+  console.log("📋 StrategyEditor 블록 순서 정렬:", {
+    blockOrderLength: strategy.blockOrder.length,
+    foundBlocks: orderedBlocks.length,
+    allBlocks: strategy.blocks.length,
+    blockIds: strategy.blocks.map((b) => b.id),
+    blockOrder: strategy.blockOrder,
+  });
+
+  // 조건 블록과 액션 블록 분리 (디버깅 로그 추가)
   const conditionBlocks = orderedBlocks.filter(
     (block) => block.type === "condition"
   );
   const actionBlocks = orderedBlocks.filter((block) => block.type === "action");
+
+  console.log("🔍 StrategyEditor 블록 분류:", {
+    totalBlocks: strategy.blocks.length,
+    orderedBlocks: orderedBlocks.length,
+    conditionBlocks: conditionBlocks.length,
+    actionBlocks: actionBlocks.length,
+    blockOrder: strategy.blockOrder.length,
+  });
 
   // 전략 유효성 검사
   const isValidStrategy = conditionBlocks.length > 0 && actionBlocks.length > 0;
