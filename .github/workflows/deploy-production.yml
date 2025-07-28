@@ -7,14 +7,16 @@ on:
 
 env:
   NODE_VERSION: 20.x
+  CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
+  S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
   deploy:
     name: 🏗️ Build & Deploy Production
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://${{ secrets.CLOUDFRONT_DOMAIN }}
+    environment: production
 
     steps:
       - name: 📥 Checkout code
@@ -64,14 +66,14 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: 🚀 Deploy to Production S3
         run: |
           echo "🚀 Deploying to production S3 bucket..."
 
           # S3에 파일 동기화 (루트 경로에)
-          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }}/ \
+          aws s3 sync dist/ s3://${{ env.S3_BUCKET_NAME }}/ \
             --delete \
             --cache-control "public, max-age=31536000" \
             --metadata-directive REPLACE \
@@ -80,7 +82,7 @@ jobs:
           # HTML 파일은 별도로 캐시 설정
           find dist -name "*.html" -type f | while read file; do
             key=$(echo $file | sed 's|dist/||')
-            aws s3 cp "$file" s3://${{ secrets.S3_BUCKET_NAME }}/$key \
+            aws s3 cp "$file" s3://${{ env.S3_BUCKET_NAME }}/$key \
               --cache-control "no-cache, no-store, must-revalidate" \
               --content-type "text/html" \
               --metadata-directive REPLACE
@@ -94,7 +96,7 @@ jobs:
 
           # 전체 캐시 무효화
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*" \
             --query 'Invalidation.Id' \
             --output text)
@@ -104,7 +106,7 @@ jobs:
           # 무효화 완료 대기 (최대 10분)
           echo "⏳ Waiting for invalidation to complete..."
           aws cloudfront wait invalidation-completed \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
             --id $INVALIDATION_ID
             
           echo "✅ CloudFront cache invalidation completed!"
@@ -127,7 +129,7 @@ jobs:
         run: |
           echo "## 🎉 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🌐 **Live URL**: https://${{ secrets.CLOUDFRONT_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Live URL**: https://${{ env.CLOUDFRONT_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
           echo "⏰ **Deployed at**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "📦 **Version**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -148,16 +150,16 @@ jobs:
           echo "🏥 Performing health check..."
 
           # 기본 접근성 체크
-          curl -f -s https://${{ secrets.CLOUDFRONT_DOMAIN }} > /dev/null
+          curl -f -s https://${{ env.CLOUDFRONT_DOMAIN }} > /dev/null
 
           # HTTP 상태 코드 체크
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.CLOUDFRONT_DOMAIN }})
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://${{ env.CLOUDFRONT_DOMAIN }})
 
           if [ $STATUS -eq 200 ]; then
             echo "✅ Health check passed! (HTTP $STATUS)"
             echo "## 🏥 Health Check Results" >> $GITHUB_STEP_SUMMARY
             echo "✅ **Status**: Healthy (HTTP $STATUS)" >> $GITHUB_STEP_SUMMARY
-            echo "🌐 **URL**: https://${{ secrets.CLOUDFRONT_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+            echo "🌐 **URL**: https://${{ env.CLOUDFRONT_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Health check failed! (HTTP $STATUS)"
             echo "## 🚨 Health Check Results" >> $GITHUB_STEP_SUMMARY

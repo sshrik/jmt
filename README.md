@@ -89,22 +89,30 @@ yarn preview
 
 ## 🔄 CI/CD 설정
 
-### GitHub Secrets 설정
+### GitHub Variables 설정
 
-GitHub 저장소의 Settings > Secrets and variables > Actions에서 다음 환경변수를 설정해주세요:
+GitHub 저장소의 **Settings > Secrets and variables > Actions > Variables**에서 다음 환경변수를 설정해주세요:
 
 #### 🔑 필수 환경변수
 
+**Variables (일반 환경변수)**
+
 ```bash
-# AWS 인증 정보
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+# AWS 리전
 AWS_REGION=ap-northeast-2
 
 # S3 및 CloudFront 설정
 S3_BUCKET_NAME=your-s3-bucket-name
 CLOUDFRONT_DISTRIBUTION_ID=your-cloudfront-distribution-id
 CLOUDFRONT_DOMAIN=your-domain.com
+```
+
+**Secrets (민감한 정보)**
+
+```bash
+# AWS 인증 정보
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 ```
 
 #### 🛠️ AWS 설정 가이드

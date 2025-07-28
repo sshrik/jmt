@@ -7,6 +7,10 @@ on:
 
 env:
   NODE_VERSION: 20.x
+  CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
+  S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
 
 jobs:
   build-and-deploy:
@@ -55,7 +59,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: 📤 Deploy to Production S3 (Preview Path)
         run: |
@@ -64,21 +68,21 @@ jobs:
           echo "🚀 Deploying to preview path: $PREVIEW_PATH"
 
           # Production S3에 업로드 (프리뷰 경로로)
-          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }}/$PREVIEW_PATH/ \
+          aws s3 sync dist/ s3://${{ env.S3_BUCKET_NAME }}/$PREVIEW_PATH/ \
             --delete \
             --cache-control "public, max-age=3600" \
             --metadata-directive REPLACE
             
           # index.html은 캐시 안함
-          aws s3 cp dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/$PREVIEW_PATH/index.html \
+          aws s3 cp dist/index.html s3://${{ env.S3_BUCKET_NAME }}/$PREVIEW_PATH/index.html \
             --cache-control "no-cache, no-store, must-revalidate" \
             --metadata-directive REPLACE
             
           echo "✅ Deployment completed!"
-          echo "🔗 Preview URL: https://${{ secrets.CLOUDFRONT_DOMAIN }}/$PREVIEW_PATH/"
+          echo "🔗 Preview URL: https://${{ env.CLOUDFRONT_DOMAIN }}/$PREVIEW_PATH/"
 
           # 환경변수로 URL 저장
-          echo "PREVIEW_URL=https://${{ secrets.CLOUDFRONT_DOMAIN }}/$PREVIEW_PATH/" >> $GITHUB_ENV
+          echo "PREVIEW_URL=https://${{ env.CLOUDFRONT_DOMAIN }}/$PREVIEW_PATH/" >> $GITHUB_ENV
 
       - name: 🔄 Invalidate CloudFront cache
         run: |
@@ -86,7 +90,7 @@ jobs:
 
           # 프리뷰 경로의 모든 파일 무효화
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/pr-${{ github.event.number }}/*" \
             --query 'Invalidation.Id' \
             --output text)
@@ -165,14 +169,14 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: 🗑️ Remove preview files from production S3
         run: |
           PREVIEW_PATH="pr-${{ github.event.number }}"
           echo "🗑️ Cleaning up preview: $PREVIEW_PATH"
 
-          aws s3 rm s3://${{ secrets.S3_BUCKET_NAME }}/$PREVIEW_PATH/ --recursive
+          aws s3 rm s3://${{ env.S3_BUCKET_NAME }}/$PREVIEW_PATH/ --recursive
 
           echo "✅ Preview cleanup completed!"
 
