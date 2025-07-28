@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  useNavigate,
+  Outlet,
+  useLocation,
+} from "@tanstack/react-router";
 import {
   Container,
   Title,
@@ -30,12 +35,18 @@ export const Route = createFileRoute("/projects")({
 
 function ProjectsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { projects, loading, error, deleteProject } = useProjectStore();
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{
     id: string;
     name: string;
   } | null>(null);
+
+  // 자식 라우트인 경우 Outlet 렌더링
+  if (location.pathname !== "/projects") {
+    return <Outlet />;
+  }
 
   const handleDeleteClick = (projectId: string, projectName: string) => {
     setProjectToDelete({ id: projectId, name: projectName });
