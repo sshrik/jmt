@@ -174,6 +174,13 @@ function processMultiplicationDivision(expression: string): string {
       const operator = tokens[i + 1];
       const right = parseFloat(tokens[i + 2] as string);
 
+      // NaN 체크
+      if (isNaN(left) || isNaN(right)) {
+        result.push(tokens[i]);
+        i++;
+        continue;
+      }
+
       let operationResult: number;
       if (operator === "*") {
         operationResult = left * right;
@@ -200,11 +207,26 @@ function processMultiplicationDivision(expression: string): string {
  */
 function processAdditionSubtraction(expression: string): number {
   const tokens = tokenize(expression);
+
+  if (tokens.length === 0) {
+    return 0;
+  }
+
   let result = parseFloat(tokens[0] as string);
+
+  // NaN 체크
+  if (isNaN(result)) {
+    result = 0;
+  }
 
   for (let i = 1; i < tokens.length; i += 2) {
     const operator = tokens[i];
     const operand = parseFloat(tokens[i + 1] as string);
+
+    // NaN 체크
+    if (isNaN(operand)) {
+      continue;
+    }
 
     if (operator === "+") {
       result += operand;
@@ -218,6 +240,7 @@ function processAdditionSubtraction(expression: string): number {
 
 /**
  * 표현식을 토큰으로 분할합니다.
+ * 음수 처리를 포함합니다.
  */
 function tokenize(expression: string): string[] {
   const tokens: string[] = [];
@@ -227,11 +250,19 @@ function tokenize(expression: string): string[] {
     const char = expression[i];
 
     if (["+", "-", "*", "/"].includes(char)) {
-      if (currentToken) {
-        tokens.push(currentToken);
-        currentToken = "";
+      // 음수 처리: '-' 기호가 숫자의 시작 부분이면 음수로 처리
+      if (
+        char === "-" &&
+        (i === 0 || ["(", "+", "-", "*", "/"].includes(expression[i - 1]))
+      ) {
+        currentToken += char;
+      } else {
+        if (currentToken) {
+          tokens.push(currentToken);
+          currentToken = "";
+        }
+        tokens.push(char);
       }
-      tokens.push(char);
     } else {
       currentToken += char;
     }

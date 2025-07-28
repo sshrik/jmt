@@ -280,19 +280,28 @@ export const ActionBlock = ({
             <Text size="xs" fw={500}>
               수식 테스트:
             </Text>
-            {[1, 5, 10, -5].map((testN) => {
+            {[1, 5, 10, -5, -10].map((testN) => {
               const result = calculateFormula(formula, testN);
               const unit = actionType.includes("amount")
                 ? "원"
                 : actionType.includes("shares")
                   ? "주"
                   : "%";
+              const isNegativeAmount =
+                result.isValid &&
+                result.value < 0 &&
+                actionType.includes("buy");
               return (
-                <Text key={testN} size="xs" c="dimmed">
+                <Text
+                  key={testN}
+                  size="xs"
+                  c={isNegativeAmount ? "red" : "dimmed"}
+                >
                   N={testN}% →{" "}
                   {result.isValid
                     ? `${result.value.toLocaleString()}${unit}`
-                    : "계산 오류"}
+                    : `오류: ${result.error}`}
+                  {isNegativeAmount && " (음수: 매수 안함)"}
                 </Text>
               );
             })}

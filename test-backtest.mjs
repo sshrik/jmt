@@ -129,6 +129,10 @@ function simulateAction(actionType, params, currentPrice, portfolio) {
         result = priceChangePercent;
       }
 
+      console.log(
+        `    수식: ${formula}, N=${priceChangePercent}, 결과: ${result}`
+      );
+
       if (result <= 0) break;
 
       const amount = result;
@@ -433,6 +437,27 @@ function testFormulaActions() {
       ? formulaSharesResult.trades[0].quantity
       : 0;
   console.log(`  결과: ${actualShares === expectedShares ? "PASS" : "FAIL"}`);
+
+  // 음수 케이스 테스트 추가
+  console.log("");
+  console.log("🧮 음수 케이스 테스트 (10000 * N + 2000, N=-5%):");
+  const portfolio3 = { cash: 1000000, shares: 0 };
+  // 하락 시 테스트 (1000 → 950, -5% 하락)
+  const negativeTestPrice = { date: "2024-01-06", close: 950 };
+  const formulaNegativeResult = simulateAction(
+    "buy_formula_amount",
+    { formula: "10000 * N + 2000" },
+    negativeTestPrice,
+    portfolio3
+  );
+
+  console.log(`  -5% 하락 시 수식 결과: -48000원 (음수이므로 매수 안함)`);
+  console.log(
+    `  실제 매수: ${formulaNegativeResult.trades.length > 0 ? "YES" : "NO"}`
+  );
+  console.log(
+    `  결과: ${formulaNegativeResult.trades.length === 0 ? "PASS" : "FAIL"} (음수 시 매수 방지)`
+  );
 
   console.log("");
 }
