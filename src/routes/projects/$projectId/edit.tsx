@@ -186,11 +186,6 @@ function ProjectEdit() {
   // 기본 전략이 로드되면 현재 전략으로 설정 (매번 최신 데이터로 업데이트)
   useEffect(() => {
     if (baseStrategy) {
-      console.log(
-        "🔄 기본 전략 업데이트:",
-        baseStrategy.blocks.length,
-        "개 블록"
-      );
       setCurrentStrategy(baseStrategy);
     }
   }, [baseStrategy]);

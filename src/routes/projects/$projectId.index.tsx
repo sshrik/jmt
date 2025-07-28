@@ -56,12 +56,21 @@ function ProjectDetail() {
       };
     }
 
+    console.log("🔍 상세 페이지 프로젝트 데이터:", {
+      projectId: project.id,
+      versionsCount: project.versions.length,
+      firstVersionStrategy: project.versions[0]?.strategy?.length || 0,
+    });
+
     // 기존 블록 타입 마이그레이션
     const rawBlocks = project.versions[0]?.strategy || [];
+    console.log("📦 로드된 블록들:", rawBlocks);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const migratedBlocks = rawBlocks.map((block: any) => {
       // 기존 price_change_percent를 close_price_change로 마이그레이션
       if (block.conditionType === "price_change_percent") {
+        console.log("🔄 상세 페이지 마이그레이션:", block.id);
         return {
           ...block,
           conditionType: "close_price_change",
@@ -69,6 +78,8 @@ function ProjectDetail() {
       }
       return block;
     });
+
+    console.log("✅ 마이그레이션된 블록들:", migratedBlocks);
 
     return {
       id: `strategy-${project.id}`,
