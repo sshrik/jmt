@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Container,
@@ -14,11 +14,19 @@ import {
   Anchor,
   Select,
   Alert,
+  Tabs,
 } from "@mantine/core";
-import { IconArrowLeft, IconChartLine, IconEdit } from "@tabler/icons-react";
+import {
+  IconArrowLeft,
+  IconChartLine,
+  IconEdit,
+  IconTrendingUp,
+  IconEye,
+} from "@tabler/icons-react";
 import { useProjectStore } from "../../hooks/useProjectStore";
 import { ProjectStore } from "../../stores/projectStore";
 import { StrategyEditor } from "../../components/strategy/StrategyEditor";
+import { BacktestRunner } from "../../components/backtest/BacktestRunner";
 import type { Strategy } from "../../types/strategy";
 
 export const Route = createFileRoute("/projects/$projectId/")({
@@ -29,6 +37,7 @@ function ProjectDetail() {
   const { projectId } = Route.useParams();
   const navigate = useNavigate();
   const { loading, error } = useProjectStore();
+  const [activeTab, setActiveTab] = useState("strategy");
 
   // 현재 프로젝트 찾기
   const project = useMemo(() => {
@@ -210,18 +219,69 @@ function ProjectDetail() {
       </Card>
 
       {/* 투자 전략 (읽기 전용) */}
-      <div>
-        <Text size="sm" c="dimmed" mb="sm">
-          현재 전략 블록 수: {strategy.blocks.length}개 (조건:{" "}
-          {strategy.blocks.filter((b) => b.type === "condition").length}개,
-          액션: {strategy.blocks.filter((b) => b.type === "action").length}개)
-        </Text>
-        <StrategyEditor
-          strategy={strategy}
-          onStrategyUpdate={() => {}} // 읽기 전용이므로 빈 함수
-          readOnly={true}
-        />
-      </div>
+      <Tabs
+        value={activeTab}
+        onChange={(value) => setActiveTab(value || "strategy")}
+        mb="xl"
+      >
+        <Tabs.List>
+          <Tabs.Tab value="strategy" leftSection={<IconChartLine size={16} />}>
+            투자 전략
+          </Tabs.Tab>
+          <Tabs.Tab value="backtest" leftSection={<IconTrendingUp size={16} />}>
+            백테스트
+          </Tabs.Tab>
+          <Tabs.Tab value="overview" leftSection={<IconEye size={16} />}>
+            개요
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="strategy" pt="lg">
+          <Text size="sm" c="dimmed" mb="sm">
+            현재 전략 블록 수: {strategy.blocks.length}개 (조건:{" "}
+            {strategy.blocks.filter((b) => b.type === "condition").length}개,
+            액션: {strategy.blocks.filter((b) => b.type === "action").length}개)
+          </Text>
+          <StrategyEditor
+            strategy={strategy}
+            onStrategyUpdate={() => {}} // 읽기 전용이므로 빈 함수
+            readOnly={true}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="backtest" pt="lg">
+          <BacktestRunner strategy={strategy} />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="overview" pt="lg">
+          <Card withBorder p="lg">
+            <Title order={4} mb="md">
+              프로젝트 개요
+            </Title>
+            <Text size="sm" c="dimmed" mb="xs">
+              프로젝트 이름
+            </Text>
+            <Text fw={500} mb="md">
+              {project.name}
+            </Text>
+
+            <Text size="sm" c="dimmed" mb="xs">
+              설명
+            </Text>
+            <Text mb="md">{project.description}</Text>
+
+            <Text size="sm" c="dimmed" mb="xs">
+              생성일
+            </Text>
+            <Text mb="md">{project.createdAt.toLocaleDateString("ko-KR")}</Text>
+
+            <Text size="sm" c="dimmed" mb="xs">
+              최근 수정
+            </Text>
+            <Text>{project.updatedAt.toLocaleDateString("ko-KR")}</Text>
+          </Card>
+        </Tabs.Panel>
+      </Tabs>
     </Container>
   );
 }
