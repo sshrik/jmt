@@ -4,15 +4,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Environment to deploy"
-        required: true
-        default: "production"
-        type: choice
-        options:
-          - production
-          - staging
 
 env:
   NODE_VERSION: 20.x
@@ -22,7 +13,7 @@ jobs:
     name: 🏗️ Build & Deploy Production
     runs-on: ubuntu-latest
     environment:
-      name: ${{ inputs.environment || 'production' }}
+      name: production
       url: https://${{ secrets.CLOUDFRONT_DOMAIN }}
 
     steps:
@@ -52,12 +43,12 @@ jobs:
         env:
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_APP_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
-          VITE_APP_ENVIRONMENT: ${{ inputs.environment || 'production' }}
+          VITE_APP_ENVIRONMENT: production
 
       - name: 📊 Build analysis
         run: |
           echo "## 🚀 Production Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: ${{ inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: production" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tag**: $(git describe --tags --exact-match 2>/dev/null || echo 'No tag')" >> $GITHUB_STEP_SUMMARY
           echo "- **Build Size**: $(du -sh dist/ | cut -f1)" >> $GITHUB_STEP_SUMMARY
@@ -75,7 +66,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: 🚀 Deploy to S3 Production
+      - name: 🚀 Deploy to Production S3
         run: |
           echo "🚀 Deploying to production S3 bucket..."
 
@@ -142,7 +133,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🚀 Deployment Actions Completed:" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Build successful" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Deployed to S3" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Deployed to production S3" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ CloudFront cache invalidated" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Deployment tag created" >> $GITHUB_STEP_SUMMARY
 

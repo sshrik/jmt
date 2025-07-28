@@ -10,8 +10,9 @@ env:
 
 jobs:
   build-and-deploy:
-    name: 🏗️ Build & Deploy to S3
+    name: 🏗️ Build & Deploy to Production S3
     runs-on: ubuntu-latest
+    environment: production
 
     # PR에서만 실행되도록 보안 체크
     if: github.event_name == 'pull_request'
@@ -39,6 +40,7 @@ jobs:
         env:
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_APP_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
+          VITE_APP_ENVIRONMENT: production
 
       - name: 📊 Build summary
         run: |
@@ -55,13 +57,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: 📤 Deploy to S3 (Preview)
+      - name: 📤 Deploy to Production S3 (Preview Path)
         run: |
           # PR 번호를 기반으로 한 프리뷰 경로 생성
           PREVIEW_PATH="pr-${{ github.event.number }}"
           echo "🚀 Deploying to preview path: $PREVIEW_PATH"
 
-          # S3에 업로드 (프리뷰 경로로)
+          # Production S3에 업로드 (프리뷰 경로로)
           aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }}/$PREVIEW_PATH/ \
             --delete \
             --cache-control "public, max-age=3600" \
@@ -101,18 +103,19 @@ jobs:
 
             const comment = `## 🚀 Preview Deployment
 
-            ✅ **Successfully deployed!**
+            ✅ **Successfully deployed to production environment!**
 
             📱 **Preview URL**: ${previewUrl}
 
             ### 📊 Deployment Details
             - **Commit**: \`${context.sha.slice(0, 7)}\`
             - **Branch**: \`${context.payload.pull_request.head.ref}\`
+            - **Environment**: Production S3 + CloudFront
             - **Build Time**: \`${new Date().toISOString()}\`
 
             ### 🔧 Actions Performed
             - ✅ Build completed
-            - ✅ Deployed to S3
+            - ✅ Deployed to production S3 (preview path)
             - ✅ CloudFront cache invalidated
 
             ---
@@ -153,6 +156,7 @@ jobs:
   cleanup-on-close:
     name: 🗑️ Cleanup Preview
     runs-on: ubuntu-latest
+    environment: production
     if: github.event.action == 'closed'
 
     steps:
@@ -163,7 +167,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: 🗑️ Remove preview files from S3
+      - name: 🗑️ Remove preview files from production S3
         run: |
           PREVIEW_PATH="pr-${{ github.event.number }}"
           echo "🗑️ Cleaning up preview: $PREVIEW_PATH"
@@ -180,9 +184,9 @@ jobs:
 
             const comment = `## 🗑️ Preview Cleaned Up
 
-            ✅ **Preview deployment has been removed.**
+            ✅ **Preview deployment has been removed from production environment.**
 
-            The preview files have been cleaned up from S3 since this PR was ${context.payload.action}.`;
+            The preview files have been cleaned up from production S3 since this PR was ${context.payload.action}.`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,

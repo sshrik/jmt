@@ -169,15 +169,17 @@ CLOUDFRONT_DOMAIN=your-domain.com
 #### 2. **Preview Deployment**
 
 - **트리거**: Pull Request 생성/업데이트
-- **작업**: 빌드 + S3 업로드 + CloudFront 무효화
+- **작업**: 프로덕션 빌드 + S3 업로드 (프리뷰 경로) + CloudFront 무효화
 - **결과**: PR 댓글에 프리뷰 링크 자동 생성
+- **환경**: Production S3 + CloudFront
 - **URL 형식**: `https://your-domain.com/pr-{number}/`
 
 #### 3. **Production Deployment**
 
 - **트리거**: Push to main 브랜치
-- **작업**: 프로덕션 빌드 + 배포 + 헬스 체크
+- **작업**: 프로덕션 빌드 + 루트 경로 배포 + 헬스 체크
 - **결과**: 라이브 사이트 업데이트
+- **환경**: Production S3 + CloudFront
 - **URL**: `https://your-domain.com/`
 
 ## 📁 프로젝트 구조
