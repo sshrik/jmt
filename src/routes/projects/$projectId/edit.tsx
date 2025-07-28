@@ -692,11 +692,13 @@ function ProjectEdit() {
               </Text>
             </Alert>
 
-            <StrategyEditor
-              strategy={strategy}
-              onStrategyUpdate={handleStrategyUpdate}
-              readOnly={isSaving}
-            />
+            <div style={{ height: "calc(100vh - 400px)", minHeight: "600px" }}>
+              <StrategyEditor
+                strategy={strategy}
+                onStrategyUpdate={handleStrategyUpdate}
+                readOnly={isSaving}
+              />
+            </div>
           </Stack>
         </Tabs.Panel>
 

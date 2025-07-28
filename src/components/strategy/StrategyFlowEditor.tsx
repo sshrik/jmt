@@ -551,7 +551,15 @@ export const StrategyFlowEditor = ({
           {/* React Flow 차트 */}
           <div
             ref={reactFlowWrapper}
-            style={{ flexGrow: 1, height: "100%", minHeight: 400 }}
+            style={{
+              flexGrow: 1,
+              width: "100%",
+              height: "calc(100vh - 200px)", // 명시적인 height 설정
+              minHeight: "600px",
+              border: "1px solid #e0e7ff",
+              borderRadius: "8px",
+              overflow: "hidden",
+            }}
           >
             <ReactFlow
               nodes={nodes.map((node) => ({
