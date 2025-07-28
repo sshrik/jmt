@@ -53,7 +53,15 @@ JMT는 개인 투자자를 위한 **노코드 투자 전략 설계 및 백테스
 git clone https://github.com/sshrik/jmt.git
 cd jmt
 
-# 의존성 설치 (Node.js 18+ 필요)
+# Node.js 20+ 버전 설정 (nvm 사용)
+nvm use  # .nvmrc 파일 기반 자동 설정
+# 또는 수동으로 버전 지정
+nvm use 20
+# 또는 최신 LTS 설치
+nvm install --lts
+nvm use --lts
+
+# 의존성 설치 (Node.js 20+ 필요)
 yarn install
 
 # 개발 서버 실행

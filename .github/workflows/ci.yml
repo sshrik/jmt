@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x, 22.x]
 
     steps:
       - name: 📥 Checkout code
@@ -37,14 +37,14 @@ jobs:
       - name: 🏗️ Build production
         run: yarn build
 
-      - name: 📊 Bundle analyzer (Node 18 only)
-        if: matrix.node-version == '18.x'
+      - name: 📊 Bundle analyzer (Node 20 only)
+        if: matrix.node-version == '20.x'
         run: |
           ls -la dist/
           du -sh dist/
 
-      - name: ✅ Build artifact upload (Node 18 only)
-        if: matrix.node-version == '18.x'
+      - name: ✅ Build artifact upload (Node 20 only)
+        if: matrix.node-version == '20.x'
         uses: actions/upload-artifact@v4
         with:
           name: build-files
@@ -62,7 +62,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 20.x
           cache: "yarn"
 
       - name: 📥 Install dependencies
@@ -89,7 +89,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 20.x
           cache: "yarn"
 
       - name: 📥 Install dependencies
