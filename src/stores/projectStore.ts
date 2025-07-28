@@ -77,12 +77,12 @@ const getProjectsFromStorage = (): Project[] => {
 
 const saveProjectsToStorage = (projects: Project[]): void => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-    // 저장 후 다른 컴포넌트들에게 변경사항 알림
+    const serializedData = JSON.stringify(projects, null, 2);
+    localStorage.setItem(STORAGE_KEY, serializedData);
     dispatchProjectsChanged();
   } catch (error) {
-    console.error("Error saving projects to storage:", error);
-    throw new Error("프로젝트 저장 중 오류가 발생했습니다.");
+    console.error("프로젝트 저장 실패:", error);
+    throw error;
   }
 };
 
@@ -231,10 +231,7 @@ export class ProjectStore {
     saveProjectsToStorage(filteredProjects); // 이 함수가 이벤트를 발생시킴
   }
 
-  static saveBacktestResult(
-    projectId: string,
-    backtestResult: any // eslint-disable-line @typescript-eslint/no-explicit-any
-  ): void {
+  static saveBacktestResult(projectId: string, backtestResult: unknown): void {
     const projects = this.getAllProjects();
     const projectIndex = projects.findIndex((p) => p.id === projectId);
 
@@ -247,12 +244,44 @@ export class ProjectStore {
       throw new Error("프로젝트에 버전이 없습니다.");
     }
 
-    projects[projectIndex].versions[0].backtestResults = {
+    const result = backtestResult as {
+      stats?: {
+        totalReturn?: number;
+        totalReturnPct?: number;
+        maxDrawdown?: number;
+        totalTrades?: number;
+        winRate?: number;
+      };
+      trades?: Array<Record<string, unknown>>;
+      portfolioHistory?: Array<Record<string, unknown>>;
+      config?: { initialCash?: number; startDate?: string; endDate?: string };
+      startDate?: string;
+      endDate?: string;
+    };
+
+    // 백테스트 결과를 프로젝트용 형식으로 변환
+    const convertedResult = {
       id: generateId(),
       versionId: projects[projectIndex].versions[0].id,
       executedAt: new Date(),
-      ...backtestResult,
+      totalReturn: result.stats?.totalReturnPct || 0, // 퍼센트 수익률 사용
+      maxDrawdown: result.stats?.maxDrawdown || 0,
+      tradeCount: result.stats?.totalTrades || result.trades?.length || 0,
+      winRate: result.stats?.winRate || 0,
+      transactions: [],
+      portfolioHistory: [],
+      initialCash: result.config?.initialCash || 1000000,
+      backtestPeriod: {
+        startDate: new Date(
+          result.startDate || result.config?.startDate || "2024-01-01"
+        ),
+        endDate: new Date(
+          result.endDate || result.config?.endDate || "2024-12-31"
+        ),
+      },
     };
+
+    projects[projectIndex].versions[0].backtestResults = convertedResult;
     projects[projectIndex].updatedAt = new Date();
 
     saveProjectsToStorage(projects);
