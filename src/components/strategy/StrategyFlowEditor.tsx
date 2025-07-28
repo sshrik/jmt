@@ -308,7 +308,14 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      if (!draggedNodeType || !reactFlowWrapper.current) return;
+      // dataTransfer에서 노드 타입 가져오기
+      const nodeType = event.dataTransfer.getData(
+        "application/reactflow-nodetype"
+      ) as FlowNodeType;
+
+      if (!nodeType || !reactFlowWrapper.current) {
+        return;
+      }
 
       const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
 
@@ -332,11 +339,15 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         ),
       };
 
-      const newNode = createNode(draggedNodeType, clampedPosition);
+      const newNode = createNode(nodeType, clampedPosition);
       setNodes((nds) => [...nds, newNode]);
-      setDraggedNodeType(null);
+
+      // 드래그 상태 정리 (만약 아직 정리되지 않았다면)
+      if (draggedNodeType) {
+        setDraggedNodeType(null);
+      }
     },
-    [draggedNodeType, setNodes]
+    [setNodes, draggedNodeType]
   );
 
   // 노드 삭제
@@ -404,7 +415,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+    event.dataTransfer.dropEffect = "copy";
   }, []);
 
   // 플로우 내보내기 - 제거됨 (상위 컴포넌트에서 자동 저장)
@@ -504,13 +515,21 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         maxWidth: "120px",
         textAlign: "center",
         transition: "all 0.2s",
-        backgroundColor: draggedNodeType === type ? "#f0f9ff" : "white",
+        backgroundColor: draggedNodeType === type ? "#e3f2fd" : "white",
+        borderColor: draggedNodeType === type ? "#2196f3" : undefined,
+        transform: draggedNodeType === type ? "scale(0.95)" : "scale(1)",
       }}
       onDragStart={(event) => {
         event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("application/reactflow-nodetype", type);
         setDraggedNodeType(type);
       }}
-      onDragEnd={() => setDraggedNodeType(null)}
+      onDragEnd={() => {
+        // 드롭 이벤트가 완료된 후 상태 정리
+        setTimeout(() => {
+          setDraggedNodeType(null);
+        }, 100);
+      }}
       draggable
     >
       <Stack gap="xs" align="center">
