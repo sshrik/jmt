@@ -30,6 +30,12 @@ interface ConditionBlockProps {
 
 // 조건 타입별 설정
 const CONDITION_CONFIG = {
+  always: {
+    label: "항상",
+    description: "조건 없이 항상 실행",
+    icon: IconTrendingUp,
+    color: "orange",
+  },
   close_price_change: {
     label: "전일 종가 대비 변화",
     description: "전일 종가 대비 주가 변화율이 임계값 이상/이하일 때 조건 만족",
@@ -97,6 +103,14 @@ export const ConditionBlock = ({
 
   // 조건 파라미터 UI 렌더링
   const renderConditionParams = () => {
+    if (conditionType === "always") {
+      return (
+        <Text size="xs" c="dimmed">
+          조건 없이 항상 실행됩니다
+        </Text>
+      );
+    }
+
     return (
       <Stack gap="sm">
         <Group grow>

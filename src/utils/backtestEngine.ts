@@ -151,6 +151,8 @@ export class BacktestEngine {
     const { conditionType, conditionParams } = block;
 
     switch (conditionType) {
+      case "always":
+        return true;
       case "close_price_change": {
         const priceChangePercent =
           ((currentPrice.close - prevPrice.close) / prevPrice.close) * 100;
@@ -253,6 +255,47 @@ export class BacktestEngine {
         }
         break;
       }
+
+      case "buy_shares": {
+        const quantity = actionParams?.shareCount || 0;
+        const amount = quantity * price;
+        const commission = amount * this.config.commission;
+        const total = amount + commission;
+
+        if (quantity > 0 && total <= this.cash) {
+          this.executeBuy(currentPrice.date, quantity, price, commission);
+        }
+        break;
+      }
+
+      case "sell_shares": {
+        const quantity = actionParams?.shareCount || 0;
+        const position = this.positions.get(this.config.symbol);
+
+        if (position && quantity > 0 && quantity <= position.quantity) {
+          const commission = quantity * price * this.config.commission;
+          this.executeSell(currentPrice.date, quantity, price, commission);
+        }
+        break;
+      }
+
+      case "sell_all": {
+        const position = this.positions.get(this.config.symbol);
+        if (position && position.quantity > 0) {
+          const commission = position.quantity * price * this.config.commission;
+          this.executeSell(
+            currentPrice.date,
+            position.quantity,
+            price,
+            commission
+          );
+        }
+        break;
+      }
+
+      case "hold":
+        // 아무것도 하지 않음
+        break;
     }
   }
 

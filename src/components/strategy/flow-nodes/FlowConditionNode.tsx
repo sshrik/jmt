@@ -26,6 +26,12 @@ import type {
 
 // 조건 타입별 설정
 const CONDITION_CONFIG = {
+  always: {
+    label: "항상",
+    description: "조건 없이 항상 실행",
+    icon: IconTrendingUp,
+    color: "orange",
+  },
   close_price_change: {
     label: "전일 종가 대비 변화",
     description: "전일 종가 대비 주가 변화율이 임계값 이상/이하일 때 조건 만족",
@@ -153,42 +159,52 @@ export const FlowConditionNode = memo(
           />
 
           {/* 조건 파라미터 */}
-          <Group grow>
-            <Select
-              label="방향"
-              placeholder="선택"
-              value={params.priceChangeDirection || "up"}
-              onChange={(value) =>
-                updateParams({ priceChangeDirection: value as "up" | "down" })
-              }
-              data={[
-                { value: "up", label: "상승" },
-                { value: "down", label: "하락" },
-              ]}
-              size="sm"
-            />
-            <NumberInput
-              label="임계값 (%)"
-              placeholder="예: 5"
-              value={params.priceChangePercent || 0}
-              onChange={(value) =>
-                updateParams({ priceChangePercent: Number(value) || 0 })
-              }
-              min={0}
-              max={100}
-              step={0.1}
-              size="sm"
-            />
-          </Group>
+          {conditionType === "always" ? (
+            <Badge variant="light" color={config.color} size="sm">
+              조건 없이 항상 실행
+            </Badge>
+          ) : (
+            <>
+              <Group grow>
+                <Select
+                  label="방향"
+                  placeholder="선택"
+                  value={params.priceChangeDirection || "up"}
+                  onChange={(value) =>
+                    updateParams({
+                      priceChangeDirection: value as "up" | "down",
+                    })
+                  }
+                  data={[
+                    { value: "up", label: "상승" },
+                    { value: "down", label: "하락" },
+                  ]}
+                  size="sm"
+                />
+                <NumberInput
+                  label="임계값 (%)"
+                  placeholder="예: 5"
+                  value={params.priceChangePercent || 0}
+                  onChange={(value) =>
+                    updateParams({ priceChangePercent: Number(value) || 0 })
+                  }
+                  min={0}
+                  max={100}
+                  step={0.1}
+                  size="sm"
+                />
+              </Group>
 
-          <Badge variant="light" color={config.color} size="sm">
-            조건: {conditionType === "close_price_change" && "종가"}
-            {conditionType === "high_price_change" && "고가"}
-            {conditionType === "low_price_change" && "저가"} 대비{" "}
-            {params.priceChangeDirection === "down" ? "하락" : "상승"}{" "}
-            {params.priceChangePercent || 0}%{" "}
-            {params.priceChangeDirection === "down" ? "이하" : "이상"}
-          </Badge>
+              <Badge variant="light" color={config.color} size="sm">
+                조건: {conditionType === "close_price_change" && "종가"}
+                {conditionType === "high_price_change" && "고가"}
+                {conditionType === "low_price_change" && "저가"} 대비{" "}
+                {params.priceChangeDirection === "down" ? "하락" : "상승"}{" "}
+                {params.priceChangePercent || 0}%{" "}
+                {params.priceChangeDirection === "down" ? "이하" : "이상"}
+              </Badge>
+            </>
+          )}
 
           <Text size="xs" c="dimmed">
             {config.description}

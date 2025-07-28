@@ -239,6 +239,9 @@ export class FlowExecutionEngine {
     const mockPreviousPrice = 95000; // 실제로는 과거 데이터에서 가져옴
 
     switch (conditionType) {
+      case "always":
+        return true;
+
       case "close_price_change": {
         const priceChangePercent = params?.priceChangePercent || 5;
         const direction = params?.priceChangeDirection || "up";
@@ -302,6 +305,40 @@ export class FlowExecutionEngine {
           price: currentPrice,
           amount: sellShares * currentPrice,
           message: `보유 주식의 ${sellPercent}%를 매도 주문 실행`,
+        };
+      }
+
+      case "buy_shares": {
+        const shareCount = params?.shareCount || 0;
+        const amount = shareCount * currentPrice;
+        return {
+          action: "buy",
+          shares: shareCount,
+          price: currentPrice,
+          amount: amount,
+          message: `${shareCount}주 매수 주문 실행`,
+        };
+      }
+
+      case "sell_shares": {
+        const shareCount = params?.shareCount || 0;
+        const amount = shareCount * currentPrice;
+        return {
+          action: "sell",
+          shares: shareCount,
+          price: currentPrice,
+          amount: amount,
+          message: `${shareCount}주 매도 주문 실행`,
+        };
+      }
+
+      case "sell_all": {
+        return {
+          action: "sell",
+          shares: totalStocks,
+          price: currentPrice,
+          amount: totalStocks * currentPrice,
+          message: "보유 주식 100% 매도 주문 실행",
         };
       }
 

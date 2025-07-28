@@ -1,5 +1,6 @@
 // 조건 타입 정의
 export type ConditionType =
+  | "always" // 항상
   | "close_price_change" // 전일 종가 대비 변화
   | "high_price_change" // 전일 고가 대비 변화
   | "low_price_change"; // 전일 저가 대비 변화
@@ -10,9 +11,10 @@ export type ActionType =
   | "sell_percent_stock" // 주식의 %만큼 매도
   | "buy_fixed_amount" // 고정 금액 매수
   | "sell_fixed_amount" // 고정 금액 매도
-  | "hold" // 대기
-  | "stop_loss" // 손절
-  | "take_profit"; // 익절
+  | "buy_shares" // N주 매수
+  | "sell_shares" // N주 매도
+  | "sell_all" // 100% 판매
+  | "hold"; // 대기
 
 // 조건 파라미터
 export interface ConditionParameters {
@@ -47,9 +49,8 @@ export interface ActionParameters {
   // 고정 금액
   fixedAmount?: number; // 1000000 (100만원)
 
-  // 손절/익절
-  stopLossPercent?: number; // 5 (5% 손실시)
-  takeProfitPercent?: number; // 10 (10% 수익시)
+  // 주식 수
+  shareCount?: number; // 100 (100주)
 }
 
 // 전략 블록 인터페이스

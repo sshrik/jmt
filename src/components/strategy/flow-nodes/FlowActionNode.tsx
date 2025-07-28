@@ -17,8 +17,6 @@ import {
   IconArrowUp,
   IconArrowDown,
   IconPlayerPause,
-  IconTarget,
-  IconShield,
   IconPower,
   IconBell,
   IconFileText,
@@ -56,23 +54,29 @@ const ACTION_CONFIG = {
     icon: IconArrowDown,
     color: "red",
   },
+  buy_shares: {
+    label: "N주 매수",
+    description: "정해진 주식 수만큼 매수",
+    icon: IconArrowUp,
+    color: "green",
+  },
+  sell_shares: {
+    label: "N주 매도",
+    description: "정해진 주식 수만큼 매도",
+    icon: IconArrowDown,
+    color: "red",
+  },
+  sell_all: {
+    label: "100% 판매",
+    description: "보유 주식을 모두 매도",
+    icon: IconArrowDown,
+    color: "orange",
+  },
   hold: {
     label: "대기",
     description: "매매하지 않고 대기",
     icon: IconPlayerPause,
     color: "gray",
-  },
-  stop_loss: {
-    label: "손절",
-    description: "손실률 달성시 자동 매도",
-    icon: IconShield,
-    color: "red",
-  },
-  take_profit: {
-    label: "익절",
-    description: "수익률 달성시 자동 매도",
-    icon: IconTarget,
-    color: "green",
   },
   exit_all: {
     label: "투자 종료",
@@ -191,38 +195,43 @@ export const FlowActionNode = memo(
             />
           );
 
-        case "stop_loss":
+        case "buy_shares":
           return (
             <NumberInput
-              label="손절 비율 (%)"
-              placeholder="예: 5"
-              value={params.stopLossPercent || 0}
+              label="매수 주식 수"
+              placeholder="예: 100"
+              value={params.shareCount || 0}
               onChange={(value) =>
-                updateParams({ stopLossPercent: Number(value) || 0 })
+                updateParams({ shareCount: Number(value) || 0 })
               }
-              min={0}
-              max={50}
-              step={0.1}
-              description="몇 % 손실시 자동 매도할지 설정"
+              min={1}
+              step={1}
+              description="몇 주를 매수할지 설정"
               size="sm"
             />
           );
 
-        case "take_profit":
+        case "sell_shares":
           return (
             <NumberInput
-              label="익절 비율 (%)"
-              placeholder="예: 10"
-              value={params.takeProfitPercent || 0}
+              label="매도 주식 수"
+              placeholder="예: 50"
+              value={params.shareCount || 0}
               onChange={(value) =>
-                updateParams({ takeProfitPercent: Number(value) || 0 })
+                updateParams({ shareCount: Number(value) || 0 })
               }
-              min={0}
-              max={100}
-              step={0.1}
-              description="몇 % 수익시 자동 매도할지 설정"
+              min={1}
+              step={1}
+              description="몇 주를 매도할지 설정"
               size="sm"
             />
+          );
+
+        case "sell_all":
+          return (
+            <Text size="xs" c="dimmed">
+              보유한 모든 주식을 100% 매도합니다
+            </Text>
           );
 
         case "exit_all":
