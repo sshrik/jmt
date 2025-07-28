@@ -16,7 +16,6 @@ import {
   Badge,
 } from "@mantine/core";
 import {
-  IconSettings,
   IconTrash,
   IconInfoCircle,
   IconDownload,
@@ -217,9 +216,12 @@ function SettingsPage() {
         <Card withBorder p="lg">
           <Group justify="space-between" mb="md">
             <div>
-              <Text fw={500} size="lg" mb="xs">
-                <IconPalette size={20} style={{ marginRight: 8 }} />앱 설정
-              </Text>
+              <Group gap="xs" mb="xs">
+                <IconPalette size={20} />
+                <Text fw={500} size="lg">
+                  앱 설정
+                </Text>
+              </Group>
               <Text size="sm" c="dimmed">
                 사용자 인터페이스 및 동작 설정
               </Text>
@@ -297,10 +299,12 @@ function SettingsPage() {
         <Card withBorder p="lg">
           <Group justify="space-between" mb="md">
             <div>
-              <Text fw={500} size="lg" mb="xs">
-                <IconDatabase size={20} style={{ marginRight: 8 }} />
-                데이터 관리
-              </Text>
+              <Group gap="xs" mb="xs">
+                <IconDatabase size={20} />
+                <Text fw={500} size="lg">
+                  데이터 관리
+                </Text>
+              </Group>
               <Text size="sm" c="dimmed">
                 로컬 데이터 백업 및 관리
               </Text>
@@ -356,26 +360,39 @@ function SettingsPage() {
           </Group>
         </Card>
 
-        {/* 앱 정보 */}
+        {/* 개발자 정보 */}
         <Card withBorder p="lg">
-          <Text fw={500} size="lg" mb="md">
-            <IconSettings size={20} style={{ marginRight: 8 }} />앱 정보
-          </Text>
+          <Group gap="xs" mb="md">
+            <IconInfoCircle size={20} />
+            <Text fw={500} size="lg">
+              개발자 정보
+            </Text>
+          </Group>
           <Stack gap="sm">
             <Group justify="space-between">
-              <Text size="sm">버전</Text>
-              <Badge variant="light">v1.0.0</Badge>
-            </Group>
-            <Group justify="space-between">
-              <Text size="sm">빌드 날짜</Text>
-              <Text size="sm" c="dimmed">
-                2024.01.01
+              <Text size="sm">개발자</Text>
+              <Text
+                size="sm"
+                c="blue"
+                style={{ cursor: "pointer" }}
+                onClick={() =>
+                  window.open("https://github.com/sshrik", "_blank")
+                }
+              >
+                @sshrik
               </Text>
             </Group>
             <Group justify="space-between">
-              <Text size="sm">개발자</Text>
-              <Text size="sm" c="dimmed">
-                JMT Team
+              <Text size="sm">GitHub</Text>
+              <Text
+                size="sm"
+                c="blue"
+                style={{ cursor: "pointer", textDecoration: "underline" }}
+                onClick={() =>
+                  window.open("https://github.com/sshrik", "_blank")
+                }
+              >
+                github.com/sshrik
               </Text>
             </Group>
           </Stack>
