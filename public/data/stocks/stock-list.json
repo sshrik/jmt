@@ -1,0 +1,86 @@
+[
+  {
+    "symbol": "005930.KS",
+    "name": "삼성전자",
+    "market": "KOSPI",
+    "currency": "USD",
+    "dataFile": "005930_KS.json"
+  },
+  {
+    "symbol": "000660.KS",
+    "name": "SK하이닉스",
+    "market": "KOSPI",
+    "currency": "USD",
+    "dataFile": "000660_KS.json"
+  },
+  {
+    "symbol": "035420.KS",
+    "name": "NAVER",
+    "market": "KOSPI",
+    "currency": "USD",
+    "dataFile": "035420_KS.json"
+  },
+  {
+    "symbol": "005380.KS",
+    "name": "현대차",
+    "market": "KOSPI",
+    "currency": "USD",
+    "dataFile": "005380_KS.json"
+  },
+  {
+    "symbol": "051910.KS",
+    "name": "LG화학",
+    "market": "KOSPI",
+    "currency": "USD",
+    "dataFile": "051910_KS.json"
+  },
+  {
+    "symbol": "035720.KS",
+    "name": "카카오",
+    "market": "KOSPI",
+    "currency": "USD",
+    "dataFile": "035720_KS.json"
+  },
+  {
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "market": "NASDAQ",
+    "currency": "USD",
+    "dataFile": "AAPL.json"
+  },
+  {
+    "symbol": "MSFT",
+    "name": "Microsoft Corporation",
+    "market": "NASDAQ",
+    "currency": "USD",
+    "dataFile": "MSFT.json"
+  },
+  {
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc.",
+    "market": "NASDAQ",
+    "currency": "USD",
+    "dataFile": "GOOGL.json"
+  },
+  {
+    "symbol": "TSLA",
+    "name": "Tesla, Inc.",
+    "market": "NASDAQ",
+    "currency": "USD",
+    "dataFile": "TSLA.json"
+  },
+  {
+    "symbol": "NVDA",
+    "name": "NVIDIA Corporation",
+    "market": "NASDAQ",
+    "currency": "USD",
+    "dataFile": "NVDA.json"
+  },
+  {
+    "symbol": "AMZN",
+    "name": "Amazon.com, Inc.",
+    "market": "NASDAQ",
+    "currency": "USD",
+    "dataFile": "AMZN.json"
+  }
+]
