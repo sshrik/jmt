@@ -72,8 +72,16 @@ jobs:
         run: |
           echo "🚀 Deploying to production S3 bucket..."
 
+          # 환경변수 검증
+          if [ -z "${{ env.S3_BUCKET_NAME }}" ]; then
+            echo "❌ S3_BUCKET_NAME is not set"
+            exit 1
+          fi
+
+          echo "📦 S3 Bucket: ${{ env.S3_BUCKET_NAME }}"
+
           # S3에 파일 동기화 (루트 경로에)
-          aws s3 sync dist/ s3://${{ env.S3_BUCKET_NAME }}/ \
+          aws s3 sync dist/ s3://"${{ env.S3_BUCKET_NAME }}"/ \
             --delete \
             --cache-control "public, max-age=31536000" \
             --metadata-directive REPLACE \
@@ -82,7 +90,7 @@ jobs:
           # HTML 파일은 별도로 캐시 설정
           find dist -name "*.html" -type f | while read file; do
             key=$(echo $file | sed 's|dist/||')
-            aws s3 cp "$file" s3://${{ env.S3_BUCKET_NAME }}/$key \
+            aws s3 cp "$file" s3://"${{ env.S3_BUCKET_NAME }}"/$key \
               --cache-control "no-cache, no-store, must-revalidate" \
               --content-type "text/html" \
               --metadata-directive REPLACE
@@ -94,10 +102,18 @@ jobs:
         run: |
           echo "🔄 Invalidating CloudFront cache for production..."
 
-          # 전체 캐시 무효화
+          # 환경변수 검증
+          if [ -z "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
+            echo "❌ CLOUDFRONT_DISTRIBUTION_ID is not set"
+            exit 1
+          fi
+
+          echo "📋 Distribution ID: ${{ env.CLOUDFRONT_DISTRIBUTION_ID }}"
+
+          # 전체 캐시 무효화 (올바른 형식)
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
-            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*" \
+            --distribution-id "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --invalidation-batch '{"Paths":{"Quantity":1,"Items":["/*"]},"CallerReference":"deploy-'$(date +%s)'"}' \
             --query 'Invalidation.Id' \
             --output text)
             
@@ -106,8 +122,8 @@ jobs:
           # 무효화 완료 대기 (최대 10분)
           echo "⏳ Waiting for invalidation to complete..."
           aws cloudfront wait invalidation-completed \
-            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --id $INVALIDATION_ID
+            --distribution-id "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --id "$INVALIDATION_ID"
             
           echo "✅ CloudFront cache invalidation completed!"
 
@@ -143,11 +159,21 @@ jobs:
     name: 🏥 Health Check
     runs-on: ubuntu-latest
     needs: deploy
+    env:
+      CLOUDFRONT_DOMAIN: ${{ vars.CLOUDFRONT_DOMAIN }}
 
     steps:
       - name: 🏥 Check deployment health
         run: |
           echo "🏥 Performing health check..."
+
+          # 환경변수 검증
+          if [ -z "${{ env.CLOUDFRONT_DOMAIN }}" ]; then
+            echo "❌ CLOUDFRONT_DOMAIN is not set"
+            exit 1
+          fi
+
+          echo "🌐 Checking: https://${{ env.CLOUDFRONT_DOMAIN }}"
 
           # 기본 접근성 체크
           curl -f -s https://${{ env.CLOUDFRONT_DOMAIN }} > /dev/null

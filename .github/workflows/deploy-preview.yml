@@ -67,14 +67,23 @@ jobs:
           PREVIEW_PATH="pr-${{ github.event.number }}"
           echo "🚀 Deploying to preview path: $PREVIEW_PATH"
 
+          # 환경변수 검증
+          if [ -z "${{ env.S3_BUCKET_NAME }}" ]; then
+            echo "❌ S3_BUCKET_NAME is not set"
+            exit 1
+          fi
+
+          echo "📦 S3 Bucket: ${{ env.S3_BUCKET_NAME }}"
+          echo "📁 Preview Path: /$PREVIEW_PATH/"
+
           # Production S3에 업로드 (프리뷰 경로로)
-          aws s3 sync dist/ s3://${{ env.S3_BUCKET_NAME }}/$PREVIEW_PATH/ \
+          aws s3 sync dist/ s3://"${{ env.S3_BUCKET_NAME }}"/$PREVIEW_PATH/ \
             --delete \
             --cache-control "public, max-age=3600" \
             --metadata-directive REPLACE
             
           # index.html은 캐시 안함
-          aws s3 cp dist/index.html s3://${{ env.S3_BUCKET_NAME }}/$PREVIEW_PATH/index.html \
+          aws s3 cp dist/index.html s3://"${{ env.S3_BUCKET_NAME }}"/$PREVIEW_PATH/index.html \
             --cache-control "no-cache, no-store, must-revalidate" \
             --metadata-directive REPLACE
             
@@ -88,10 +97,19 @@ jobs:
         run: |
           echo "🔄 Invalidating CloudFront cache..."
 
-          # 프리뷰 경로의 모든 파일 무효화
+          # 환경변수 검증
+          if [ -z "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
+            echo "❌ CLOUDFRONT_DISTRIBUTION_ID is not set"
+            exit 1
+          fi
+
+          echo "📋 Distribution ID: ${{ env.CLOUDFRONT_DISTRIBUTION_ID }}"
+          echo "📁 Invalidating path: /pr-${{ github.event.number }}/*"
+
+          # 프리뷰 경로의 모든 파일 무효화 (올바른 형식)
           INVALIDATION_ID=$(aws cloudfront create-invalidation \
-            --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/pr-${{ github.event.number }}/*" \
+            --distribution-id "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --invalidation-batch '{"Paths":{"Quantity":1,"Items":["/pr-${{ github.event.number }}/*"]},"CallerReference":"preview-${{ github.event.number }}-'$(date +%s)'"}' \
             --query 'Invalidation.Id' \
             --output text)
             
@@ -162,6 +180,9 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     if: github.event.action == 'closed'
+    env:
+      S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
 
     steps:
       - name: 🔧 Configure AWS credentials
@@ -176,7 +197,16 @@ jobs:
           PREVIEW_PATH="pr-${{ github.event.number }}"
           echo "🗑️ Cleaning up preview: $PREVIEW_PATH"
 
-          aws s3 rm s3://${{ env.S3_BUCKET_NAME }}/$PREVIEW_PATH/ --recursive
+          # 환경변수 검증
+          if [ -z "${{ env.S3_BUCKET_NAME }}" ]; then
+            echo "❌ S3_BUCKET_NAME is not set"
+            exit 1
+          fi
+
+          echo "📦 S3 Bucket: ${{ env.S3_BUCKET_NAME }}"
+          echo "📁 Removing path: /$PREVIEW_PATH/"
+
+          aws s3 rm s3://"${{ env.S3_BUCKET_NAME }}"/$PREVIEW_PATH/ --recursive
 
           echo "✅ Preview cleanup completed!"
 
