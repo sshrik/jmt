@@ -476,8 +476,22 @@ export const StrategyEditor = ({
       const totalNewBlocks = conditionNodes.length + actionNodes.length;
 
       // 실제 블록 구조 변경이 없다면 업데이트 스킵
+      // 단, 블록 ID가 다르면 새로운 블록이므로 업데이트 필요
       if (totalNewBlocks === strategy.blocks.length) {
-        return;
+        const currentBlockIds = new Set(strategy.blocks.map((b) => b.id));
+        const flowBlockIds = new Set([
+          ...conditionNodes.map((n) => n.id),
+          ...actionNodes.map((n) => n.id),
+        ]);
+
+        // ID가 모두 동일하면 스킵
+        const allIdsMatch =
+          currentBlockIds.size === flowBlockIds.size &&
+          [...currentBlockIds].every((id) => flowBlockIds.has(id));
+
+        if (allIdsMatch) {
+          return;
+        }
       }
 
       // 플로우에서 조건과 액션 블록들 추출

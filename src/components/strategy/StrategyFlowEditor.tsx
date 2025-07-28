@@ -378,7 +378,7 @@ export const StrategyFlowEditor = ({
       };
 
       onFlowUpdate(updatedFlow);
-    }, 500); // 500ms 디바운싱
+    }, 1000); // 1초 디바운싱으로 증가
 
     return () => clearTimeout(timeoutId);
   }, [nodes, edges, onFlowUpdate]); // flow 의존성 제거
