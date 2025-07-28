@@ -23,6 +23,7 @@ import type {
   StrategyBlock,
   Strategy,
   StrategyFlow,
+  ActionType,
 } from "../../types/strategy";
 
 interface StrategyEditorProps {
@@ -451,13 +452,73 @@ export const StrategyEditor = ({
   const handleFlowUpdate = useCallback(
     (updatedFlow: StrategyFlow) => {
       // 플로우를 기존 룰 기반 구조로 역변환하는 로직
-      // 여기서는 간단히 메타데이터만 업데이트
-      onStrategyUpdate({
+      console.log("🔄 플로우 업데이트:", updatedFlow);
+
+      // 플로우에서 조건과 액션 블록들 추출
+      const conditionNodes = updatedFlow.nodes.filter(
+        (node) => node.data.type === "condition"
+      );
+      const actionNodes = updatedFlow.nodes.filter(
+        (node) => node.data.type === "action"
+      );
+
+      // 새로운 블록 배열 생성
+      const newBlocks: StrategyBlock[] = [];
+      const newBlockOrder: string[] = [];
+
+      // 조건 노드들을 블록으로 변환
+      conditionNodes.forEach((node) => {
+        const block: StrategyBlock = {
+          id: node.id,
+          type: "condition",
+          name: node.data.label,
+          enabled: node.data.enabled || true,
+          createdAt: node.data.createdAt || new Date(),
+          updatedAt: new Date(),
+          position: node.position,
+          connections: [],
+          conditionType: node.data.conditionType,
+          conditionParams: node.data.conditionParams,
+        };
+        newBlocks.push(block);
+        newBlockOrder.push(node.id);
+      });
+
+      // 액션 노드들을 블록으로 변환
+      actionNodes.forEach((node) => {
+        const block: StrategyBlock = {
+          id: node.id,
+          type: "action",
+          name: node.data.label,
+          enabled: node.data.enabled || true,
+          createdAt: node.data.createdAt || new Date(),
+          updatedAt: new Date(),
+          position: node.position,
+          connections: [],
+          actionType: node.data.actionType as ActionType,
+          actionParams: node.data.actionParams,
+        };
+        newBlocks.push(block);
+        newBlockOrder.push(node.id);
+      });
+
+      // 전략 업데이트
+      const updatedStrategy: Strategy = {
         ...strategy,
         name: updatedFlow.name.replace(" (플로우)", ""),
         description: updatedFlow.description,
+        blocks: newBlocks,
+        blockOrder: newBlockOrder,
         updatedAt: new Date(),
+      };
+
+      console.log("📝 전략 업데이트:", {
+        원본블록수: strategy.blocks.length,
+        새블록수: newBlocks.length,
+        블록순서: newBlockOrder,
       });
+
+      onStrategyUpdate(updatedStrategy);
     },
     [strategy, onStrategyUpdate]
   );

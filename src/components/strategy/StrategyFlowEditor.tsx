@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import {
   ReactFlow,
   Controls,
@@ -15,7 +15,6 @@ import {
   Card,
   Title,
   Group,
-  Button,
   Stack,
   Badge,
   Text,
@@ -201,11 +200,27 @@ export const StrategyFlowEditor = ({
   const [draggedNodeType, setDraggedNodeType] = useState<FlowNodeType | null>(
     null
   );
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
   // 엣지 연결 핸들러
   const onConnect = useCallback(
     (connection: Connection) => {
       if (connection.source && connection.target) {
+        // 액션 노드로의 연결 제한 (1개만 허용)
+        const targetNode = nodes.find((node) => node.id === connection.target);
+        if (targetNode?.type === "action") {
+          // 이미 연결된 액션 노드인지 확인
+          const existingConnection = edges.find(
+            (edge) =>
+              edge.target === connection.target &&
+              edge.targetHandle === connection.targetHandle
+          );
+          if (existingConnection) {
+            console.log("액션 노드는 하나의 입력만 허용됩니다.");
+            return; // 연결 차단
+          }
+        }
+
         const newEdge: Edge = {
           id: `${connection.source}-${connection.target}`,
           source: connection.source,
@@ -217,7 +232,7 @@ export const StrategyFlowEditor = ({
         setEdges((eds) => addEdge(newEdge, eds));
       }
     },
-    [setEdges]
+    [setEdges, nodes, edges]
   );
 
   // 노드 업데이트 핸들러
@@ -237,22 +252,17 @@ export const StrategyFlowEditor = ({
     [setNodes]
   );
 
-  // 노드 추가 (드래그앤드롭)
+  // 노드 추가 (드래그앤드롭) - React Flow 내부에서 실행
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
 
-      if (!draggedNodeType) return;
+      if (!draggedNodeType || !reactFlowWrapper.current) return;
 
-      // React Flow 컨테이너의 경계를 고려한 정확한 위치 계산
-      const reactFlowBounds = (
-        event.currentTarget as Element
-      ).getBoundingClientRect();
-
-      // 화면 좌표를 React Flow 내부 좌표로 변환
+      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = {
-        x: event.clientX - reactFlowBounds.left - 150, // 노드 중앙 정렬을 위한 오프셋
-        y: event.clientY - reactFlowBounds.top - 100,
+        x: event.clientX - reactFlowBounds.left,
+        y: event.clientY - reactFlowBounds.top,
       };
 
       console.log("드래그앤드롭 위치:", {
@@ -300,13 +310,8 @@ export const StrategyFlowEditor = ({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onKeyDown]);
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }, []);
-
-  // 플로우 내보내기
-  const exportFlow = useCallback(() => {
+  // 플로우 변경사항 자동 저장
+  useEffect(() => {
     if (onFlowUpdate && flow) {
       const updatedFlow: StrategyFlow = {
         ...flow,
@@ -316,7 +321,25 @@ export const StrategyFlowEditor = ({
       };
       onFlowUpdate(updatedFlow);
     }
-  }, [flow, nodes, edges, onFlowUpdate]);
+  }, [nodes, edges, onFlowUpdate, flow]);
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  // 플로우 내보내기 - 제거됨 (상위 컴포넌트에서 자동 저장)
+  // const exportFlow = useCallback(() => {
+  //   if (onFlowUpdate && flow) {
+  //     const updatedFlow: StrategyFlow = {
+  //       ...flow,
+  //       nodes: nodes as StrategyFlowNode[],
+  //       edges: edges as StrategyFlowEdge[],
+  //       updatedAt: new Date(),
+  //     };
+  //     onFlowUpdate(updatedFlow);
+  //   }
+  // }, [flow, nodes, edges, onFlowUpdate]);
 
   // 통계 정보
   const flowStats = useMemo(() => {
@@ -358,11 +381,6 @@ export const StrategyFlowEditor = ({
             >
               {flowStats.isValid ? "유효함" : "불완전"}
             </Badge>
-            {!readOnly && (
-              <Button size="sm" variant="light" onClick={exportFlow}>
-                저장
-              </Button>
-            )}
           </Group>
         </Group>
 
@@ -434,7 +452,6 @@ export const StrategyFlowEditor = ({
                       backgroundColor:
                         draggedNodeType === type ? "#f0f9ff" : "white",
                     }}
-                    onMouseDown={() => setDraggedNodeType(type)}
                     onDragStart={(e) => {
                       setDraggedNodeType(type);
                       e.dataTransfer.effectAllowed = "move";
@@ -472,7 +489,10 @@ export const StrategyFlowEditor = ({
           )}
 
           {/* React Flow 차트 */}
-          <div style={{ flexGrow: 1, height: "100%", minHeight: 400 }}>
+          <div
+            ref={reactFlowWrapper}
+            style={{ flexGrow: 1, height: "100%", minHeight: 400 }}
+          >
             <ReactFlow
               nodes={nodes.map((node) => ({
                 ...node,
