@@ -9,6 +9,7 @@ import type {
   BacktestStats,
 } from "../types/backtest";
 import type { Strategy, StrategyBlock } from "../types/strategy";
+import { calculateFormula } from "./formulaCalculator";
 
 // 백테스트 엔진 클래스
 export class BacktestEngine {
@@ -293,6 +294,138 @@ export class BacktestEngine {
         break;
       }
 
+      case "buy_formula_amount": {
+        const formula = actionParams?.formula || "";
+        if (formula) {
+          const priceChangePercent =
+            this.getCurrentPriceChangePercent(currentPrice);
+          const formulaResult = calculateFormula(formula, priceChangePercent);
+
+          if (formulaResult.isValid && formulaResult.value > 0) {
+            const amount = formulaResult.value;
+            const commission = amount * this.config.commission;
+            const netAmount = amount - commission;
+            const quantity = Math.floor(netAmount / price);
+
+            if (quantity > 0 && amount <= this.cash) {
+              this.executeBuy(currentPrice.date, quantity, price, commission);
+            }
+          }
+        }
+        break;
+      }
+
+      case "sell_formula_amount": {
+        const formula = actionParams?.formula || "";
+        if (formula) {
+          const priceChangePercent =
+            this.getCurrentPriceChangePercent(currentPrice);
+          const formulaResult = calculateFormula(formula, priceChangePercent);
+
+          if (formulaResult.isValid && formulaResult.value > 0) {
+            const amount = formulaResult.value;
+            const quantity = Math.floor(amount / price);
+            const position = this.positions.get(this.config.symbol);
+
+            if (position && quantity > 0 && quantity <= position.quantity) {
+              const commission = quantity * price * this.config.commission;
+              this.executeSell(currentPrice.date, quantity, price, commission);
+            }
+          }
+        }
+        break;
+      }
+
+      case "buy_formula_shares": {
+        const formula = actionParams?.formula || "";
+        if (formula) {
+          const priceChangePercent =
+            this.getCurrentPriceChangePercent(currentPrice);
+          const formulaResult = calculateFormula(formula, priceChangePercent);
+
+          if (formulaResult.isValid && formulaResult.value > 0) {
+            const quantity = Math.floor(formulaResult.value);
+            const amount = quantity * price;
+            const commission = amount * this.config.commission;
+            const total = amount + commission;
+
+            if (quantity > 0 && total <= this.cash) {
+              this.executeBuy(currentPrice.date, quantity, price, commission);
+            }
+          }
+        }
+        break;
+      }
+
+      case "sell_formula_shares": {
+        const formula = actionParams?.formula || "";
+        if (formula) {
+          const priceChangePercent =
+            this.getCurrentPriceChangePercent(currentPrice);
+          const formulaResult = calculateFormula(formula, priceChangePercent);
+
+          if (formulaResult.isValid && formulaResult.value > 0) {
+            const quantity = Math.floor(formulaResult.value);
+            const position = this.positions.get(this.config.symbol);
+
+            if (position && quantity > 0 && quantity <= position.quantity) {
+              const commission = quantity * price * this.config.commission;
+              this.executeSell(currentPrice.date, quantity, price, commission);
+            }
+          }
+        }
+        break;
+      }
+
+      case "buy_formula_percent": {
+        const formula = actionParams?.formula || "";
+        if (formula) {
+          const priceChangePercent =
+            this.getCurrentPriceChangePercent(currentPrice);
+          const formulaResult = calculateFormula(formula, priceChangePercent);
+
+          if (formulaResult.isValid && formulaResult.value > 0) {
+            const percent = Math.min(100, Math.max(0, formulaResult.value));
+            const amount = (this.cash * percent) / 100;
+            const commission = amount * this.config.commission;
+            const netAmount = amount - commission;
+            const quantity = Math.floor(netAmount / price);
+
+            if (quantity > 0 && netAmount <= this.cash) {
+              this.executeBuy(currentPrice.date, quantity, price, commission);
+            }
+          }
+        }
+        break;
+      }
+
+      case "sell_formula_percent": {
+        const formula = actionParams?.formula || "";
+        if (formula) {
+          const priceChangePercent =
+            this.getCurrentPriceChangePercent(currentPrice);
+          const formulaResult = calculateFormula(formula, priceChangePercent);
+
+          if (formulaResult.isValid && formulaResult.value > 0) {
+            const percent = Math.min(100, Math.max(0, formulaResult.value));
+            const position = this.positions.get(this.config.symbol);
+            if (position) {
+              const quantity = Math.floor((position.quantity * percent) / 100);
+              if (quantity > 0) {
+                const commission = quantity * price * this.config.commission;
+                this.executeSell(
+                  currentPrice.date,
+                  quantity,
+                  price,
+                  commission
+                );
+              }
+            }
+          }
+        }
+        break;
+      }
+
       case "hold":
         // 아무것도 하지 않음
         break;
@@ -537,6 +670,21 @@ export class BacktestEngine {
           status === "running" ? `${currentDate} 데이터 처리 중...` : undefined,
       });
     }
+  }
+
+  // 현재 가격 변화율 계산 (N 값)
+  private getCurrentPriceChangePercent(currentPrice: StockPrice): number {
+    const currentIndex = this.stockData.prices.findIndex(
+      (p) => p.date === currentPrice.date
+    );
+
+    if (currentIndex <= 0) return 0; // 첫 번째 데이터이거나 찾을 수 없는 경우
+
+    const prevPrice = this.stockData.prices[currentIndex - 1];
+    const changePercent =
+      ((currentPrice.close - prevPrice.close) / prevPrice.close) * 100;
+
+    return changePercent;
   }
 }
 

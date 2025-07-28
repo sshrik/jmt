@@ -8,18 +8,32 @@ import {
   ActionIcon,
   Tooltip,
   Stack,
+  TextInput,
+  Collapse,
+  Code,
+  Alert,
 } from "@mantine/core";
 import {
   IconTrash,
   IconArrowUp,
   IconArrowDown,
   IconPlayerPause,
+  IconMath,
+  IconInfoCircle,
+  IconChevronDown,
+  IconChevronUp,
 } from "@tabler/icons-react";
+import { useState } from "react";
 import type {
   StrategyBlock,
   ActionType,
   ActionParameters,
 } from "../../types/strategy";
+import {
+  validateFormula,
+  calculateFormula,
+  FORMULA_EXAMPLES,
+} from "../../utils/formulaCalculator";
 
 interface ActionBlockProps {
   block: StrategyBlock;
@@ -73,6 +87,42 @@ const ACTION_CONFIG = {
     icon: IconArrowDown,
     color: "orange",
   },
+  buy_formula_amount: {
+    label: "수식 기반 금액 매수",
+    description: "상승/하락 비율에 따른 수식으로 매수 금액 계산",
+    icon: IconMath,
+    color: "blue",
+  },
+  sell_formula_amount: {
+    label: "수식 기반 금액 매도",
+    description: "상승/하락 비율에 따른 수식으로 매도 금액 계산",
+    icon: IconMath,
+    color: "purple",
+  },
+  buy_formula_shares: {
+    label: "수식 기반 주식 수 매수",
+    description: "상승/하락 비율에 따른 수식으로 매수 주식 수 계산",
+    icon: IconMath,
+    color: "teal",
+  },
+  sell_formula_shares: {
+    label: "수식 기반 주식 수 매도",
+    description: "상승/하락 비율에 따른 수식으로 매도 주식 수 계산",
+    icon: IconMath,
+    color: "indigo",
+  },
+  buy_formula_percent: {
+    label: "수식 기반 비율 매수",
+    description: "상승/하락 비율에 따른 수식으로 매수 비율 계산",
+    icon: IconMath,
+    color: "cyan",
+  },
+  sell_formula_percent: {
+    label: "수식 기반 비율 매도",
+    description: "상승/하락 비율에 따른 수식으로 매도 비율 계산",
+    icon: IconMath,
+    color: "grape",
+  },
   hold: {
     label: "대기",
     description: "매매하지 않고 대기",
@@ -88,6 +138,7 @@ export const ActionBlock = ({
   readOnly = false,
   canDelete = false,
 }: ActionBlockProps) => {
+  const [showExamples, setShowExamples] = useState(false);
   const actionType = block.actionType || "buy_percent_cash";
   const params = block.actionParams || {};
   const config = ACTION_CONFIG[actionType];
@@ -115,6 +166,140 @@ export const ActionBlock = ({
         name: `${ACTION_CONFIG[value as ActionType].label} 액션`,
       });
     }
+  };
+
+  // 수식 입력 UI 렌더링
+  const renderFormulaInput = () => {
+    const formula = params.formula || "";
+    const validation = validateFormula(formula);
+
+    const getFormulaDescription = () => {
+      switch (actionType) {
+        case "buy_formula_amount":
+          return "상승/하락 비율(N)에 따라 매수할 금액을 계산하는 수식을 입력하세요.";
+        case "sell_formula_amount":
+          return "상승/하락 비율(N)에 따라 매도할 금액을 계산하는 수식을 입력하세요.";
+        case "buy_formula_shares":
+          return "상승/하락 비율(N)에 따라 매수할 주식 수를 계산하는 수식을 입력하세요.";
+        case "sell_formula_shares":
+          return "상승/하락 비율(N)에 따라 매도할 주식 수를 계산하는 수식을 입력하세요.";
+        case "buy_formula_percent":
+          return "상승/하락 비율(N)에 따라 현금의 몇 %를 매수할지 계산하는 수식을 입력하세요.";
+        case "sell_formula_percent":
+          return "상승/하락 비율(N)에 따라 주식의 몇 %를 매도할지 계산하는 수식을 입력하세요.";
+        default:
+          return "수식을 입력하세요.";
+      }
+    };
+
+    const getExampleFormula = () => {
+      switch (actionType) {
+        case "buy_formula_amount":
+        case "sell_formula_amount":
+          return "10000 * N + 2000";
+        case "buy_formula_shares":
+        case "sell_formula_shares":
+          return "2 * N";
+        case "buy_formula_percent":
+        case "sell_formula_percent":
+          return "abs(N) * 0.5";
+        default:
+          return "N";
+      }
+    };
+
+    return (
+      <Stack gap="sm">
+        <TextInput
+          label="수식"
+          placeholder={`예: ${getExampleFormula()}`}
+          value={formula}
+          onChange={(event) =>
+            updateParams({ formula: event.currentTarget.value })
+          }
+          disabled={readOnly}
+          description={getFormulaDescription()}
+          error={validation.isValid ? undefined : validation.error}
+          rightSection={
+            <Tooltip label="수식 예시 보기">
+              <ActionIcon
+                variant="subtle"
+                color="blue"
+                onClick={() => setShowExamples(!showExamples)}
+              >
+                {showExamples ? (
+                  <IconChevronUp size={16} />
+                ) : (
+                  <IconChevronDown size={16} />
+                )}
+              </ActionIcon>
+            </Tooltip>
+          }
+        />
+
+        <Collapse in={showExamples}>
+          <Alert
+            icon={<IconInfoCircle size={16} />}
+            color="blue"
+            title="수식 예시"
+          >
+            <Stack gap="xs">
+              <Text size="sm" fw={500}>
+                사용 가능한 변수 및 함수:
+              </Text>
+              <Text size="xs">
+                • <Code>N</Code>: 실제 상승/하락 비율 (예: 5는 5%)
+              </Text>
+              <Text size="xs">
+                • <Code>abs(N)</Code>: 절댓값 (상승/하락 관계없이)
+              </Text>
+              <Text size="xs">
+                • 연산자: <Code>+</Code>, <Code>-</Code>, <Code>*</Code>,{" "}
+                <Code>/</Code>, <Code>()</Code>
+              </Text>
+
+              <Text size="sm" fw={500} mt="sm">
+                예시:
+              </Text>
+              {FORMULA_EXAMPLES.slice(0, 3).map((example, index) => (
+                <div key={index}>
+                  <Text size="xs">
+                    <Code>{example.formula}</Code> - {example.description}
+                  </Text>
+                  <Text size="xs" c="dimmed" ml="md">
+                    {example.example}
+                  </Text>
+                </div>
+              ))}
+            </Stack>
+          </Alert>
+        </Collapse>
+
+        {formula && validation.isValid && (
+          <Stack gap="xs">
+            <Text size="xs" fw={500}>
+              수식 테스트:
+            </Text>
+            {[1, 5, 10, -5].map((testN) => {
+              const result = calculateFormula(formula, testN);
+              const unit = actionType.includes("amount")
+                ? "원"
+                : actionType.includes("shares")
+                  ? "주"
+                  : "%";
+              return (
+                <Text key={testN} size="xs" c="dimmed">
+                  N={testN}% →{" "}
+                  {result.isValid
+                    ? `${result.value.toLocaleString()}${unit}`
+                    : "계산 오류"}
+                </Text>
+              );
+            })}
+          </Stack>
+        )}
+      </Stack>
+    );
   };
 
   // 액션별 파라미터 UI 렌더링
@@ -260,6 +445,14 @@ export const ActionBlock = ({
             </Text>
           </Stack>
         );
+
+      case "buy_formula_amount":
+      case "sell_formula_amount":
+      case "buy_formula_shares":
+      case "sell_formula_shares":
+      case "buy_formula_percent":
+      case "sell_formula_percent":
+        return renderFormulaInput();
 
       case "hold":
         return (

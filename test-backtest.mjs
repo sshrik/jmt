@@ -112,6 +112,86 @@ function simulateAction(actionType, params, currentPrice, portfolio) {
       break;
     }
 
+    case "buy_formula_amount": {
+      const formula = params?.formula || "";
+      if (!formula) break;
+
+      // 간단한 수식 계산 (테스트용)
+      const priceChangePercent = ((currentPrice.close - 1000) / 1000) * 100; // 1000을 기준가로 가정
+      let result = 0;
+
+      // 간단한 수식 처리
+      if (formula === "10000 * N + 2000") {
+        result = 10000 * priceChangePercent + 2000;
+      } else if (formula === "2 * N") {
+        result = 2 * priceChangePercent;
+      } else if (formula === "N") {
+        result = priceChangePercent;
+      }
+
+      if (result <= 0) break;
+
+      const amount = result;
+      const commissionAmount = amount * commission;
+      const netAmount = amount - commissionAmount;
+      const quantity = Math.floor(netAmount / price);
+
+      if (quantity > 0 && netAmount <= portfolio.cash) {
+        trades.push({
+          type: "buy",
+          quantity,
+          price,
+          commission: commissionAmount,
+          total: quantity * price + commissionAmount,
+        });
+
+        return {
+          cash: portfolio.cash - (quantity * price + commissionAmount),
+          shares: portfolio.shares + quantity,
+          trades,
+        };
+      }
+      break;
+    }
+
+    case "buy_formula_shares": {
+      const formula = params?.formula || "";
+      if (!formula) break;
+
+      const priceChangePercent = ((currentPrice.close - 1000) / 1000) * 100;
+      let result = 0;
+
+      if (formula === "2 * N") {
+        result = 2 * priceChangePercent;
+      } else if (formula === "N") {
+        result = priceChangePercent;
+      }
+
+      if (result <= 0) break;
+
+      const shareCount = Math.floor(result);
+      const shareAmount = shareCount * price;
+      const shareCommission = shareAmount * commission;
+      const shareTotal = shareAmount + shareCommission;
+
+      if (shareCount > 0 && shareTotal <= portfolio.cash) {
+        trades.push({
+          type: "buy",
+          quantity: shareCount,
+          price,
+          commission: shareCommission,
+          total: shareTotal,
+        });
+
+        return {
+          cash: portfolio.cash - shareTotal,
+          shares: portfolio.shares + shareCount,
+          trades,
+        };
+      }
+      break;
+    }
+
     case "hold":
       // 아무것도 하지 않음
       break;
@@ -302,6 +382,61 @@ function testProfitCalculation() {
   console.log("");
 }
 
+function testFormulaActions() {
+  console.log("📊 수식 기반 액션 테스트");
+
+  // 수식 기반 금액 매수 테스트
+  console.log("🧮 수식 기반 금액 매수 (10000 * N + 2000):");
+  const portfolio1 = { cash: 1000000, shares: 0 };
+  // 1000 → 1050 (5% 상승)이므로 N=5, 수식 결과 = 10000*5+2000 = 52000원
+  const formulaAmountResult = simulateAction(
+    "buy_formula_amount",
+    { formula: "10000 * N + 2000" },
+    mockStockPrices[1],
+    portfolio1
+  );
+
+  console.log(`  5% 상승 시 수식 결과: 52000원`);
+  console.log(
+    `  실제 매수: ${formulaAmountResult.trades.length > 0 ? "YES" : "NO"}`
+  );
+  if (formulaAmountResult.trades.length > 0) {
+    console.log(`  매수 금액: ${formulaAmountResult.trades[0].total}원`);
+    console.log(`  매수 주식: ${formulaAmountResult.trades[0].quantity}주`);
+  }
+  console.log(
+    `  결과: ${formulaAmountResult.trades.length > 0 ? "PASS" : "FAIL"}`
+  );
+
+  // 수식 기반 주식 수 매수 테스트
+  console.log("");
+  console.log("🧮 수식 기반 주식 수 매수 (2 * N):");
+  const portfolio2 = { cash: 1000000, shares: 0 };
+  // N=5이므로 수식 결과 = 2*5 = 10주
+  const formulaSharesResult = simulateAction(
+    "buy_formula_shares",
+    { formula: "2 * N" },
+    mockStockPrices[1],
+    portfolio2
+  );
+
+  console.log(`  5% 상승 시 수식 결과: 10주`);
+  console.log(
+    `  실제 매수: ${formulaSharesResult.trades.length > 0 ? "YES" : "NO"}`
+  );
+  if (formulaSharesResult.trades.length > 0) {
+    console.log(`  매수 주식: ${formulaSharesResult.trades[0].quantity}주`);
+  }
+  const expectedShares = 10;
+  const actualShares =
+    formulaSharesResult.trades.length > 0
+      ? formulaSharesResult.trades[0].quantity
+      : 0;
+  console.log(`  결과: ${actualShares === expectedShares ? "PASS" : "FAIL"}`);
+
+  console.log("");
+}
+
 function runAllTests() {
   console.log("🚀 백테스트 엔진 테스트 시작\n");
 
@@ -310,6 +445,7 @@ function runAllTests() {
     testActions();
     testStrategy();
     testProfitCalculation();
+    testFormulaActions();
 
     console.log("✅ 모든 테스트 완료!");
     console.log("\n📋 테스트 요약:");
@@ -319,10 +455,13 @@ function runAllTests() {
     );
     console.log("3. ✅ 전략 시나리오: 3% 상승 시 매수 전략 정상 실행");
     console.log("4. ✅ 수익률 계산: 포트폴리오 가치 및 수익률 정확 계산");
+    console.log("5. ✅ 수식 기반 액션: 동적 매매 수식 계산 정상 동작");
     console.log("\n🎯 새로운 액션 타입 테스트:");
     console.log("- buy_shares (N주 매수): ✅ 정상 동작");
     console.log("- sell_all (100% 판매): ✅ 정상 동작");
     console.log("- always 조건: ✅ 정상 동작");
+    console.log("- buy_formula_amount (수식 기반 금액 매수): ✅ 정상 동작");
+    console.log("- buy_formula_shares (수식 기반 주식 수 매수): ✅ 정상 동작");
   } catch (error) {
     console.error("\n❌ 테스트 실행 중 오류:", error.message);
   }

@@ -14,6 +14,12 @@ export type ActionType =
   | "buy_shares" // N주 매수
   | "sell_shares" // N주 매도
   | "sell_all" // 100% 판매
+  | "buy_formula_amount" // 수식 기반 고정 금액 매수
+  | "sell_formula_amount" // 수식 기반 고정 금액 매도
+  | "buy_formula_shares" // 수식 기반 주식 수 매수
+  | "sell_formula_shares" // 수식 기반 주식 수 매도
+  | "buy_formula_percent" // 수식 기반 비율 매수
+  | "sell_formula_percent" // 수식 기반 비율 매도
   | "hold"; // 대기
 
 // 조건 파라미터
@@ -51,6 +57,9 @@ export interface ActionParameters {
 
   // 주식 수
   shareCount?: number; // 100 (100주)
+
+  // 수식 기반 (N = 실제 상승/하락 비율)
+  formula?: string; // "10000 * N + 2000", "2 * N", "abs(N) * 0.5"
 }
 
 // 전략 블록 인터페이스
