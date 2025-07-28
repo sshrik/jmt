@@ -10,8 +10,15 @@ import {
   Select,
   NumberInput,
   Stack,
+  ActionIcon,
+  Tooltip,
 } from "@mantine/core";
-import { IconClock, IconCalendar, IconRefresh } from "@tabler/icons-react";
+import {
+  IconClock,
+  IconCalendar,
+  IconRefresh,
+  IconTrash,
+} from "@tabler/icons-react";
 import type { FlowNodeData, ScheduleType } from "../../../types/strategy";
 
 // 스케줄 타입별 설정
@@ -56,10 +63,11 @@ const SCHEDULE_CONFIG = {
 
 interface ScheduleNodeProps extends NodeProps<FlowNodeData> {
   onUpdate?: (data: FlowNodeData) => void;
+  onDelete?: () => void;
 }
 
 export const ScheduleNode = memo(
-  ({ data, selected, onUpdate }: ScheduleNodeProps) => {
+  ({ data, selected, onUpdate, onDelete }: ScheduleNodeProps) => {
     const scheduleType = data.scheduleParams?.scheduleType || "market_open";
     const config = SCHEDULE_CONFIG[scheduleType];
     const IconComponent = config.icon;
@@ -109,7 +117,7 @@ export const ScheduleNode = memo(
           <ThemeIcon color={config.color} variant="light" size="lg">
             <IconComponent size={20} />
           </ThemeIcon>
-          <div>
+          <div style={{ flex: 1 }}>
             <Text fw={600} size="sm">
               실행 일정
             </Text>
@@ -117,6 +125,18 @@ export const ScheduleNode = memo(
               {data.label}
             </Text>
           </div>
+          {onDelete && (
+            <Tooltip label="노드 삭제">
+              <ActionIcon
+                color="red"
+                variant="subtle"
+                size="sm"
+                onClick={onDelete}
+              >
+                <IconTrash size={14} />
+              </ActionIcon>
+            </Tooltip>
+          )}
         </Group>
 
         <Stack gap="sm">

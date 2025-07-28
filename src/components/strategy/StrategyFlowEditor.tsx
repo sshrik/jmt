@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import {
   ReactFlow,
   Controls,
@@ -21,6 +21,7 @@ import {
   Text,
   Paper,
   Alert,
+  ThemeIcon,
 } from "@mantine/core";
 import {
   IconPlayerPlay,
@@ -54,7 +55,7 @@ const createDefaultFlow = (): {
   const startNode: StrategyFlowNode = {
     id: "start-1",
     type: "start",
-    position: { x: 100, y: 50 },
+    position: { x: 250, y: 50 },
     data: {
       id: "start-1",
       label: "전략 시작",
@@ -66,7 +67,7 @@ const createDefaultFlow = (): {
   const scheduleNode: StrategyFlowNode = {
     id: "schedule-1",
     type: "schedule",
-    position: { x: 100, y: 200 },
+    position: { x: 250, y: 250 },
     data: {
       id: "schedule-1",
       label: "실행 일정",
@@ -82,7 +83,7 @@ const createDefaultFlow = (): {
   const endNode: StrategyFlowNode = {
     id: "end-1",
     type: "end",
-    position: { x: 100, y: 600 },
+    position: { x: 250, y: 450 },
     data: {
       id: "end-1",
       label: "전략 종료",
@@ -91,16 +92,23 @@ const createDefaultFlow = (): {
     },
   };
 
-  const startEdge: StrategyFlowEdge = {
+  const startToScheduleEdge: StrategyFlowEdge = {
     id: "start-schedule",
     source: "start-1",
     target: "schedule-1",
     animated: true,
   };
 
+  const scheduleToEndEdge: StrategyFlowEdge = {
+    id: "schedule-end",
+    source: "schedule-1",
+    target: "end-1",
+    animated: true,
+  };
+
   return {
     nodes: [startNode, scheduleNode, endNode],
-    edges: [startEdge],
+    edges: [startToScheduleEdge, scheduleToEndEdge],
   };
 };
 
@@ -236,9 +244,14 @@ export const StrategyFlowEditor = ({
 
       if (!draggedNodeType) return;
 
+      // React Flow 컨테이너의 경계를 고려한 정확한 위치 계산
+      const reactFlowBounds = (event.target as Element).closest(".react-flow");
+      if (!reactFlowBounds) return;
+
+      const boundingRect = reactFlowBounds.getBoundingClientRect();
       const position = {
-        x: event.clientX - 200,
-        y: event.clientY - 100,
+        x: event.clientX - boundingRect.left - 150, // 노드 중앙 정렬을 위한 오프셋
+        y: event.clientY - boundingRect.top - 100,
       };
 
       const newNode = createNode(draggedNodeType, position);
@@ -248,19 +261,40 @@ export const StrategyFlowEditor = ({
     [draggedNodeType, setNodes]
   );
 
+  // 노드 삭제
+  const deleteNode = useCallback(
+    (nodeId: string) => {
+      // 시작과 종료 노드는 삭제 불가
+      const nodeToDelete = nodes.find((n) => n.id === nodeId);
+      if (nodeToDelete?.type === "start" || nodeToDelete?.type === "end") {
+        return;
+      }
+
+      setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+      setEdges((eds) =>
+        eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+      );
+    },
+    [nodes, setNodes, setEdges]
+  );
+
+  // 키보드 단축키로 삭제
+  const onKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === "Delete" || event.key === "Backspace") {
+      // 선택된 노드들 삭제 (향후 구현)
+      console.log("노드 삭제 단축키");
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onKeyDown]);
+
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
-
-  // 노드 삭제 (현재 미사용이지만 향후 사용 예정)
-  // const deleteNode = useCallback(
-  //   (nodeId: string) => {
-  //     setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-  //     setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
-  //   },
-  //   [setNodes, setEdges]
-  // );
 
   // 플로우 내보내기
   const exportFlow = useCallback(() => {
@@ -336,10 +370,13 @@ export const StrategyFlowEditor = ({
         <Group align="flex-start" style={{ height: "100%", flexGrow: 1 }}>
           {/* 노드 팔레트 */}
           {!readOnly && (
-            <Paper p="md" withBorder style={{ width: 200, minHeight: 400 }}>
+            <Paper p="md" withBorder style={{ width: 250, minHeight: 400 }}>
               <Title order={4} mb="md">
                 노드 추가
               </Title>
+              <Text size="xs" c="dimmed" mb="md">
+                노드를 드래그하여 차트에 추가하세요
+              </Text>
               <Stack gap="sm">
                 {[
                   {
@@ -347,46 +384,81 @@ export const StrategyFlowEditor = ({
                     icon: IconPlayerPlay,
                     color: "green",
                     label: "시작",
+                    description: "전략 시작점",
                   },
                   {
                     type: "schedule" as FlowNodeType,
                     icon: IconClock,
                     color: "blue",
                     label: "일정",
+                    description: "실행 일정 설정",
                   },
                   {
                     type: "condition" as FlowNodeType,
                     icon: IconGitBranch,
                     color: "purple",
                     label: "조건",
+                    description: "투자 조건 확인",
                   },
                   {
                     type: "action" as FlowNodeType,
                     icon: IconTarget,
                     color: "orange",
                     label: "액션",
+                    description: "투자 액션 실행",
                   },
                   {
                     type: "end" as FlowNodeType,
                     icon: IconPlayerStop,
                     color: "red",
                     label: "종료",
+                    description: "전략 종료점",
                   },
-                ].map(({ type, icon: Icon, color, label }) => (
-                  <Button
+                ].map(({ type, icon: Icon, color, label, description }) => (
+                  <Card
                     key={type}
-                    variant="light"
-                    color={color}
-                    leftSection={<Icon size={16} />}
-                    size="sm"
-                    style={{ justifyContent: "flex-start" }}
+                    p="sm"
+                    withBorder
+                    style={{
+                      cursor: "grab",
+                      transition: "all 0.2s",
+                      backgroundColor:
+                        draggedNodeType === type ? "#f0f9ff" : "white",
+                    }}
+                    onMouseDown={() => setDraggedNodeType(type)}
+                    onDragStart={(e) => {
+                      setDraggedNodeType(type);
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                    onDragEnd={() => setDraggedNodeType(null)}
                     draggable
-                    onDragStart={() => setDraggedNodeType(type)}
                   >
-                    {label}
-                  </Button>
+                    <Group gap="sm">
+                      <ThemeIcon color={color} variant="light" size="sm">
+                        <Icon size={16} />
+                      </ThemeIcon>
+                      <div>
+                        <Text size="sm" fw={500}>
+                          {label}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {description}
+                        </Text>
+                      </div>
+                    </Group>
+                  </Card>
                 ))}
               </Stack>
+
+              <Alert color="blue" variant="light" mt="md">
+                <Text size="xs">
+                  <strong>사용 팁:</strong>
+                  <br />• 노드를 끌어서 차트에 추가
+                  <br />• 노드 클릭으로 설정 변경
+                  <br />• 연결점을 드래그하여 노드 연결
+                  <br />• 시작/종료 노드는 삭제 불가
+                </Text>
+              </Alert>
             </Paper>
           )}
 
@@ -398,6 +470,7 @@ export const StrategyFlowEditor = ({
                 data: {
                   ...node.data,
                   onUpdate: (data: FlowNodeData) => onNodeUpdate(node.id, data),
+                  onDelete: () => deleteNode(node.id),
                 },
               }))}
               edges={edges}
@@ -409,6 +482,8 @@ export const StrategyFlowEditor = ({
               nodeTypes={FLOW_NODE_TYPES}
               fitView
               attributionPosition="bottom-left"
+              deleteKeyCode={["Delete", "Backspace"]}
+              multiSelectionKeyCode={["Meta", "Ctrl"]}
             >
               <Background />
               <Controls />

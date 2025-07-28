@@ -10,6 +10,8 @@ import {
   Select,
   NumberInput,
   Stack,
+  ActionIcon,
+  Tooltip,
 } from "@mantine/core";
 import {
   IconArrowUp,
@@ -20,6 +22,7 @@ import {
   IconPower,
   IconBell,
   IconFileText,
+  IconTrash,
 } from "@tabler/icons-react";
 import type {
   FlowNodeData,
@@ -99,10 +102,11 @@ const ACTION_CONFIG = {
 
 interface FlowActionNodeProps extends NodeProps<FlowNodeData> {
   onUpdate?: (data: FlowNodeData) => void;
+  onDelete?: () => void;
 }
 
 export const FlowActionNode = memo(
-  ({ data, selected, onUpdate }: FlowActionNodeProps) => {
+  ({ data, selected, onUpdate, onDelete }: FlowActionNodeProps) => {
     const actionType = data.actionType || "buy_percent_cash";
     const params = data.actionParams || {};
     const config = ACTION_CONFIG[actionType];
@@ -265,7 +269,7 @@ export const FlowActionNode = memo(
           <ThemeIcon color={config.color} variant="light" size="lg">
             <IconComponent size={20} />
           </ThemeIcon>
-          <div>
+          <div style={{ flex: 1 }}>
             <Text fw={600} size="sm">
               액션
             </Text>
@@ -273,6 +277,18 @@ export const FlowActionNode = memo(
               {data.label}
             </Text>
           </div>
+          {onDelete && (
+            <Tooltip label="노드 삭제">
+              <ActionIcon
+                color="red"
+                variant="subtle"
+                size="sm"
+                onClick={onDelete}
+              >
+                <IconTrash size={14} />
+              </ActionIcon>
+            </Tooltip>
+          )}
         </Group>
 
         <Stack gap="sm">

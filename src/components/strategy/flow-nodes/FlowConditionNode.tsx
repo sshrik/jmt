@@ -10,8 +10,14 @@ import {
   Select,
   NumberInput,
   Stack,
+  ActionIcon,
+  Tooltip,
 } from "@mantine/core";
-import { IconTrendingUp, IconTrendingDown } from "@tabler/icons-react";
+import {
+  IconTrendingUp,
+  IconTrendingDown,
+  IconTrash,
+} from "@tabler/icons-react";
 import type {
   FlowNodeData,
   ConditionType,
@@ -42,10 +48,11 @@ const CONDITION_CONFIG = {
 
 interface FlowConditionNodeProps extends NodeProps<FlowNodeData> {
   onUpdate?: (data: FlowNodeData) => void;
+  onDelete?: () => void;
 }
 
 export const FlowConditionNode = memo(
-  ({ data, selected, onUpdate }: FlowConditionNodeProps) => {
+  ({ data, selected, onUpdate, onDelete }: FlowConditionNodeProps) => {
     const conditionType = data.conditionType || "close_price_change";
     const params = data.conditionParams || {};
     const config = CONDITION_CONFIG[conditionType];
@@ -104,7 +111,7 @@ export const FlowConditionNode = memo(
           <ThemeIcon color={config.color} variant="light" size="lg">
             <IconComponent size={20} />
           </ThemeIcon>
-          <div>
+          <div style={{ flex: 1 }}>
             <Text fw={600} size="sm">
               조건
             </Text>
@@ -112,6 +119,18 @@ export const FlowConditionNode = memo(
               {data.label}
             </Text>
           </div>
+          {onDelete && (
+            <Tooltip label="노드 삭제">
+              <ActionIcon
+                color="red"
+                variant="subtle"
+                size="sm"
+                onClick={onDelete}
+              >
+                <IconTrash size={14} />
+              </ActionIcon>
+            </Tooltip>
+          )}
         </Group>
 
         <Stack gap="sm">

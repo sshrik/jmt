@@ -290,7 +290,7 @@ export const StrategyEditor = ({
     flowNodes.push({
       id: "start-1",
       type: "start",
-      position: { x: 100, y: 50 },
+      position: { x: 250, y: 50 },
       data: {
         id: "start-1",
         label: "전략 시작",
@@ -302,15 +302,51 @@ export const StrategyEditor = ({
     let yPosition = 200;
     let prevNodeId = "start-1";
 
+    // 스케줄 노드 추가 (전략이 있는 경우에만)
+    if (rules.length > 0) {
+      const scheduleNodeId = "schedule-1";
+      flowNodes.push({
+        id: scheduleNodeId,
+        type: "schedule",
+        position: { x: 250, y: yPosition },
+        data: {
+          id: scheduleNodeId,
+          label: "실행 일정",
+          type: "schedule" as const,
+          scheduleParams: {
+            scheduleType: "market_open" as const,
+            description: "장 시작 시 실행",
+          },
+          description: "전략 실행 일정을 설정합니다.",
+        },
+      });
+
+      // 이전 노드와 연결
+      flowEdges.push({
+        id: `${prevNodeId}-${scheduleNodeId}`,
+        source: prevNodeId,
+        target: scheduleNodeId,
+        animated: true,
+      });
+
+      prevNodeId = scheduleNodeId;
+      yPosition += 200;
+    }
+
     // 기존 룰들을 플로우로 변환
-    rules.forEach((rule, index) => {
-      // 조건 노드들 추가
+    rules.forEach((rule, ruleIndex) => {
+      const ruleStartY = yPosition;
+      let maxNodeHeight = 0;
+
+      // 조건 노드들을 가로로 배치
       rule.conditions.forEach((condition, condIndex) => {
-        const conditionNodeId = `condition-${index}-${condIndex}`;
+        const conditionNodeId = `condition-${ruleIndex}-${condIndex}`;
+        const xPosition = 100 + condIndex * 350; // 조건들을 가로로 나열
+
         flowNodes.push({
           id: conditionNodeId,
           type: "condition",
-          position: { x: 100, y: yPosition },
+          position: { x: xPosition, y: ruleStartY },
           data: {
             id: conditionNodeId,
             label: condition.name,
@@ -321,25 +357,29 @@ export const StrategyEditor = ({
           },
         });
 
-        // 이전 노드와 연결
-        flowEdges.push({
-          id: `${prevNodeId}-${conditionNodeId}`,
-          source: prevNodeId,
-          target: conditionNodeId,
-          animated: true,
-        });
+        // 첫 번째 조건만 이전 노드와 연결
+        if (condIndex === 0) {
+          flowEdges.push({
+            id: `${prevNodeId}-${conditionNodeId}`,
+            source: prevNodeId,
+            target: conditionNodeId,
+            animated: true,
+          });
+        }
 
-        prevNodeId = conditionNodeId;
-        yPosition += 150;
+        maxNodeHeight = Math.max(maxNodeHeight, 200);
       });
 
-      // 액션 노드들 추가
+      // 액션 노드들을 조건 아래에 배치
+      const actionY = ruleStartY + maxNodeHeight;
       rule.actions.forEach((action, actionIndex) => {
-        const actionNodeId = `action-${index}-${actionIndex}`;
+        const actionNodeId = `action-${ruleIndex}-${actionIndex}`;
+        const xPosition = 100 + actionIndex * 350; // 액션들을 가로로 나열
+
         flowNodes.push({
           id: actionNodeId,
           type: "action",
-          position: { x: 100, y: yPosition },
+          position: { x: xPosition, y: actionY },
           data: {
             id: actionNodeId,
             label: action.name,
@@ -350,17 +390,26 @@ export const StrategyEditor = ({
           },
         });
 
-        // 이전 노드와 연결
-        flowEdges.push({
-          id: `${prevNodeId}-${actionNodeId}`,
-          source: prevNodeId,
-          target: actionNodeId,
-          animated: true,
-        });
-
-        prevNodeId = actionNodeId;
-        yPosition += 150;
+        // 첫 번째 조건에서 액션들로 연결
+        if (rule.conditions.length > 0) {
+          const firstConditionId = `condition-${ruleIndex}-0`;
+          flowEdges.push({
+            id: `${firstConditionId}-${actionNodeId}`,
+            source: firstConditionId,
+            target: actionNodeId,
+            animated: true,
+          });
+        }
       });
+
+      // 다음 룰이 있으면 현재 룰의 첫 번째 액션에서 다음 룰로 연결
+      if (ruleIndex < rules.length - 1 && rule.actions.length > 0) {
+        prevNodeId = `action-${ruleIndex}-0`;
+      } else if (rule.actions.length > 0) {
+        prevNodeId = `action-${ruleIndex}-0`;
+      }
+
+      yPosition = actionY + 200; // 다음 룰을 위한 Y 위치 조정
     });
 
     // 종료 노드 추가
@@ -368,7 +417,7 @@ export const StrategyEditor = ({
     flowNodes.push({
       id: endNodeId,
       type: "end",
-      position: { x: 100, y: yPosition },
+      position: { x: 250, y: yPosition },
       data: {
         id: endNodeId,
         label: "전략 종료",
@@ -377,6 +426,7 @@ export const StrategyEditor = ({
       },
     });
 
+    // 마지막 노드에서 종료 노드로 연결
     if (prevNodeId !== "start-1") {
       flowEdges.push({
         id: `${prevNodeId}-${endNodeId}`,
