@@ -85,7 +85,43 @@ yarn lint
 
 # 프리뷰 (빌드 후)
 yarn preview
+
+# 테스트 실행
+yarn test
 ```
+
+### 3️⃣ 테스트 시스템
+
+JMT는 **TypeScript 기반의 포괄적인 테스트 스위트**를 제공합니다:
+
+```bash
+# 전체 테스트 실행 (기본 + 종합)
+yarn test
+
+# 개별 테스트 실행
+npx tsx tests/backtest.test.ts        # 기본 백테스트 테스트
+npx tsx tests/comprehensive.test.ts   # 종합 테스트
+```
+
+#### 📁 테스트 구조
+
+```
+tests/
+├── utils/
+│   ├── mockData.ts          # 테스트용 주가 데이터
+│   ├── testHelpers.ts       # 조건/액션 실행 함수
+│   └── formulaCalculator.ts # 수식 계산기
+├── backtest.test.ts         # 기본 백테스트 테스트
+└── comprehensive.test.ts    # 종합 테스트 (모든 조건/액션)
+```
+
+#### ✅ 테스트 커버리지
+
+- **📋 조건 타입 (4/4)**: `always`, `close_price_change`, `high_price_change`, `low_price_change`
+- **🎯 액션 타입 (14/14)**: 모든 매수/매도/수식 기반 액션
+- **🧮 수식 계산**: 양수/음수/절댓값 케이스, 동적 매매
+- **🔄 복합 시나리오**: 연속 거래, 포트폴리오 추적
+- **⚠️ 에러 처리**: 자금 부족, 잘못된 파라미터
 
 ## 🔄 CI/CD 설정
 
