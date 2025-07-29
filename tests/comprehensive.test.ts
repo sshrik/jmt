@@ -97,6 +97,73 @@ function testAllConditionTypes(): void {
       expected: true,
       description: "저가 변화 - 2% 상승 조건 (실제: 2.04% 상승)",
     },
+    // 범위 조건 테스트
+    {
+      type: "close_price_range",
+      params: {
+        minPercent: 3,
+        maxPercent: 7,
+        rangeDirection: "up",
+        rangeOperator: "inclusive",
+      },
+      currentPrice: mockStockPrices[1], // 5% 상승
+      prevPrice: mockStockPrices[0],
+      expected: true,
+      description: "종가 범위 - 3% 이상 7% 이하 상승 조건 (실제: 5% 상승)",
+    },
+    {
+      type: "close_price_range",
+      params: {
+        minPercent: 6,
+        maxPercent: 10,
+        rangeDirection: "up",
+        rangeOperator: "inclusive",
+      },
+      currentPrice: mockStockPrices[1], // 5% 상승
+      prevPrice: mockStockPrices[0],
+      expected: false,
+      description:
+        "종가 범위 - 6% 이상 10% 이하 상승 조건 (실제: 5% 상승, 범위 밖)",
+    },
+    {
+      type: "close_price_range",
+      params: {
+        minPercent: 3,
+        maxPercent: 7,
+        rangeDirection: "both",
+        rangeOperator: "inclusive",
+      },
+      currentPrice: mockStockPrices[4], // 5.26% 하락 (절댓값 5.26%)
+      prevPrice: mockStockPrices[3],
+      expected: true,
+      description: "종가 범위 - 양방향 3% 이상 7% 이하 조건 (실제: 5.26% 하락)",
+    },
+    {
+      type: "price_value_range",
+      params: {
+        minPrice: 1040,
+        maxPrice: 1060,
+        rangeOperator: "inclusive",
+      },
+      currentPrice: mockStockPrices[1], // 1050원
+      prevPrice: mockStockPrices[0],
+      expected: true,
+      description:
+        "절대 가격 범위 - 1040원 이상 1060원 이하 조건 (실제: 1050원)",
+    },
+    {
+      type: "price_value_range",
+      params: {
+        minPrice: 1000,
+        maxPrice: 1040,
+        rangeOperator: "exclusive",
+      },
+      currentPrice: mockStockPrices[1], // 1050원
+      prevPrice: mockStockPrices[0],
+      expected: false,
+      description:
+        "절대 가격 범위 - 1000원 초과 1040원 미만 조건 (실제: 1050원, 범위 밖)",
+    },
   ];
 
   testCases.forEach((testCase, index) => {
@@ -470,8 +537,12 @@ function runComprehensiveTests(): void {
     console.log("🎉 종합 테스트 완료!");
     console.log("=====================================");
     console.log("✅ 테스트 커버리지:");
+    console.log("   📋 조건 타입: 8/8 (단순 조건 4개 + 범위 조건 4개)");
     console.log(
-      "   📋 조건 타입: 4/4 (always, close_price_change, high_price_change, low_price_change)"
+      "     • 단순: always, close_price_change, high_price_change, low_price_change"
+    );
+    console.log(
+      "     • 범위: close_price_range, high_price_range, low_price_range, price_value_range"
     );
     console.log("   🎯 액션 타입: 14/14 (모든 매수/매도/수식 기반 액션)");
     console.log("   🧮 수식 계산: 양수/음수/절댓값 케이스");

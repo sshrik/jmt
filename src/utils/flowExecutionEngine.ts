@@ -256,8 +256,121 @@ export class FlowExecutionEngine {
         }
       }
 
+      case "high_price_change": {
+        const priceChangePercent = params?.priceChangePercent || 5;
+        const direction = params?.priceChangeDirection || "up";
+        const mockPreviousHigh = 96000; // 데모용
+        const currentHigh = currentPrice * 1.02; // 데모용
+        const actualChangePercent =
+          ((currentHigh - mockPreviousHigh) / mockPreviousHigh) * 100;
+
+        if (direction === "up") {
+          return actualChangePercent >= priceChangePercent;
+        } else {
+          return actualChangePercent <= -priceChangePercent;
+        }
+      }
+
+      case "low_price_change": {
+        const priceChangePercent = params?.priceChangePercent || 5;
+        const direction = params?.priceChangeDirection || "up";
+        const mockPreviousLow = 94000; // 데모용
+        const currentLow = currentPrice * 0.98; // 데모용
+        const actualChangePercent =
+          ((currentLow - mockPreviousLow) / mockPreviousLow) * 100;
+
+        if (direction === "up") {
+          return actualChangePercent >= priceChangePercent;
+        } else {
+          return actualChangePercent <= -priceChangePercent;
+        }
+      }
+
+      case "close_price_range": {
+        const actualChangePercent =
+          ((currentPrice - mockPreviousPrice) / mockPreviousPrice) * 100;
+        return this.evaluateRangeCondition(actualChangePercent, params);
+      }
+
+      case "high_price_range": {
+        const mockPreviousHigh = 96000; // 데모용
+        const currentHigh = currentPrice * 1.02; // 데모용
+        const actualChangePercent =
+          ((currentHigh - mockPreviousHigh) / mockPreviousHigh) * 100;
+        return this.evaluateRangeCondition(actualChangePercent, params);
+      }
+
+      case "low_price_range": {
+        const mockPreviousLow = 94000; // 데모용
+        const currentLow = currentPrice * 0.98; // 데모용
+        const actualChangePercent =
+          ((currentLow - mockPreviousLow) / mockPreviousLow) * 100;
+        return this.evaluateRangeCondition(actualChangePercent, params);
+      }
+
+      case "price_value_range": {
+        return this.evaluateValueRangeCondition(currentPrice, params);
+      }
+
       default:
         return true; // 기본적으로 조건 만족
+    }
+  }
+
+  // 범위 조건 평가 (퍼센트)
+  private evaluateRangeCondition(
+    priceChangePercent: number,
+    params: ConditionParameters | undefined
+  ): boolean {
+    const minPercent = params?.minPercent || 0;
+    const maxPercent = params?.maxPercent || 0;
+    const direction = params?.rangeDirection || "up";
+    const operator = params?.rangeOperator || "inclusive";
+
+    // 방향에 따른 변화율 조정
+    let adjustedValue = priceChangePercent;
+    if (direction === "down") {
+      adjustedValue = -priceChangePercent; // 하락은 양수로 변환
+    } else if (direction === "both") {
+      adjustedValue = Math.abs(priceChangePercent); // 양방향은 절댓값
+    }
+
+    // 범위 연산자에 따른 조건 평가
+    switch (operator) {
+      case "inclusive": // 이상 이하 (≥ ≤)
+        return adjustedValue >= minPercent && adjustedValue <= maxPercent;
+      case "exclusive": // 초과 미만 (> <)
+        return adjustedValue > minPercent && adjustedValue < maxPercent;
+      case "left_inclusive": // 이상 미만 (≥ <)
+        return adjustedValue >= minPercent && adjustedValue < maxPercent;
+      case "right_inclusive": // 초과 이하 (> ≤)
+        return adjustedValue > minPercent && adjustedValue <= maxPercent;
+      default:
+        return false;
+    }
+  }
+
+  // 절대 가격 범위 조건 평가
+  private evaluateValueRangeCondition(
+    currentValue: number,
+    params: ConditionParameters | undefined
+  ): boolean {
+    const minPrice = params?.minPrice || 0;
+    const maxPrice = params?.maxPrice || 0;
+    const operator = params?.rangeOperator || "inclusive";
+
+    // 범위 연산자에 따른 조건 평가
+    switch (operator) {
+      case "inclusive": // 이상 이하 (≥ ≤)
+        return currentValue >= minPrice && currentValue <= maxPrice;
+      case "exclusive": // 초과 미만 (> <)
+        return currentValue > minPrice && currentValue < maxPrice;
+      case "left_inclusive": // 이상 미만 (≥ <)
+        return currentValue >= minPrice && currentValue < maxPrice;
+      case "right_inclusive": // 초과 이하 (> ≤)
+        return currentValue > minPrice && currentValue <= maxPrice;
+      default:
+        return false;
     }
   }
 

@@ -70,6 +70,29 @@ export function evaluateCondition(
       }
     }
 
+    case "close_price_range": {
+      const priceChangePercent =
+        ((currentPrice.close - prevPrice.close) / prevPrice.close) * 100;
+      return evaluateRangeCondition(priceChangePercent, params);
+    }
+
+    case "high_price_range": {
+      const priceChangePercent =
+        ((currentPrice.high - prevPrice.high) / prevPrice.high) * 100;
+      return evaluateRangeCondition(priceChangePercent, params);
+    }
+
+    case "low_price_range": {
+      const priceChangePercent =
+        ((currentPrice.low - prevPrice.low) / prevPrice.low) * 100;
+      return evaluateRangeCondition(priceChangePercent, params);
+    }
+
+    case "price_value_range": {
+      const currentValue = currentPrice.close;
+      return evaluateValueRangeCondition(currentValue, params);
+    }
+
     default:
       return false;
   }
@@ -426,4 +449,65 @@ export function calculateReturn(
   currentValue: number
 ): number {
   return ((currentValue - initialValue) / initialValue) * 100;
+}
+
+/**
+ * 범위 조건 평가 (퍼센트)
+ */
+function evaluateRangeCondition(
+  priceChangePercent: number,
+  params: ConditionParameters | undefined
+): boolean {
+  const minPercent = params?.minPercent || 0;
+  const maxPercent = params?.maxPercent || 0;
+  const direction = params?.rangeDirection || "up";
+  const operator = params?.rangeOperator || "inclusive";
+
+  // 방향에 따른 변화율 조정
+  let adjustedValue = priceChangePercent;
+  if (direction === "down") {
+    adjustedValue = -priceChangePercent; // 하락은 양수로 변환
+  } else if (direction === "both") {
+    adjustedValue = Math.abs(priceChangePercent); // 양방향은 절댓값
+  }
+
+  // 범위 연산자에 따른 조건 평가
+  switch (operator) {
+    case "inclusive": // 이상 이상 (≥ ≤)
+      return adjustedValue >= minPercent && adjustedValue <= maxPercent;
+    case "exclusive": // 초과 미만 (> <)
+      return adjustedValue > minPercent && adjustedValue < maxPercent;
+    case "left_inclusive": // 이상 미만 (≥ <)
+      return adjustedValue >= minPercent && adjustedValue < maxPercent;
+    case "right_inclusive": // 초과 이하 (> ≤)
+      return adjustedValue > minPercent && adjustedValue <= maxPercent;
+    default:
+      return false;
+  }
+}
+
+/**
+ * 절대 가격 범위 조건 평가
+ */
+function evaluateValueRangeCondition(
+  currentValue: number,
+  params: ConditionParameters | undefined
+): boolean {
+  const minPrice = params?.minPrice || 0;
+  const maxPrice = params?.maxPrice || 0;
+  const operator = params?.rangeOperator || "inclusive";
+
+  // 범위 연산자에 따른 조건 평가
+  switch (operator) {
+    case "inclusive": // 이상 이하 (≥ ≤)
+      return currentValue >= minPrice && currentValue <= maxPrice;
+    case "exclusive": // 초과 미만 (> <)
+      return currentValue > minPrice && currentValue < maxPrice;
+    case "left_inclusive": // 이상 미만 (≥ <)
+      return currentValue >= minPrice && currentValue < maxPrice;
+    case "right_inclusive": // 초과 이하 (> ≤)
+      return currentValue > minPrice && currentValue <= maxPrice;
+    default:
+      return false;
+  }
 }

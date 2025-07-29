@@ -3,7 +3,11 @@ export type ConditionType =
   | "always" // 항상
   | "close_price_change" // 전일 종가 대비 변화
   | "high_price_change" // 전일 고가 대비 변화
-  | "low_price_change"; // 전일 저가 대비 변화
+  | "low_price_change" // 전일 저가 대비 변화
+  | "close_price_range" // 종가 변화율 범위 (3% 이상 5% 이하)
+  | "high_price_range" // 고가 변화율 범위
+  | "low_price_range" // 저가 변화율 범위
+  | "price_value_range"; // 절대 가격 범위 (1000원 이상 1500원 이하)
 
 // 액션 타입 정의
 export type ActionType =
@@ -27,6 +31,20 @@ export interface ConditionParameters {
   // 전일가 대비 변화
   priceChangePercent?: number; // 5 (5% 변화)
   priceChangeDirection?: "up" | "down"; // 상승/하락
+
+  // 범위 조건 (퍼센트)
+  minPercent?: number; // 3 (최소 3%)
+  maxPercent?: number; // 5 (최대 5%)
+  rangeDirection?: "up" | "down" | "both"; // 상승/하락/양방향
+  rangeOperator?:
+    | "inclusive"
+    | "exclusive"
+    | "left_inclusive"
+    | "right_inclusive"; // 이상이하/초과미만/이상미만/초과이하
+
+  // 절대 가격 범위
+  minPrice?: number; // 1000 (최소 1000원)
+  maxPrice?: number; // 1500 (최대 1500원)
 
   // 수익률
   profitLossPercent?: number; // 10 (10% 수익)

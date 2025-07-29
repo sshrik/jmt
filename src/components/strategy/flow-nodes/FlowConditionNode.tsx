@@ -50,6 +50,32 @@ const CONDITION_CONFIG = {
     icon: IconTrendingDown,
     color: "orange",
   },
+  close_price_range: {
+    label: "종가 변화율 범위",
+    description:
+      "종가 변화율이 지정된 범위 내에 있을 때 조건 만족 (예: 3% 이상 5% 이하)",
+    icon: IconTrendingUp,
+    color: "indigo",
+  },
+  high_price_range: {
+    label: "고가 변화율 범위",
+    description: "고가 변화율이 지정된 범위 내에 있을 때 조건 만족",
+    icon: IconTrendingUp,
+    color: "teal",
+  },
+  low_price_range: {
+    label: "저가 변화율 범위",
+    description: "저가 변화율이 지정된 범위 내에 있을 때 조건 만족",
+    icon: IconTrendingDown,
+    color: "yellow",
+  },
+  price_value_range: {
+    label: "절대 가격 범위",
+    description:
+      "현재 주가가 지정된 가격 범위 내에 있을 때 조건 만족 (예: 1000원 이상 1500원 이하)",
+    icon: IconTrendingUp,
+    color: "purple",
+  },
 } as const;
 
 // 확장된 노드 데이터 타입
@@ -89,6 +115,51 @@ export const FlowConditionNode = memo(
           label: `${CONDITION_CONFIG[value as ConditionType].label} 조건`,
         });
       }
+    };
+
+    // 범위 조건 설명 텍스트
+    const renderRangeDescription = (
+      conditionType: ConditionType,
+      params: ConditionParameters
+    ) => {
+      const isValueRange = conditionType === "price_value_range";
+      const direction = params.rangeDirection || "up";
+      const operator = params.rangeOperator || "inclusive";
+
+      const minVal = isValueRange
+        ? params.minPrice || 0
+        : params.minPercent || 0;
+      const maxVal = isValueRange
+        ? params.maxPrice || 0
+        : params.maxPercent || 0;
+      const unit = isValueRange ? "원" : "%";
+
+      let prefix = "";
+      if (!isValueRange) {
+        if (direction === "up") prefix = "상승 ";
+        else if (direction === "down") prefix = "하락 ";
+        else prefix = "변화율이 ";
+      } else {
+        prefix = "현재 주가가 ";
+      }
+
+      let operatorText = "";
+      switch (operator) {
+        case "inclusive":
+          operatorText = `${minVal}${unit} 이상 ${maxVal}${unit} 이하`;
+          break;
+        case "exclusive":
+          operatorText = `${minVal}${unit} 초과 ${maxVal}${unit} 미만`;
+          break;
+        case "left_inclusive":
+          operatorText = `${minVal}${unit} 이상 ${maxVal}${unit} 미만`;
+          break;
+        case "right_inclusive":
+          operatorText = `${minVal}${unit} 초과 ${maxVal}${unit} 이하`;
+          break;
+      }
+
+      return `${prefix}${operatorText}`;
     };
 
     return (
@@ -163,7 +234,111 @@ export const FlowConditionNode = memo(
             <Badge variant="light" color={config.color} size="sm">
               조건 없이 항상 실행
             </Badge>
+          ) : conditionType.endsWith("_range") ? (
+            // 범위 조건들
+            <>
+              {conditionType !== "price_value_range" && (
+                <Select
+                  label="변화 방향"
+                  placeholder="선택"
+                  value={params.rangeDirection || "up"}
+                  onChange={(value) =>
+                    updateParams({
+                      rangeDirection: value as "up" | "down" | "both",
+                    })
+                  }
+                  data={[
+                    { value: "up", label: "상승" },
+                    { value: "down", label: "하락" },
+                    { value: "both", label: "양방향" },
+                  ]}
+                  size="sm"
+                />
+              )}
+
+              <Select
+                label="범위 타입"
+                placeholder="선택"
+                value={params.rangeOperator || "inclusive"}
+                onChange={(value) =>
+                  updateParams({
+                    rangeOperator: value as
+                      | "inclusive"
+                      | "exclusive"
+                      | "left_inclusive"
+                      | "right_inclusive",
+                  })
+                }
+                data={[
+                  { value: "inclusive", label: "이상 이하 (≥ ≤)" },
+                  { value: "exclusive", label: "초과 미만 (> <)" },
+                  { value: "left_inclusive", label: "이상 미만 (≥ <)" },
+                  { value: "right_inclusive", label: "초과 이하 (> ≤)" },
+                ]}
+                size="sm"
+              />
+
+              <Group grow>
+                <NumberInput
+                  label={
+                    conditionType === "price_value_range"
+                      ? "최소 가격 (원)"
+                      : "최소값 (%)"
+                  }
+                  placeholder={
+                    conditionType === "price_value_range" ? "예: 1000" : "예: 3"
+                  }
+                  value={
+                    conditionType === "price_value_range"
+                      ? params.minPrice || 0
+                      : params.minPercent || 0
+                  }
+                  onChange={(value) =>
+                    updateParams(
+                      conditionType === "price_value_range"
+                        ? { minPrice: Number(value) || 0 }
+                        : { minPercent: Number(value) || 0 }
+                    )
+                  }
+                  min={0}
+                  max={conditionType === "price_value_range" ? undefined : 100}
+                  step={conditionType === "price_value_range" ? 1 : 0.1}
+                  size="sm"
+                />
+                <NumberInput
+                  label={
+                    conditionType === "price_value_range"
+                      ? "최대 가격 (원)"
+                      : "최대값 (%)"
+                  }
+                  placeholder={
+                    conditionType === "price_value_range" ? "예: 1500" : "예: 5"
+                  }
+                  value={
+                    conditionType === "price_value_range"
+                      ? params.maxPrice || 0
+                      : params.maxPercent || 0
+                  }
+                  onChange={(value) =>
+                    updateParams(
+                      conditionType === "price_value_range"
+                        ? { maxPrice: Number(value) || 0 }
+                        : { maxPercent: Number(value) || 0 }
+                    )
+                  }
+                  min={0}
+                  max={conditionType === "price_value_range" ? undefined : 100}
+                  step={conditionType === "price_value_range" ? 1 : 0.1}
+                  size="sm"
+                />
+              </Group>
+
+              <Badge variant="light" color={config.color} size="sm">
+                {renderRangeDescription(conditionType, params)}
+              </Badge>
+            </>
           ) : (
+            // 기존 단순 조건들
             <>
               <Group grow>
                 <Select

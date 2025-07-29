@@ -8,7 +8,11 @@ import type {
   PortfolioSnapshot,
   BacktestStats,
 } from "../types/backtest";
-import type { Strategy, StrategyBlock } from "../types/strategy";
+import type {
+  Strategy,
+  StrategyBlock,
+  ConditionParameters,
+} from "../types/strategy";
 import { calculateFormula } from "./formulaCalculator";
 
 // 백테스트 엔진 클래스
@@ -193,6 +197,86 @@ export class BacktestEngine {
         }
       }
 
+      case "close_price_range": {
+        const priceChangePercent =
+          ((currentPrice.close - prevPrice.close) / prevPrice.close) * 100;
+        return this.evaluateRangeCondition(priceChangePercent, conditionParams);
+      }
+
+      case "high_price_range": {
+        const priceChangePercent =
+          ((currentPrice.high - prevPrice.high) / prevPrice.high) * 100;
+        return this.evaluateRangeCondition(priceChangePercent, conditionParams);
+      }
+
+      case "low_price_range": {
+        const priceChangePercent =
+          ((currentPrice.low - prevPrice.low) / prevPrice.low) * 100;
+        return this.evaluateRangeCondition(priceChangePercent, conditionParams);
+      }
+
+      case "price_value_range": {
+        const currentValue = currentPrice.close;
+        return this.evaluateValueRangeCondition(currentValue, conditionParams);
+      }
+
+      default:
+        return false;
+    }
+  }
+
+  // 범위 조건 평가 (퍼센트)
+  private evaluateRangeCondition(
+    priceChangePercent: number,
+    conditionParams: ConditionParameters | undefined
+  ): boolean {
+    const minPercent = conditionParams?.minPercent || 0;
+    const maxPercent = conditionParams?.maxPercent || 0;
+    const direction = conditionParams?.rangeDirection || "up";
+    const operator = conditionParams?.rangeOperator || "inclusive";
+
+    // 방향에 따른 변화율 조정
+    let adjustedValue = priceChangePercent;
+    if (direction === "down") {
+      adjustedValue = -priceChangePercent; // 하락은 양수로 변환
+    } else if (direction === "both") {
+      adjustedValue = Math.abs(priceChangePercent); // 양방향은 절댓값
+    }
+
+    // 범위 연산자에 따른 조건 평가
+    switch (operator) {
+      case "inclusive": // 이상 이하 (≥ ≤)
+        return adjustedValue >= minPercent && adjustedValue <= maxPercent;
+      case "exclusive": // 초과 미만 (> <)
+        return adjustedValue > minPercent && adjustedValue < maxPercent;
+      case "left_inclusive": // 이상 미만 (≥ <)
+        return adjustedValue >= minPercent && adjustedValue < maxPercent;
+      case "right_inclusive": // 초과 이하 (> ≤)
+        return adjustedValue > minPercent && adjustedValue <= maxPercent;
+      default:
+        return false;
+    }
+  }
+
+  // 절대 가격 범위 조건 평가
+  private evaluateValueRangeCondition(
+    currentValue: number,
+    conditionParams: ConditionParameters | undefined
+  ): boolean {
+    const minPrice = conditionParams?.minPrice || 0;
+    const maxPrice = conditionParams?.maxPrice || 0;
+    const operator = conditionParams?.rangeOperator || "inclusive";
+
+    // 범위 연산자에 따른 조건 평가
+    switch (operator) {
+      case "inclusive": // 이상 이하 (≥ ≤)
+        return currentValue >= minPrice && currentValue <= maxPrice;
+      case "exclusive": // 초과 미만 (> <)
+        return currentValue > minPrice && currentValue < maxPrice;
+      case "left_inclusive": // 이상 미만 (≥ <)
+        return currentValue >= minPrice && currentValue < maxPrice;
+      case "right_inclusive": // 초과 이하 (> ≤)
+        return currentValue > minPrice && currentValue <= maxPrice;
       default:
         return false;
     }
