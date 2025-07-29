@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node test-backtest.mjs",
+    "test": "node test-backtest.mjs && echo '\n========================\n' && node test-comprehensive.mjs",
     "test:vitest": "vitest",
     "test:run": "vitest run",
     "fetch-data": "node scripts/fetchStockData.js"
