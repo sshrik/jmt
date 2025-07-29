@@ -21,6 +21,7 @@ JMT는 개인 투자자를 위한 **노코드 투자 전략 설계 및 백테스
 - **📈 성과 대시보드**: 실제 백테스트 결과 기반 프로젝트 순위
 - **🌙 다크모드**: 완전한 테마 시스템 지원
 - **💾 데이터 영속성**: 로컬 스토리지 + 백업/복원 기능
+- **🗂️ 버전 관리**: Git과 유사한 전략 버전 관리 시스템
 
 ## 🏗️ 기술 스택
 
@@ -244,6 +245,113 @@ src/
 ├── 🔗 hooks/             # 커스텀 훅
 ├── 🛠️ utils/             # 유틸리티 함수
 └── 📏 types/             # TypeScript 타입 정의
+```
+
+## 🗂️ 버전 관리 시스템
+
+JMT는 Git과 유사한 **전략 버전 관리 시스템**을 제공합니다. 전략을 수정할 때마다 버전을 생성하고, 이전 버전으로 되돌릴 수 있습니다.
+
+### ✨ 주요 기능
+
+#### 📝 **자동/수동 버전 생성**
+
+```typescript
+// 자동 버전 생성 (변경사항이 있을 때만)
+const autoVersion = VersionStore.createAutoVersionIfChanged(
+  project,
+  strategy,
+  "조건 블록 추가"
+);
+
+// 수동 버전 생성
+const version = VersionStore.createVersion(project, strategy, {
+  description: "새로운 매매 전략 v2.0",
+  author: "사용자",
+  isAutoSaved: false,
+});
+```
+
+#### 🔍 **버전 비교 및 차이점 추적**
+
+```typescript
+const comparison = VersionStore.compareVersions(version1, version2);
+console.log(comparison.hasChanges); // true/false
+console.log(comparison.strategyChanges); // 변경사항 배열
+```
+
+#### ↩️ **버전 되돌리기**
+
+```typescript
+const revertedVersion = VersionStore.revertToVersion(
+  project,
+  targetVersionId,
+  "이전 전략으로 되돌리기"
+);
+```
+
+#### 🛠️ **유틸리티 함수들**
+
+```typescript
+// 최신 버전 가져오기
+const latest = VersionStore.getLatestVersion(project);
+
+// 백테스트 결과가 있는 버전들
+const tested = VersionStore.getVersionsWithBacktest(project);
+
+// 자동 저장 버전 정리 (최신 10개만 유지)
+const cleaned = VersionStore.cleanupAutoSavedVersions(project, 10);
+```
+
+### 🖥️ **UI 컴포넌트**
+
+#### 버전 목록 (`VersionList`)
+
+- 📊 버전별 백테스트 성과 표시
+- 🏷️ 자동저장/수동저장 구분
+- ⏰ 상대적 시간 표시 ("3분 전", "어제")
+- 🎯 버전별 액션 (전환, 되돌리기, 복제, 삭제)
+
+#### 버전 생성 모달 (`CreateVersionModal`)
+
+- 📝 버전 설명 및 작성자 입력
+- ⚠️ 변경사항 없음 경고
+- 🤖 자동 저장 옵션
+- 🧪 백테스트 자동 실행 옵션
+
+#### 버전 비교 (`VersionComparison`)
+
+- 📊 변경사항 시각화 (추가/제거/수정)
+- 📋 상세 차이점 표시
+- 🔍 JSON 뷰어로 전략 구조 비교
+
+### 🏷️ **버전 네이밍**
+
+- **자동 생성**: `v0.1`, `v0.2`, `v1.0`, `v1.1` ...
+- **시맨틱 버전**: 최신 버전 + 0.1씩 증가
+- **중복 방지**: 기존 버전명과 중복되지 않도록 자동 처리
+
+### 📈 **실사용 예시**
+
+```typescript
+// 1. 전략 에디터에서 조건 블록 추가
+// → 자동 버전 생성: "v1.1"
+
+// 2. 백테스트 실행
+// → 버전에 백테스트 결과 저장
+
+// 3. 전략 수정 후 수동 버전 생성
+const newVersion = VersionStore.createVersion(project, strategy, {
+  description: "RSI 지표 추가 및 수익률 개선",
+  author: "트레이더",
+  shouldRunBacktest: true,
+});
+
+// 4. 이전 성과가 좋았던 v1.0으로 되돌리기
+const revertedVersion = VersionStore.revertToVersion(
+  project,
+  "version-1.0-id",
+  "수익률이 좋았던 v1.0으로 복원"
+);
 ```
 
 ## 🎨 사용자 가이드

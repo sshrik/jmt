@@ -1,3 +1,5 @@
+import type { Strategy } from "./strategy";
+
 // 기본 데이터 타입들
 export interface Project {
   id: string;
@@ -14,7 +16,9 @@ export interface Version {
   versionName: string; // "v1.0", "v1.1" etc.
   description: string;
   createdAt: Date;
-  strategy: StrategyBlock[];
+  author?: string; // 버전 생성자
+  isAutoSaved?: boolean; // 자동 저장 여부
+  strategy: Strategy; // 현재 Strategy 타입 사용
   backtestResults?: BacktestResult;
 }
 
@@ -160,4 +164,33 @@ export interface ValidationError {
   blockId: string;
   message: string;
   type: "error" | "warning";
+}
+
+// 버전 관리 추가 타입들
+export interface VersionComparisonResult {
+  hasChanges: boolean;
+  strategyChanges: StrategyChange[];
+  metadataChanges: MetadataChange[];
+}
+
+export interface StrategyChange {
+  type: "added" | "removed" | "modified";
+  blockType: "condition" | "action";
+  blockId: string;
+  description: string;
+  before?: unknown;
+  after?: unknown;
+}
+
+export interface MetadataChange {
+  field: string;
+  before: unknown;
+  after: unknown;
+}
+
+export interface VersionCreationOptions {
+  description: string;
+  isAutoSaved?: boolean;
+  author?: string;
+  shouldRunBacktest?: boolean;
 }

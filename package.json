@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "npx tsx tests/backtest.test.ts && echo '\n========================\n' && npx tsx tests/comprehensive.test.ts",
+    "test": "npx tsx tests/backtest.test.ts && echo '\n========================\n' && npx tsx tests/comprehensive.test.ts && echo '\n========================\n' && npx tsx tests/version.test.ts",
     "test:vitest": "vitest",
     "test:run": "vitest run",
     "fetch-data": "node scripts/fetchStockData.js"

@@ -1,4 +1,12 @@
-import type { Project, Version, ProjectSummary } from "../types/project";
+import type {
+  Project,
+  Version,
+  ProjectSummary,
+  VersionCreationOptions,
+  VersionComparisonResult,
+  StrategyChange,
+} from "../types/project";
+import type { Strategy } from "../types/strategy";
 
 const STORAGE_KEY = "jmt_projects";
 
@@ -344,7 +352,18 @@ export class ProjectStore {
             versionName: "v1.0",
             description: "초기 버전",
             createdAt: new Date("2024-01-05"),
-            strategy: [],
+            strategy: {
+              id: generateId(),
+              projectId: "sample-project",
+              versionId: "sample-version-1",
+              name: "샘플 전략",
+              description: "기본 전략",
+              blocks: [],
+              blockOrder: [],
+              createdAt: now,
+              updatedAt: now,
+              isActive: true,
+            },
             backtestResults: {
               id: "backtest-2",
               versionId: "version-3",

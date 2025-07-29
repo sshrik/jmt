@@ -11,7 +11,13 @@ import {
   Card,
   Tabs,
 } from "@mantine/core";
-import { IconPlus, IconGitBranch, IconListCheck } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconGitBranch,
+  IconListCheck,
+  IconHistory,
+  IconDeviceFloppy,
+} from "@tabler/icons-react";
 import { StrategyRuleEditor } from "./StrategyRuleEditor";
 import { StrategyFlowEditor } from "./StrategyFlowEditor";
 import type {
@@ -27,6 +33,8 @@ interface StrategyEditorProps {
   strategy: Strategy;
   onStrategyUpdate: (strategy: Strategy) => void;
   readOnly?: boolean;
+  onSaveVersion?: () => void;
+  onShowVersionHistory?: () => void;
 }
 
 // 룰 구조 정의
@@ -77,6 +85,8 @@ export const StrategyEditor = ({
   strategy,
   onStrategyUpdate,
   readOnly = false,
+  onSaveVersion,
+  onShowVersionHistory,
 }: StrategyEditorProps) => {
   const [activeTab, setActiveTab] = useState<"rules" | "flow">("rules");
 
@@ -630,10 +640,38 @@ export const StrategyEditor = ({
       <Stack gap="lg">
         {/* 헤더 */}
         <Group justify="space-between">
-          <Title order={2}>투자 전략</Title>
-          <Badge variant="light" color={isValidStrategy ? "green" : "orange"}>
-            {isValidStrategy ? "실행 가능" : "불완전한 전략"}
-          </Badge>
+          <Group gap="md">
+            <Title order={2}>투자 전략</Title>
+            <Badge variant="light" color={isValidStrategy ? "green" : "orange"}>
+              {isValidStrategy ? "실행 가능" : "불완전한 전략"}
+            </Badge>
+          </Group>
+
+          {/* 버전 관리 버튼들 */}
+          {!readOnly && (
+            <Group gap="xs">
+              {onSaveVersion && (
+                <Button
+                  variant="light"
+                  size="sm"
+                  leftSection={<IconDeviceFloppy size={16} />}
+                  onClick={onSaveVersion}
+                >
+                  버전 저장
+                </Button>
+              )}
+              {onShowVersionHistory && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftSection={<IconHistory size={16} />}
+                  onClick={onShowVersionHistory}
+                >
+                  버전 기록
+                </Button>
+              )}
+            </Group>
+          )}
         </Group>
 
         {/* 모드 선택 탭 */}
