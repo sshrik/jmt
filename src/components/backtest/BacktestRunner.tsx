@@ -17,11 +17,13 @@ import type { Strategy } from "../../types/strategy";
 interface BacktestRunnerProps {
   strategy: Strategy;
   projectId?: string;
+  versionId?: string;
 }
 
 export const BacktestRunner = ({
   strategy,
   projectId,
+  versionId,
 }: BacktestRunnerProps) => {
   const [result, setResult] = useState<BacktestResult | null>(null);
   const [progress, setProgress] = useState<BacktestProgressType | null>(null);
@@ -50,11 +52,25 @@ export const BacktestRunner = ({
         // 주식 데이터 로드
         const stockData = await getStockData(backtestConfig.symbol);
 
+        // 기간에 따른 필터링된 데이터 길이 계산
+        const filteredPrices = stockData.prices.filter(
+          (price) =>
+            price.date >= backtestConfig.startDate &&
+            price.date <= backtestConfig.endDate
+        );
+
+        console.log(
+          `백테스트 기간: ${backtestConfig.startDate} ~ ${backtestConfig.endDate}`
+        );
+        console.log(
+          `전체 데이터: ${stockData.prices.length}개, 필터링된 데이터: ${filteredPrices.length}개`
+        );
+
         // 실행 단계 시작
         setProgress({
           current: 0,
-          total: stockData.prices.length,
-          currentDate: stockData.prices[0]?.date || "",
+          total: filteredPrices.length, // 필터링된 데이터 길이 사용
+          currentDate: filteredPrices[0]?.date || "",
           status: "running",
           message: "백테스트를 실행하고 있습니다...",
         });
@@ -74,10 +90,9 @@ export const BacktestRunner = ({
 
         // 완료
         setProgress({
-          current: stockData.prices.length,
-          total: stockData.prices.length,
-          currentDate:
-            stockData.prices[stockData.prices.length - 1]?.date || "",
+          current: filteredPrices.length,
+          total: filteredPrices.length,
+          currentDate: filteredPrices[filteredPrices.length - 1]?.date || "",
           status: "completed",
           message: "백테스트가 성공적으로 완료되었습니다!",
         });
@@ -87,11 +102,26 @@ export const BacktestRunner = ({
         // 프로젝트가 있는 경우 백테스트 결과 저장
         if (projectId) {
           try {
-            ProjectStore.saveBacktestResult(projectId, backtestResult);
+            console.log(
+              `백테스트 결과 저장 시도: projectId=${projectId}, versionId=${versionId}`
+            );
+            console.log("백테스트 결과:", backtestResult);
+
+            ProjectStore.saveBacktestResult(
+              projectId,
+              backtestResult,
+              versionId
+            );
+
+            console.log("백테스트 결과 저장 성공!");
           } catch (saveError) {
             console.error("백테스트 결과 저장 실패:", saveError);
             // 저장 실패해도 결과는 표시
           }
+        } else {
+          console.log(
+            "프로젝트 ID가 없어서 백테스트 결과를 저장하지 않습니다."
+          );
         }
       } catch (err) {
         const errorMessage =
@@ -112,7 +142,7 @@ export const BacktestRunner = ({
         setIsRunning(false);
       }
     },
-    [strategy, projectId]
+    [strategy, projectId, versionId]
   );
 
   // 백테스트 취소

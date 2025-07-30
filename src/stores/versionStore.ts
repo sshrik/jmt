@@ -13,6 +13,10 @@ const generateId = (): string => {
 };
 
 const generateVersionName = (existingVersions: Version[]): string => {
+  if (!existingVersions || !Array.isArray(existingVersions)) {
+    return "v1.0";
+  }
+
   const versionNumbers = existingVersions
     .map((v) => v.versionName.replace("v", ""))
     .map((v) => parseFloat(v))
@@ -49,65 +53,97 @@ const compareStrategies = (
   strategy1: Strategy,
   strategy2: Strategy
 ): VersionComparisonResult => {
-  const strategyChanges: StrategyChange[] = [];
+  try {
+    const strategyChanges: StrategyChange[] = [];
 
-  // 블록 비교
-  const blocks1Map = new Map(
-    strategy1.blocks.map((block) => [block.id, block])
-  );
-  const blocks2Map = new Map(
-    strategy2.blocks.map((block) => [block.id, block])
-  );
+    // 안전하게 블록 배열 가져오기
+    const blocks1 = strategy1?.blocks || [];
+    const blocks2 = strategy2?.blocks || [];
 
-  // 추가된 블록들
-  strategy2.blocks.forEach((block) => {
-    if (!blocks1Map.has(block.id)) {
-      strategyChanges.push({
-        type: "added",
-        blockType: block.type,
-        blockId: block.id,
-        description: `${block.type} 블록이 추가되었습니다: ${block.name || block.id}`,
-        after: block,
-      });
+    // blocks가 배열인지 확인
+    if (!Array.isArray(blocks1) || !Array.isArray(blocks2)) {
+      return {
+        hasChanges: true,
+        strategyChanges: [
+          {
+            type: "modified",
+            blockType: "condition",
+            blockId: "structure",
+            description: "전략 구조가 변경되었습니다.",
+          },
+        ],
+        metadataChanges: [],
+      };
     }
-  });
 
-  // 제거된 블록들
-  strategy1.blocks.forEach((block) => {
-    if (!blocks2Map.has(block.id)) {
-      strategyChanges.push({
-        type: "removed",
-        blockType: block.type,
-        blockId: block.id,
-        description: `${block.type} 블록이 제거되었습니다: ${block.name || block.id}`,
-        before: block,
-      });
-    }
-  });
+    // 블록 비교
+    const blocks1Map = new Map(blocks1.map((block) => [block.id, block]));
+    const blocks2Map = new Map(blocks2.map((block) => [block.id, block]));
 
-  // 수정된 블록들
-  strategy1.blocks.forEach((block1) => {
-    const block2 = blocks2Map.get(block1.id);
-    if (block2) {
-      // 깊은 비교를 위해 JSON 문자열 비교
-      if (JSON.stringify(block1) !== JSON.stringify(block2)) {
+    // 추가된 블록들
+    blocks2.forEach((block) => {
+      if (!blocks1Map.has(block.id)) {
         strategyChanges.push({
-          type: "modified",
-          blockType: block1.type,
-          blockId: block1.id,
-          description: `${block1.type} 블록이 수정되었습니다: ${block1.name || block1.id}`,
-          before: block1,
-          after: block2,
+          type: "added",
+          blockType: block.type,
+          blockId: block.id,
+          description: `${block.type} 블록이 추가되었습니다: ${block.name || block.id}`,
+          after: block,
         });
       }
-    }
-  });
+    });
 
-  return {
-    hasChanges: strategyChanges.length > 0,
-    strategyChanges,
-    metadataChanges: [], // 필요시 추가 구현
-  };
+    // 제거된 블록들
+    blocks1.forEach((block) => {
+      if (!blocks2Map.has(block.id)) {
+        strategyChanges.push({
+          type: "removed",
+          blockType: block.type,
+          blockId: block.id,
+          description: `${block.type} 블록이 제거되었습니다: ${block.name || block.id}`,
+          before: block,
+        });
+      }
+    });
+
+    // 수정된 블록들
+    blocks1.forEach((block1) => {
+      const block2 = blocks2Map.get(block1.id);
+      if (block2) {
+        // 깊은 비교를 위해 JSON 문자열 비교
+        if (JSON.stringify(block1) !== JSON.stringify(block2)) {
+          strategyChanges.push({
+            type: "modified",
+            blockType: block1.type,
+            blockId: block1.id,
+            description: `${block1.type} 블록이 수정되었습니다: ${block1.name || block1.id}`,
+            before: block1,
+            after: block2,
+          });
+        }
+      }
+    });
+
+    return {
+      hasChanges: strategyChanges.length > 0,
+      strategyChanges,
+      metadataChanges: [], // 필요시 추가 구현
+    };
+  } catch (error) {
+    console.warn("전략 비교 중 오류:", error);
+    return {
+      hasChanges: true,
+      strategyChanges: [
+        {
+          type: "modified",
+          blockType: "condition",
+          blockId: "error",
+          description: "전략 비교 중 오류가 발생했습니다.",
+        },
+      ],
+      metadataChanges: [],
+    };
+  }
 };
 
 // 버전 관리 스토어
@@ -134,8 +170,8 @@ export class VersionStore {
       projectId: project.id,
       versionName: generateVersionName(project.versions),
       description: options.description,
+      reason: options.reason,
       createdAt: now,
-      author: options.author || "Unknown",
       isAutoSaved: options.isAutoSaved || false,
       strategy: {
         ...strategy,
@@ -185,6 +221,10 @@ export class VersionStore {
     sourceVersionId: string,
     options: VersionCreationOptions
   ): Version | null {
+    if (!project.versions || !Array.isArray(project.versions)) {
+      return null;
+    }
+
     const sourceVersion = project.versions.find(
       (v) => v.id === sourceVersionId
     );
@@ -202,7 +242,13 @@ export class VersionStore {
    * 최신 버전 가져오기
    */
   static getLatestVersion(project: Project): Version | null {
-    if (project.versions.length === 0) return null;
+    if (
+      !project.versions ||
+      !Array.isArray(project.versions) ||
+      project.versions.length === 0
+    ) {
+      return null;
+    }
 
     return project.versions.sort(
       (a, b) =>
@@ -228,6 +274,10 @@ export class VersionStore {
     targetVersionId: string,
     description = "버전 되돌리기"
   ): Version | null {
+    if (!project.versions || !Array.isArray(project.versions)) {
+      return null;
+    }
+
     const targetVersion = project.versions.find(
       (v) => v.id === targetVersionId
     );
@@ -247,6 +297,9 @@ export class VersionStore {
     project: Project,
     ascending = false
   ): Version[] {
+    if (!project.versions || !Array.isArray(project.versions)) {
+      return [];
+    }
     return [...project.versions].sort((a, b) => {
       const timeA = new Date(a.createdAt).getTime();
       const timeB = new Date(b.createdAt).getTime();
@@ -258,6 +311,9 @@ export class VersionStore {
    * 백테스트 결과가 있는 버전들만 가져오기
    */
   static getVersionsWithBacktest(project: Project): Version[] {
+    if (!project.versions || !Array.isArray(project.versions)) {
+      return [];
+    }
     return project.versions.filter((v) => v.backtestResults);
   }
 
@@ -265,6 +321,10 @@ export class VersionStore {
    * 자동 저장 버전들 정리 (최신 N개만 유지)
    */
   static cleanupAutoSavedVersions(project: Project, keepCount = 10): Version[] {
+    if (!project.versions || !Array.isArray(project.versions)) {
+      return [];
+    }
+
     const autoSavedVersions = project.versions
       .filter((v) => v.isAutoSaved)
       .sort(

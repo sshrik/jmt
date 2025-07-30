@@ -239,7 +239,11 @@ export class ProjectStore {
     saveProjectsToStorage(filteredProjects); // 이 함수가 이벤트를 발생시킴
   }
 
-  static saveBacktestResult(projectId: string, backtestResult: unknown): void {
+  static saveBacktestResult(
+    projectId: string,
+    backtestResult: unknown,
+    versionId?: string
+  ): void {
     const projects = this.getAllProjects();
     const projectIndex = projects.findIndex((p) => p.id === projectId);
 
@@ -247,9 +251,24 @@ export class ProjectStore {
       throw new Error("프로젝트를 찾을 수 없습니다.");
     }
 
-    // 가장 최신 버전(첫 번째 버전)에 백테스트 결과 저장
+    // 버전 찾기 (versionId가 제공된 경우 해당 버전, 아니면 최신 버전)
     if (projects[projectIndex].versions.length === 0) {
       throw new Error("프로젝트에 버전이 없습니다.");
+    }
+
+    let targetVersionIndex = 0; // 기본값: 최신 버전 (첫 번째)
+
+    if (versionId) {
+      const foundIndex = projects[projectIndex].versions.findIndex(
+        (v) => v.id === versionId
+      );
+      if (foundIndex === -1) {
+        console.warn(
+          `버전 ID ${versionId}를 찾을 수 없습니다. 최신 버전에 저장합니다.`
+        );
+      } else {
+        targetVersionIndex = foundIndex;
+      }
     }
 
     const result = backtestResult as {
@@ -268,9 +287,10 @@ export class ProjectStore {
     };
 
     // 백테스트 결과를 프로젝트용 형식으로 변환
+    const targetVersion = projects[projectIndex].versions[targetVersionIndex];
     const convertedResult = {
       id: generateId(),
-      versionId: projects[projectIndex].versions[0].id,
+      versionId: targetVersion.id,
       executedAt: new Date(),
       totalReturn: result.stats?.totalReturnPct || 0, // 퍼센트 수익률 사용
       maxDrawdown: result.stats?.maxDrawdown || 0,
@@ -289,8 +309,14 @@ export class ProjectStore {
       },
     };
 
-    projects[projectIndex].versions[0].backtestResults = convertedResult;
+    // 지정된 버전에 백테스트 결과 저장
+    projects[projectIndex].versions[targetVersionIndex].backtestResults =
+      convertedResult;
     projects[projectIndex].updatedAt = new Date();
+
+    console.log(
+      `백테스트 결과가 버전 "${targetVersion.versionName}" (ID: ${targetVersion.id})에 저장되었습니다.`
+    );
 
     saveProjectsToStorage(projects);
   }

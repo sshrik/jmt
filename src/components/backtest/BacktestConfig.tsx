@@ -55,7 +55,7 @@ export const BacktestConfig = ({
   // 폼 상태
   const [config, setConfig] = useState<BacktestConfigType>({
     symbol: "",
-    startDate: "2023-01-01",
+    startDate: "2024-01-01", // 더 짧은 기간으로 변경
     endDate: "2024-12-31",
     initialCash: 10000000, // 1천만원
     commission: 0.0015, // 0.15%
@@ -313,11 +313,11 @@ export const BacktestConfig = ({
             </Text>
             <Group gap="md">
               <Text size="xs">
-                <strong>기간:</strong> {stockSummary.startDate} ~{" "}
+                <strong>최대 지원 기간:</strong> {stockSummary.startDate} ~{" "}
                 {stockSummary.endDate} ({stockSummary.dataPoints}일)
               </Text>
               <Text size="xs">
-                <strong>기간 내 변화량:</strong>{" "}
+                <strong>전체 기간 수익률:</strong>{" "}
                 {stockSummary.totalReturn.toFixed(2)}%
               </Text>
               <Text size="xs">

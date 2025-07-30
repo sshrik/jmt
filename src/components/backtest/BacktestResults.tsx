@@ -11,7 +11,11 @@ import {
   Table,
   Progress,
   Tooltip as MantineTooltip,
+  Pagination,
+  Select,
+  ScrollArea,
 } from "@mantine/core";
+import { useState } from "react";
 import {
   LineChart,
   Line,
@@ -38,6 +42,11 @@ interface BacktestResultsProps {
 
 export const BacktestResults = ({ result }: BacktestResultsProps) => {
   const { stats, portfolioHistory, trades, config } = result;
+
+  // 거래 내역 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
 
   // 차트 데이터 준비
   const chartData = portfolioHistory.map((snapshot) => ({
@@ -461,48 +470,130 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
         {/* 거래 내역 */}
         <Tabs.Panel value="trades" pt="md">
           <Card withBorder>
-            <Title order={4} mb="md">
-              거래 내역
-            </Title>
+            <Group justify="space-between" mb="md">
+              <Group gap="md">
+                <Title order={4}>거래 내역 ({trades.length}건)</Title>
+                <Select
+                  value={sortOrder}
+                  onChange={(value) => {
+                    setSortOrder(value as "newest" | "oldest");
+                    setCurrentPage(1); // 정렬 변경 시 첫 페이지로
+                  }}
+                  data={[
+                    { value: "newest", label: "최신순" },
+                    { value: "oldest", label: "날짜순" },
+                  ]}
+                  size="sm"
+                  w={120}
+                />
+              </Group>
+
+              <Group gap="sm">
+                <Text size="sm" c="dimmed">
+                  페이지당
+                </Text>
+                <Select
+                  value={pageSize.toString()}
+                  onChange={(value) => {
+                    setPageSize(Number(value));
+                    setCurrentPage(1); // 페이지 크기 변경 시 첫 페이지로
+                  }}
+                  data={[
+                    { value: "10", label: "10개" },
+                    { value: "20", label: "20개" },
+                    { value: "50", label: "50개" },
+                    { value: "100", label: "100개" },
+                  ]}
+                  size="sm"
+                  w={80}
+                />
+              </Group>
+            </Group>
+
             {trades.length > 0 ? (
-              <Table striped highlightOnHover>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>날짜</Table.Th>
-                    <Table.Th>구분</Table.Th>
-                    <Table.Th>수량</Table.Th>
-                    <Table.Th>가격</Table.Th>
-                    <Table.Th>수수료</Table.Th>
-                    <Table.Th>총액</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {trades
-                    .slice(-20)
-                    .reverse()
-                    .map((trade) => (
-                      <Table.Tr key={trade.id}>
-                        <Table.Td>{trade.date}</Table.Td>
-                        <Table.Td>
-                          <Badge
-                            color={trade.type === "buy" ? "blue" : "red"}
-                            variant="light"
-                          >
-                            {trade.type === "buy" ? "매수" : "매도"}
-                          </Badge>
-                        </Table.Td>
-                        <Table.Td>{formatNumber(trade.quantity, 0)}주</Table.Td>
-                        <Table.Td>₩{formatNumber(trade.price)}</Table.Td>
-                        <Table.Td>₩{formatNumber(trade.commission)}</Table.Td>
-                        <Table.Td>
-                          <Text c={trade.type === "buy" ? "red" : "green"}>
-                            ₩{formatNumber(trade.total)}
-                          </Text>
-                        </Table.Td>
+              <Stack gap="md">
+                <ScrollArea>
+                  <Table striped highlightOnHover>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>날짜</Table.Th>
+                        <Table.Th>구분</Table.Th>
+                        <Table.Th>수량</Table.Th>
+                        <Table.Th>가격</Table.Th>
+                        <Table.Th>수수료</Table.Th>
+                        <Table.Th>총액</Table.Th>
                       </Table.Tr>
-                    ))}
-                </Table.Tbody>
-              </Table>
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {(() => {
+                        // 정렬 적용
+                        const sortedTrades = [...trades].sort((a, b) => {
+                          const dateA = new Date(a.date).getTime();
+                          const dateB = new Date(b.date).getTime();
+                          return sortOrder === "newest"
+                            ? dateB - dateA
+                            : dateA - dateB;
+                        });
+
+                        // 페이지네이션 적용
+                        const startIndex = (currentPage - 1) * pageSize;
+                        const endIndex = startIndex + pageSize;
+                        const paginatedTrades = sortedTrades.slice(
+                          startIndex,
+                          endIndex
+                        );
+
+                        return paginatedTrades.map((trade) => (
+                          <Table.Tr key={trade.id}>
+                            <Table.Td>{trade.date}</Table.Td>
+                            <Table.Td>
+                              <Badge
+                                color={trade.type === "buy" ? "blue" : "red"}
+                                variant="light"
+                              >
+                                {trade.type === "buy" ? "매수" : "매도"}
+                              </Badge>
+                            </Table.Td>
+                            <Table.Td>
+                              {formatNumber(trade.quantity, 0)}주
+                            </Table.Td>
+                            <Table.Td>₩{formatNumber(trade.price)}</Table.Td>
+                            <Table.Td>
+                              ₩{formatNumber(trade.commission)}
+                            </Table.Td>
+                            <Table.Td>
+                              <Text c={trade.type === "buy" ? "red" : "green"}>
+                                ₩{formatNumber(trade.total)}
+                              </Text>
+                            </Table.Td>
+                          </Table.Tr>
+                        ));
+                      })()}
+                    </Table.Tbody>
+                  </Table>
+                </ScrollArea>
+
+                {/* 페이지네이션 */}
+                {trades.length > pageSize && (
+                  <Group justify="center" mt="md">
+                    <Pagination
+                      value={currentPage}
+                      onChange={setCurrentPage}
+                      total={Math.ceil(trades.length / pageSize)}
+                      size="sm"
+                      withEdges
+                    />
+                    <Text size="sm" c="dimmed">
+                      {Math.min(
+                        (currentPage - 1) * pageSize + 1,
+                        trades.length
+                      )}
+                      -{Math.min(currentPage * pageSize, trades.length)} /{" "}
+                      {trades.length}건
+                    </Text>
+                  </Group>
+                )}
+              </Stack>
             ) : (
               <Alert
                 icon={<IconInfoCircle size={16} />}
