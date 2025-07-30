@@ -207,20 +207,22 @@ function DashboardPage() {
                 }}
               >
                 <Group justify="space-between" mb="xs" align="flex-start">
-                  <Group gap="xs" style={{ flex: 1, minWidth: 0 }}>
-                    <Text
-                      fw={600}
-                      size="lg"
-                      lineClamp={2}
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        maxWidth: "calc(100% - 60px)", // ... 버튼과 칩을 위한 공간 확보
-                      }}
-                    >
-                      {project.name}
-                    </Text>
-                    {/* 순위 배지 - 이름 옆으로 이동 */}
+                  <Text
+                    fw={600}
+                    size="lg"
+                    lineClamp={2}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      marginRight: "8px", // 오른쪽 요소들과의 간격
+                    }}
+                  >
+                    {project.name}
+                  </Text>
+                  
+                  {/* 순위 배지와 메뉴 버튼을 함께 배치 */}
+                  <Group gap="xs" style={{ flexShrink: 0 }}>
+                    {/* 순위 배지 */}
                     {index < 3 &&
                       project.latestReturn &&
                       project.latestReturn > 0 && (
@@ -234,22 +236,21 @@ function DashboardPage() {
                                 : "orange"
                           }
                           size="sm"
-                          style={{ flexShrink: 0 }}
                         >
                           #{index + 1}
                         </Badge>
                       )}
-                  </Group>
-                  <Menu shadow="md" width={200}>
-                    <Menu.Target>
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        style={{ flexShrink: 0 }}
-                      >
-                        <IconDots size={16} />
-                      </ActionIcon>
-                    </Menu.Target>
+                    
+                    {/* 메뉴 버튼 - 순위 배지 바로 옆에 */}
+                    <Menu shadow="md" width={200}>
+                      <Menu.Target>
+                        <ActionIcon
+                          variant="subtle"
+                          color="gray"
+                        >
+                          <IconDots size={16} />
+                        </ActionIcon>
+                      </Menu.Target>
                     <Menu.Dropdown>
                       <Menu.Item
                         leftSection={<IconEdit size={14} />}
@@ -270,7 +271,8 @@ function DashboardPage() {
                         프로젝트 삭제
                       </Menu.Item>
                     </Menu.Dropdown>
-                  </Menu>
+                    </Menu>
+                  </Group>
                 </Group>
 
                 <Text c="dimmed" size="sm" mb="md" lineClamp={2}>
