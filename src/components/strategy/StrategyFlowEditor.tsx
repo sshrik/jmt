@@ -243,7 +243,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   );
 
   // 디버깅 정보 추가 (nodes, edges 정의 후)
-  // console.log("🎯 StrategyFlowEditor Debug Info:", {
+
   //   flow: flow ? "provided" : "null",
   //   currentFlow: currentFlow ? "valid" : "invalid",
   //   flowNodes: currentFlow?.nodes?.length || 0,
@@ -283,7 +283,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   // const addDebugLog = useCallback((message: string) => {
   //   const timestamp = new Date().toLocaleTimeString();
   //   const logMessage = `[${timestamp}] ${message}`;
-  //   // console.log(logMessage);
+
   //   setDebugInfo(prev => [...prev.slice(-4), logMessage]); // 최근 5개만 유지
   // }, []);
 

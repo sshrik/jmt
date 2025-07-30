@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { AppShell, Title, Group, Burger } from "@mantine/core";
 import { IconChartLine } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";

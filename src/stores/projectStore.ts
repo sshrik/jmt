@@ -156,9 +156,6 @@ export class ProjectStore {
   static getAllProjects(): Project[] {
     const projects = getProjectsFromStorage();
     if (projects.length === 0) {
-      console.log(
-        "No projects found in storage, generating mock data with highway trading strategy"
-      );
       this.generateMockData();
       return getProjectsFromStorage();
     }
@@ -299,15 +296,12 @@ export class ProjectStore {
     projects[projectIndex].updatedAt = new Date();
 
     saveProjectsToStorage(projects);
-    console.log(`버전 "${version.versionName}"이 프로젝트에 추가되었습니다.`);
   }
 
   // 개발용: localStorage 초기화 후 고속도로 매매법 생성
   static resetWithHighwayTradingStrategy(): void {
-    console.log("🧹 localStorage 초기화 후 고속도로 매매법 생성");
     localStorage.removeItem(STORAGE_KEY);
     this.generateMockData();
-    console.log("✅ 고속도로 매매법 생성 완료!");
   }
 
   static saveBacktestResult(
@@ -414,10 +408,6 @@ export class ProjectStore {
       convertedResult as unknown as BacktestResult,
     ];
     projects[projectIndex].updatedAt = new Date();
-
-    console.log(
-      `백테스트 결과가 버전 "${targetVersion.versionName}" (ID: ${targetVersion.id})에 저장되었습니다. (총 ${projects[projectIndex].versions[targetVersionIndex].backtestResults!.length}개 결과)`
-    );
 
     saveProjectsToStorage(projects);
   }

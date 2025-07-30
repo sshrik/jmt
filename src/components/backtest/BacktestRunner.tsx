@@ -63,13 +63,6 @@ export const BacktestRunner = ({
             price.date <= backtestConfig.endDate
         );
 
-        console.log(
-          `백테스트 기간: ${backtestConfig.startDate} ~ ${backtestConfig.endDate}`
-        );
-        console.log(
-          `전체 데이터: ${stockData.prices.length}개, 필터링된 데이터: ${filteredPrices.length}개`
-        );
-
         // 실행 단계 시작
         setProgress({
           current: 0,
@@ -106,11 +99,6 @@ export const BacktestRunner = ({
         // 프로젝트가 있는 경우 백테스트 결과 저장
         if (projectId) {
           try {
-            console.log(
-              `백테스트 결과 저장 시도: projectId=${projectId}, versionId=${versionId}`
-            );
-            console.log("백테스트 결과:", backtestResult);
-
             // 백테스트 설정 정보도 함께 포함
             const enrichedResult = {
               ...backtestResult,
@@ -122,16 +110,11 @@ export const BacktestRunner = ({
               enrichedResult,
               versionId
             );
-
-            console.log("백테스트 결과 저장 성공!");
           } catch (saveError) {
             console.error("백테스트 결과 저장 실패:", saveError);
             // 저장 실패해도 결과는 표시
           }
         } else {
-          console.log(
-            "프로젝트 ID가 없어서 백테스트 결과를 저장하지 않습니다."
-          );
         }
       } catch (err) {
         const errorMessage =

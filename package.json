@@ -22,7 +22,7 @@
     "@mantine/notifications": "^8.2.1",
     "@tabler/icons-react": "^3.34.1",
     "@tanstack/react-router": "^1.129.8",
-    "@tanstack/router-devtools": "^1.129.8",
+    "@tanstack/react-router-devtools": "^1.129.8",
     "@tanstack/router-vite-plugin": "^1.129.8",
     "dayjs": "^1.11.13",
     "react": "^19.1.0",
