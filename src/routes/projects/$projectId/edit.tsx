@@ -266,32 +266,11 @@ function ProjectEdit() {
     }
   }, [project?.id, isStrategyModified, currentStrategy, strategy, projectId]);
 
-  // 수동 저장 (프로젝트 정보와 전략 통합 저장)
+  // 수동 저장 (전략만 저장 - 프로젝트 정보는 실시간 저장됨)
   const handleSaveAll = useCallback(async () => {
-    const validation = form.validate();
-    if (validation.hasErrors) {
-      notifications.show({
-        title: "입력 오류",
-        message: "프로젝트 정보를 올바르게 입력해주세요.",
-        color: "red",
-        icon: <IconAlertTriangle size={16} />,
-      });
-      return;
-    }
-
     try {
       setIsSaving(true);
       setSaveProgress(0);
-
-      // 프로젝트 기본 정보 업데이트
-      if (form.isDirty() && project) {
-        setSaveProgress(30);
-        await updateProject(
-          project.id,
-          form.values.name,
-          form.values.description
-        );
-      }
 
       // 전략 데이터 저장 (블록이 있으면 저장)
       const shouldSaveStrategy =
@@ -330,7 +309,6 @@ function ProjectEdit() {
       setIsStrategyModified(false);
       setHasUnsavedChanges(false);
       setLastSaved(new Date());
-      form.resetDirty();
 
       // 저장 후 현재 전략 상태 초기화하여 새로 로드되도록 함
       setCurrentStrategy(null);
@@ -353,14 +331,11 @@ function ProjectEdit() {
       setSaveProgress(0);
     }
   }, [
-    form,
-    project,
-    updateProject,
     isStrategyModified,
     currentStrategy,
     strategy,
     projectId,
-    navigate,
+    openCreateVersion,
   ]);
 
   // 버전 생성 완료 핸들러
