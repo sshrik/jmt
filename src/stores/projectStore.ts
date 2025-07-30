@@ -75,8 +75,7 @@ const getProjectsFromStorage = (): Project[] => {
           ...version,
           createdAt: new Date(version.createdAt),
           backtestResults: backtestResults
-            ? backtestResults.map((result: any) => ({
-                // eslint-disable-line @typescript-eslint/no-explicit-any
+            ? backtestResults.map((result: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                 id: result.id as string,
                 versionId: result.versionId as string,
                 executedAt: new Date(result.executedAt as string),
@@ -84,9 +83,8 @@ const getProjectsFromStorage = (): Project[] => {
                 maxDrawdown: result.maxDrawdown as number,
                 tradeCount: result.tradeCount as number,
                 winRate: result.winRate as number,
-                transactions: ((result.transactions as any[]) || []) // eslint-disable-line @typescript-eslint/no-explicit-any
-                  .map((t: any) => ({
-                    // eslint-disable-line @typescript-eslint/no-explicit-any
+                transactions: ((result.transactions as any[]) || []).map( // eslint-disable-line @typescript-eslint/no-explicit-any
+                  (t: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                     id: t.id as string,
                     date: new Date(t.date as string),
                     type: t.type as "buy" | "sell",
@@ -95,17 +93,18 @@ const getProjectsFromStorage = (): Project[] => {
                     amount: t.total as number, // total -> amount 매핑
                     fee: t.commission as number, // commission -> fee 매핑
                     reason: (t.reason as string) || "전략 조건 충족",
-                  })),
-                portfolioHistory: ((result.portfolioHistory as any[]) || []) // eslint-disable-line @typescript-eslint/no-explicit-any
-                  .map((p: any) => ({
-                    // eslint-disable-line @typescript-eslint/no-explicit-any
-                    date: new Date(p.date as string),
-                    cash: p.cash as number,
-                    stockQuantity: 0, // 기본값 설정
-                    stockValue: 0, // 기본값 설정
-                    totalValue: p.totalValue as number,
-                    dailyReturn: 0, // 기본값 설정
-                  })),
+                  })
+                ),
+                portfolioHistory: (
+                  (result.portfolioHistory as any[]) || [] // eslint-disable-line @typescript-eslint/no-explicit-any
+                ).map((p: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+                  date: new Date(p.date as string),
+                  cash: p.cash as number,
+                  stockQuantity: 0, // 기본값 설정
+                  stockValue: 0, // 기본값 설정
+                  totalValue: p.totalValue as number,
+                  dailyReturn: 0, // 기본값 설정
+                })),
                 initialCash: result.initialCash as number,
                 backtestPeriod: {
                   startDate: new Date(
