@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Container,
@@ -76,13 +76,22 @@ function ProjectEdit() {
     { open: openCreateVersion, close: closeCreateVersion },
   ] = useDisclosure(false);
 
-  // 자동 저장 상태
+  // 자동 저장 상태 (프로젝트 정보와 전략 분리)
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
-  const autoSaveInterval = useInterval(() => {
-    if (autoSaveEnabled && hasUnsavedChanges && !isSaving) {
+  
+  // 프로젝트 기본 정보 자동 저장 (빠른 주기)
+  const projectInfoAutoSave = useInterval(() => {
+    if (autoSaveEnabled && form.isDirty() && !isSaving) {
+      handleSaveProjectInfo();
+    }
+  }, 10000); // 10초마다 프로젝트 정보 자동 저장
+
+  // 전략 자동 저장 (느린 주기)
+  const strategyAutoSave = useInterval(() => {
+    if (autoSaveEnabled && isStrategyModified && !isSaving) {
       handleAutoSave();
     }
-  }, 120000); // 2분마다 자동 저장 (성능 향상을 위해 주기 증가)
+  }, 120000); // 2분마다 전략 자동 저장
 
   // 현재 프로젝트 찾기
   const project = useMemo(() => {
@@ -93,8 +102,7 @@ function ProjectEdit() {
     }
   }, [projectId]);
 
-  // debounce를 위한 타이머 ref
-  const debounceTimerRef = useRef<number | undefined>();
+
 
   // 메모이제이션된 validation 함수들
   const nameValidator = useCallback((value: string) => {
@@ -109,17 +117,13 @@ function ProjectEdit() {
     return null;
   }, []);
 
-  // 변경사항 감지를 debounce 처리
-  const handleValuesChange = useCallback(() => {
-    if (debounceTimerRef.current) {
-      window.clearTimeout(debounceTimerRef.current);
-    }
-    debounceTimerRef.current = window.setTimeout(() => {
-      setHasUnsavedChanges(true);
-    }, 300); // 300ms 후에 변경사항 감지
+  // 프로젝트 기본 정보 변경사항 감지 (즉시 반영, 전략과 분리)
+  const handleProjectInfoChange = useCallback(() => {
+    // 프로젝트 정보는 별도로 관리하므로 hasUnsavedChanges를 false로 유지
+    // 자동 저장이 빠르게 처리할 예정
   }, []);
 
-  // 프로젝트 기본 정보 폼
+  // 프로젝트 기본 정보 폼 (전략과 완전 분리)
   const form = useForm({
     initialValues: useMemo(
       () => ({
@@ -132,9 +136,9 @@ function ProjectEdit() {
       name: nameValidator,
       description: descriptionValidator,
     },
-    validateInputOnBlur: true, // 입력 중이 아닌 blur 시에만 검증
-    validateInputOnChange: false, // 입력 중 실시간 검증 비활성화
-    onValuesChange: handleValuesChange,
+    validateInputOnBlur: true,
+    validateInputOnChange: false,
+    onValuesChange: handleProjectInfoChange, // 즉시 변경사항 감지
   });
 
   // 프로젝트 정보가 로드되면 폼 값 업데이트 (form dependency 제거)
@@ -149,23 +153,46 @@ function ProjectEdit() {
     }
   }, [project?.id, project?.name, project?.description]);
 
-  // cleanup debounce timer
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        window.clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
 
-  // 자동 저장 시작/중지
+
+  // 프로젝트 기본 정보만 저장하는 함수 (전략과 분리)
+  const handleSaveProjectInfo = useCallback(async () => {
+    if (!project || !form.isDirty()) return;
+
+    try {
+      await updateProject(project.id, form.values.name, form.values.description);
+      form.resetDirty();
+      setLastSaved(new Date());
+      
+      notifications.show({
+        title: "프로젝트 정보 저장",
+        message: "프로젝트 이름과 설명이 저장되었습니다.",
+        color: "green",
+        autoClose: 2000,
+      });
+    } catch (error) {
+      console.error("프로젝트 정보 저장 실패:", error);
+      notifications.show({
+        title: "저장 실패",
+        message: "프로젝트 정보 저장 중 오류가 발생했습니다.",
+        color: "red",
+      });
+    }
+  }, [project?.id, updateProject, form]);
+
+  // 자동 저장 시작/중지 (분리된 타이머들)
   useEffect(() => {
     if (autoSaveEnabled) {
-      autoSaveInterval.start();
+      projectInfoAutoSave.start();
+      strategyAutoSave.start();
     } else {
-      autoSaveInterval.stop();
+      projectInfoAutoSave.stop();
+      strategyAutoSave.stop();
     }
-    return autoSaveInterval.stop;
+    return () => {
+      projectInfoAutoSave.stop();
+      strategyAutoSave.stop();
+    };
   }, [autoSaveEnabled]);
 
   // 기본 전략 생성 (현재 버전)
@@ -248,33 +275,17 @@ function ProjectEdit() {
     });
   }, [strategy]);
 
-  // 자동 저장 (최적화된 버전)
+  // 전략만 저장하는 자동 저장 함수 (프로젝트 정보와 분리)
   const handleAutoSave = useCallback(async () => {
-    if (!project || isSaving) return;
+    if (!project || isSaving || !isStrategyModified) return;
 
     try {
       setIsSaving(true);
       setSaveProgress(0);
 
-      let hasChanges = false;
-
-      // 프로젝트 기본 정보 업데이트 (변경사항이 있을 때만)
-      if (form.isDirty()) {
-        setSaveProgress(30);
-        await updateProject(
-          project.id,
-          form.values.name,
-          form.values.description
-        );
-        hasChanges = true;
-      }
-
-      // 전략 데이터 자동 저장 (변경사항이 있을 때만)
+      // 전략 데이터만 자동 저장
       const currentStrategyToSave = currentStrategy || strategy;
-      const shouldAutoSave =
-        isStrategyModified && currentStrategyToSave.blocks.length > 0;
-
-      if (shouldAutoSave) {
+      if (currentStrategyToSave.blocks.length > 0) {
         setSaveProgress(60);
 
         // 불필요한 객체 생성 최소화
@@ -283,8 +294,6 @@ function ProjectEdit() {
           position: { x: 0, y: 0 },
           connections: [],
         }));
-
-        hasChanges = true;
 
         try {
           ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
@@ -298,36 +307,29 @@ function ProjectEdit() {
           if (!savedStrategy || savedBlocks.length !== strategyBlocks.length) {
             throw new Error("전략 저장에 실패했습니다.");
           }
+
+          setSaveProgress(100);
+          setIsStrategyModified(false);
+          setLastSaved(new Date());
+          setCurrentStrategy(null);
+
+          notifications.show({
+            title: "전략 자동 저장 완료",
+            message: "투자 전략이 자동으로 저장되었습니다.",
+            color: "green",
+            icon: <IconCloudCheck size={16} />,
+            autoClose: 2000,
+          });
         } catch (error) {
-          console.error("자동 저장 중 오류:", error);
+          console.error("전략 자동 저장 중 오류:", error);
           throw error;
         }
       }
-
-      // 변경사항이 있었을 때만 상태 업데이트 및 알림
-      if (hasChanges) {
-        setSaveProgress(100);
-        setIsStrategyModified(false);
-        setHasUnsavedChanges(false);
-        setLastSaved(new Date());
-        form.resetDirty();
-
-        // 자동 저장 후에도 현재 전략 상태 초기화
-        setCurrentStrategy(null);
-
-        notifications.show({
-          title: "자동 저장 완료",
-          message: "변경사항이 자동으로 저장되었습니다.",
-          color: "green",
-          icon: <IconCloudCheck size={16} />,
-          autoClose: 2000,
-        });
-      }
     } catch (error) {
-      console.error("자동 저장 실패:", error);
+      console.error("전략 자동 저장 실패:", error);
       notifications.show({
-        title: "자동 저장 실패",
-        message: "변경사항 저장 중 오류가 발생했습니다.",
+        title: "전략 자동 저장 실패",
+        message: "전략 저장 중 오류가 발생했습니다.",
         color: "red",
         icon: <IconCloudX size={16} />,
       });
@@ -335,16 +337,9 @@ function ProjectEdit() {
       setIsSaving(false);
       setSaveProgress(0);
     }
-  }, [
-    project?.id,
-    updateProject,
-    isStrategyModified,
-    currentStrategy,
-    strategy,
-    projectId,
-  ]);
+  }, [project?.id, isStrategyModified, currentStrategy, strategy, projectId]);
 
-  // 수동 저장
+  // 수동 저장 (프로젝트 정보와 전략 통합 저장)
   const handleSaveAll = useCallback(async () => {
     const validation = form.validate();
     if (validation.hasErrors) {
