@@ -258,6 +258,9 @@ async function testVersionUtilities(): Promise<void> {
     isAutoSaved: true,
   });
 
+  // 시간 간격 추가 (버전 생성 시간 차이를 보장)
+  await new Promise((resolve) => setTimeout(resolve, 20));
+
   const strategy2 = createTestStrategy(project.id, "v1.1", []);
   const version2 = VersionStore.createVersion(project, strategy2, {
     description: "두 번째 버전",
@@ -284,11 +287,21 @@ async function testVersionUtilities(): Promise<void> {
 
   project.versions.push(version1, version2);
 
-  // 최신 버전 가져오기
+  // 최신 버전 가져오기 (createdAt 기준으로 정렬되므로 version2가 최신이어야 함)
   const latestVersion = VersionStore.getLatestVersion(project);
   if (!latestVersion) {
     throw new Error("최신 버전 가져오기 실패 - latestVersion이 null입니다");
   }
+
+  // 디버깅 정보 출력
+  console.log(
+    `  버전1 생성시간: ${version1.createdAt.toISOString()}, ID: ${version1.id}`
+  );
+  console.log(
+    `  버전2 생성시간: ${version2.createdAt.toISOString()}, ID: ${version2.id}`
+  );
+  console.log(`  최신 버전 ID: ${latestVersion.id}`);
+
   if (latestVersion.id !== version2.id) {
     throw new Error(
       `최신 버전 가져오기 실패 - 예상: ${version2.id}, 실제: ${latestVersion.id}`

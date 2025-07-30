@@ -375,7 +375,7 @@ function StockTrendPage() {
                 <Paper
                   withBorder
                   p="md"
-                  bg={priceChange.isPositive ? "green.0" : "red.0"}
+                  className={priceChange.isPositive ? "return-card-positive" : "return-card-negative"}
                 >
                   <Group justify="space-between" align="center">
                     <div>
@@ -390,9 +390,9 @@ function StockTrendPage() {
                     <div style={{ textAlign: "right" }}>
                       <Group gap="xs" justify="flex-end">
                         {priceChange.isPositive ? (
-                          <IconTrendingUp size={20} color="green" />
+                          <IconTrendingUp size={20} className="return-icon-positive" />
                         ) : (
-                          <IconTrendingDown size={20} color="red" />
+                          <IconTrendingDown size={20} className="return-icon-negative" />
                         )}
                         <div>
                           <Text fw={600} size="lg">
@@ -407,7 +407,7 @@ function StockTrendPage() {
                           </Text>
                           <Text
                             size="sm"
-                            c={priceChange.isPositive ? "green" : "red"}
+                            className={priceChange.isPositive ? "return-text-positive" : "return-text-negative"}
                             fw={500}
                           >
                             {priceChange.isPositive ? "+" : ""}

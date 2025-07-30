@@ -201,10 +201,10 @@ export const BacktestConfig = ({
           {/* 종목 정보 */}
           {selectedStock && (
             <Group mt="xs" gap="xs">
-              <Badge variant="light" color="blue">
+              <Badge variant="light" color="gray">
                 {selectedStock.market}
               </Badge>
-              <Badge variant="light" color="green">
+              <Badge variant="light" color="gray">
                 {selectedStock.currency}
               </Badge>
             </Group>
