@@ -100,14 +100,7 @@ function ProjectEdit() {
     }
   }, [projectId]);
 
-  // 프로젝트 정보 업데이트 핸들러 (분리된 컴포넌트용)
-  const handleProjectInfoUpdate = useCallback(
-    async (id: string, name: string, description: string) => {
-      await updateProject(id, name, description);
-      setLastSaved(new Date());
-    },
-    [updateProject]
-  );
+
 
   // 자동 저장 시작/중지 (전략만 - 프로젝트 정보는 실시간 저장)
   useEffect(() => {
@@ -267,11 +260,23 @@ function ProjectEdit() {
     }
   }, [project?.id, isStrategyModified, currentStrategy, strategy, projectId]);
 
-  // 수동 저장 (전략만 저장 - 프로젝트 정보는 실시간 저장됨)
+  // 수동 저장 (전략 + 프로젝트 정보 저장)
   const handleSaveAll = useCallback(async () => {
     try {
       setIsSaving(true);
       setSaveProgress(0);
+
+      // 프로젝트 기본 정보 저장 (변경사항이 있으면)
+      if (pendingProjectInfo && project) {
+        setSaveProgress(30);
+        await updateProject(
+          project.id,
+          pendingProjectInfo.name,
+          pendingProjectInfo.description
+        );
+        // 저장 후 pending 상태 클리어
+        setPendingProjectInfo(null);
+      }
 
       // 전략 데이터 저장 (블록이 있으면 저장)
       const shouldSaveStrategy =
@@ -314,7 +319,7 @@ function ProjectEdit() {
       // 저장 후 현재 전략 상태 초기화하여 새로 로드되도록 함
       setCurrentStrategy(null);
 
-      // 저장 완료 후 버전 생성 모달 열기
+      // 저장 완료 후 새 버전으로 저장 모달 열기
       openCreateVersion();
     } catch (error) {
       console.error("저장 실패:", error);
@@ -332,6 +337,9 @@ function ProjectEdit() {
       setSaveProgress(0);
     }
   }, [
+    pendingProjectInfo,
+    project,
+    updateProject,
     isStrategyModified,
     currentStrategy,
     strategy,
@@ -579,7 +587,7 @@ function ProjectEdit() {
           {project && (
             <ProjectInfoForm
               project={project}
-              onUpdate={handleProjectInfoUpdate}
+              onChange={handleProjectInfoChange}
               disabled={isSaving}
             />
           )}
@@ -647,13 +655,13 @@ function ProjectEdit() {
             <Text fw={500} mb="xs">
               프로젝트 이름
             </Text>
-            <Text>{project?.name || "프로젝트 이름 없음"}</Text>
+            <Text>{pendingProjectInfo?.name || project?.name || "프로젝트 이름 없음"}</Text>
           </div>
           <div>
             <Text fw={500} mb="xs">
               설명
             </Text>
-            <Text>{project?.description || "설명 없음"}</Text>
+            <Text>{pendingProjectInfo?.description || project?.description || "설명 없음"}</Text>
           </div>
           <div>
             <Text fw={500} mb="xs">
