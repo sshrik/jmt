@@ -275,12 +275,12 @@ function DashboardPage() {
                   withBorder
                   p="sm"
                   mb="md"
-                  bg={
+                  className={
                     project.latestReturn
                       ? project.latestReturn > 0
-                        ? "green.0"
-                        : "red.0"
-                      : "gray.0"
+                        ? "return-card-positive"
+                        : "return-card-negative"
+                      : "return-card-neutral"
                   }
                 >
                   <Group justify="space-between" align="center">

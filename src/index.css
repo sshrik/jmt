@@ -92,3 +92,34 @@ body {
 [data-mantine-color-scheme="dark"] .version-card-icon {
   color: var(--mantine-color-blue-4) !important;
 }
+
+/* Return card styles */
+
+/* Light mode */
+[data-mantine-color-scheme="light"] .return-card-positive {
+  background-color: var(--mantine-color-green-0) !important;
+}
+
+[data-mantine-color-scheme="light"] .return-card-negative {
+  background-color: var(--mantine-color-red-0) !important;
+}
+
+[data-mantine-color-scheme="light"] .return-card-neutral {
+  background-color: var(--mantine-color-gray-0) !important;
+}
+
+/* Dark mode */
+[data-mantine-color-scheme="dark"] .return-card-positive {
+  background-color: var(--mantine-color-green-9) !important;
+  border-color: var(--mantine-color-green-7) !important;
+}
+
+[data-mantine-color-scheme="dark"] .return-card-negative {
+  background-color: var(--mantine-color-red-9) !important;
+  border-color: var(--mantine-color-red-7) !important;
+}
+
+[data-mantine-color-scheme="dark"] .return-card-neutral {
+  background-color: var(--mantine-color-dark-6) !important;
+  border-color: var(--mantine-color-dark-4) !important;
+}
