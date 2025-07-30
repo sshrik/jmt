@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Container,
@@ -7,13 +7,10 @@ import {
   Group,
   Button,
   LoadingOverlay,
-  Card,
   Alert,
   Breadcrumbs,
   Anchor,
   Stack,
-  TextInput,
-  Textarea,
   Badge,
   Progress,
   Kbd,
@@ -37,13 +34,14 @@ import {
   IconDots,
   IconGitBranch,
 } from "@tabler/icons-react";
-import { useForm } from "@mantine/form";
+
 import { useHotkeys, useDisclosure, useInterval } from "@mantine/hooks";
 import { useProjectStore } from "../../../hooks/useProjectStore";
 import { ProjectStore } from "../../../stores/projectStore";
 import { StrategyEditor } from "../../../components/strategy/StrategyEditor";
 import { BacktestRunner } from "../../../components/backtest/BacktestRunner";
 import { CreateVersionModal } from "../../../components/version/CreateVersionModal";
+import { ProjectInfoForm } from "../../../components/forms/ProjectInfoForm";
 import type { Strategy } from "../../../types/strategy";
 import type { Version } from "../../../types/project";
 import { notifications } from "@mantine/notifications";
@@ -102,138 +100,13 @@ function ProjectEdit() {
     }
   }, [projectId]);
 
-  // 메모이제이션된 validation 함수들
-  const nameValidator = useCallback((value: string) => {
-    if (!value?.trim()) return "프로젝트 이름을 입력해주세요";
-    if (value.length < 2) return "프로젝트 이름은 최소 2글자 이상이어야 합니다";
-    if (value.length > 50) return "프로젝트 이름은 50글자를 초과할 수 없습니다";
-    return null;
-  }, []);
-
-  const descriptionValidator = useCallback((value: string) => {
-    if (value?.length > 500) return "설명은 500글자를 초과할 수 없습니다";
-    return null;
-  }, []);
 
 
-
-  // 실시간 저장을 위한 상태 관리
-  const [projectName, setProjectName] = useState(project?.name || "");
-  const [projectDescription, setProjectDescription] = useState(project?.description || "");
-  const [isSavingInfo, setIsSavingInfo] = useState(false);
-
-  // 프로젝트 기본 정보 폼 (최소한의 설정)
-  const form = useForm({
-    initialValues: {
-      name: project?.name || "",
-      description: project?.description || "",
-    },
-    validate: {
-      name: nameValidator,
-      description: descriptionValidator,
-    },
-    validateInputOnBlur: true,
-    validateInputOnChange: false,
-  });
-
-  // 프로젝트 정보가 로드되면 상태 업데이트
-  useEffect(() => {
-    if (project) {
-      setProjectName(project.name);
-      setProjectDescription(project.description);
-      form.setValues({
-        name: project.name,
-        description: project.description,
-      });
-      form.resetDirty();
-    }
-  }, [project?.id]);
-
-  // 실시간 프로젝트 정보 저장 (debounced)
-  const saveProjectInfoRealtime = useCallback(async (name: string, description: string) => {
-    if (!project || isSavingInfo) return;
-
-    try {
-      setIsSavingInfo(true);
-      await updateProject(project.id, name, description);
-      setLastSaved(new Date());
-    } catch (error) {
-      console.error("실시간 저장 실패:", error);
-    } finally {
-      setIsSavingInfo(false);
-    }
-  }, [project?.id, updateProject, isSavingInfo]);
-
-  // 실시간 저장용 타이머들
-  const nameTimerRef = useRef<number>();
-  const descTimerRef = useRef<number>();
-
-  // 프로젝트 이름 변경 처리 (실시간 저장 with debounce)
-  const handleNameChange = useCallback((value: string) => {
-    setProjectName(value);
-    form.setFieldValue('name', value);
-    
-    // 기존 타이머 제거
-    if (nameTimerRef.current) {
-      window.clearTimeout(nameTimerRef.current);
-    }
-    
-    // 1초 후 자동 저장
-    nameTimerRef.current = window.setTimeout(() => {
-      saveProjectInfoRealtime(value, projectDescription);
-    }, 1000);
-  }, [saveProjectInfoRealtime, projectDescription, form]);
-
-  // 프로젝트 설명 변경 처리 (실시간 저장 with debounce)
-  const handleDescriptionChange = useCallback((value: string) => {
-    setProjectDescription(value);
-    form.setFieldValue('description', value);
-    
-    // 기존 타이머 제거
-    if (descTimerRef.current) {
-      window.clearTimeout(descTimerRef.current);
-    }
-    
-    // 1초 후 자동 저장
-    descTimerRef.current = window.setTimeout(() => {
-      saveProjectInfoRealtime(projectName, value);
-    }, 1000);
-  }, [saveProjectInfoRealtime, projectName, form]);
-
-  // 타이머 정리
-  useEffect(() => {
-    return () => {
-      if (nameTimerRef.current) {
-        window.clearTimeout(nameTimerRef.current);
-      }
-      if (descTimerRef.current) {
-        window.clearTimeout(descTimerRef.current);
-      }
-    };
-  }, []);
-
-  // 기존 자동 저장 함수 (폼 기반)
-  const handleSaveProjectInfo = useCallback(async () => {
-    if (!project || !form.isDirty()) return;
-
-    try {
-      await updateProject(
-        project.id,
-        form.values.name,
-        form.values.description
-      );
-      form.resetDirty();
-      setLastSaved(new Date());
-    } catch (error) {
-      console.error("프로젝트 정보 저장 실패:", error);
-      notifications.show({
-        title: "저장 실패",
-        message: "프로젝트 정보 저장 중 오류가 발생했습니다.",
-        color: "red",
-        autoClose: 3000,
-      });
-    }
-  }, [project?.id, updateProject]);
+  // 프로젝트 정보 업데이트 핸들러 (분리된 컴포넌트용)
+  const handleProjectInfoUpdate = useCallback(async (id: string, name: string, description: string) => {
+    await updateProject(id, name, description);
+    setLastSaved(new Date());
+  }, [updateProject]);
 
   // 자동 저장 시작/중지 (전략만 - 프로젝트 정보는 실시간 저장)
   useEffect(() => {
@@ -243,7 +116,7 @@ function ProjectEdit() {
     } else {
       strategyAutoSave.stop();
     }
-    
+
     return () => {
       strategyAutoSave.stop();
     };
@@ -727,37 +600,13 @@ function ProjectEdit() {
         </Tabs.List>
 
         <Tabs.Panel value="basic" pt="lg">
-          <Card withBorder p="lg">
-            <Stack gap="md">
-              <TextInput
-                label="프로젝트 이름"
-                placeholder="예: 삼성전자 단순매매 전략"
-                required
-                value={projectName}
-                onChange={(event) => handleNameChange(event.currentTarget.value)}
-                onBlur={() => form.validateField('name')}
-                error={form.errors.name}
-                disabled={isSaving || isSavingInfo}
-              />
-
-              <Textarea
-                label="프로젝트 설명"
-                placeholder="투자 전략에 대한 간단한 설명을 입력하세요"
-                rows={4}
-                value={projectDescription}
-                onChange={(event) => handleDescriptionChange(event.currentTarget.value)}
-                onBlur={() => form.validateField('description')}
-                error={form.errors.description}
-                disabled={isSaving || isSavingInfo}
-              />
-
-              {form.errors.name && (
-                <Alert color="red" variant="light">
-                  {form.errors.name}
-                </Alert>
-              )}
-            </Stack>
-          </Card>
+          {project && (
+            <ProjectInfoForm
+              project={project}
+              onUpdate={handleProjectInfoUpdate}
+              disabled={isSaving}
+            />
+          )}
         </Tabs.Panel>
 
         <Tabs.Panel value="strategy" pt="lg">
@@ -822,13 +671,13 @@ function ProjectEdit() {
             <Text fw={500} mb="xs">
               프로젝트 이름
             </Text>
-            <Text>{form.values.name || "프로젝트 이름 없음"}</Text>
+            <Text>{project?.name || "프로젝트 이름 없음"}</Text>
           </div>
           <div>
             <Text fw={500} mb="xs">
               설명
             </Text>
-            <Text>{form.values.description || "설명 없음"}</Text>
+            <Text>{project?.description || "설명 없음"}</Text>
           </div>
           <div>
             <Text fw={500} mb="xs">
