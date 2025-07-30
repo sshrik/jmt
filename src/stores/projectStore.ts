@@ -3,8 +3,6 @@ import type {
   Version,
   ProjectSummary,
   BacktestResult,
-  Transaction,
-  PortfolioSnapshot,
 } from "../types/project";
 import type { Strategy } from "../types/strategy";
 
@@ -85,7 +83,9 @@ const getProjectsFromStorage = (): Project[] => {
                 maxDrawdown: result.maxDrawdown as number,
                 tradeCount: result.tradeCount as number,
                 winRate: result.winRate as number,
-                transactions: ((result.transactions as Record<string, unknown>[]) || []).map((t: Record<string, unknown>) => ({
+                transactions: (
+                  (result.transactions as Record<string, unknown>[]) || []
+                ).map((t: Record<string, unknown>) => ({
                   id: t.id as string,
                   date: new Date(t.date as string),
                   type: t.type as "buy" | "sell",
@@ -95,7 +95,9 @@ const getProjectsFromStorage = (): Project[] => {
                   fee: t.commission as number, // commission -> fee 매핑
                   reason: (t.reason as string) || "전략 조건 충족",
                 })),
-                portfolioHistory: ((result.portfolioHistory as Record<string, unknown>[]) || []).map((p: Record<string, unknown>) => ({
+                portfolioHistory: (
+                  (result.portfolioHistory as Record<string, unknown>[]) || []
+                ).map((p: Record<string, unknown>) => ({
                   date: new Date(p.date as string),
                   cash: p.cash as number,
                   stockQuantity: 0, // 기본값 설정
@@ -106,17 +108,21 @@ const getProjectsFromStorage = (): Project[] => {
                 initialCash: result.initialCash as number,
                 backtestPeriod: {
                   startDate: new Date(
-                    (result.backtestPeriod as Record<string, unknown>).startDate as string
+                    (result.backtestPeriod as Record<string, unknown>)
+                      .startDate as string
                   ),
                   endDate: new Date(
-                    (result.backtestPeriod as Record<string, unknown>).endDate as string
+                    (result.backtestPeriod as Record<string, unknown>)
+                      .endDate as string
                   ),
                 },
-                config: result.config as {
-                  symbol: string;
-                  commission: number;
-                  slippage: number;
-                } | undefined,
+                config: result.config as
+                  | {
+                      symbol: string;
+                      commission: number;
+                      slippage: number;
+                    }
+                  | undefined,
               }))
             : undefined,
         };
