@@ -110,13 +110,13 @@ body {
 
 /* Dark mode */
 [data-mantine-color-scheme="dark"] .return-card-positive {
-  background-color: var(--mantine-color-green-9) !important;
-  border-color: var(--mantine-color-green-7) !important;
+  background-color: var(--mantine-color-dark-6) !important;
+  border-color: var(--mantine-color-green-8) !important;
 }
 
 [data-mantine-color-scheme="dark"] .return-card-negative {
-  background-color: var(--mantine-color-red-9) !important;
-  border-color: var(--mantine-color-red-7) !important;
+  background-color: var(--mantine-color-dark-6) !important;
+  border-color: var(--mantine-color-red-8) !important;
 }
 
 [data-mantine-color-scheme="dark"] .return-card-neutral {
@@ -141,15 +141,15 @@ body {
 
 /* Dark mode */
 [data-mantine-color-scheme="dark"] .return-text-positive {
-  color: var(--mantine-color-green-6) !important;
+  color: var(--mantine-color-green-5) !important;
 }
 
 [data-mantine-color-scheme="dark"] .return-text-negative {
-  color: var(--mantine-color-red-6) !important;
+  color: var(--mantine-color-red-5) !important;
 }
 
 [data-mantine-color-scheme="dark"] .return-text-neutral {
-  color: var(--mantine-color-gray-6) !important;
+  color: var(--mantine-color-gray-5) !important;
 }
 
 /* Return icon colors */
@@ -169,13 +169,13 @@ body {
 
 /* Dark mode */
 [data-mantine-color-scheme="dark"] .return-icon-positive {
-  color: var(--mantine-color-green-6) !important;
+  color: var(--mantine-color-green-5) !important;
 }
 
 [data-mantine-color-scheme="dark"] .return-icon-negative {
-  color: var(--mantine-color-red-6) !important;
+  color: var(--mantine-color-red-5) !important;
 }
 
 [data-mantine-color-scheme="dark"] .return-icon-neutral {
-  color: var(--mantine-color-gray-6) !important;
+  color: var(--mantine-color-gray-5) !important;
 }
