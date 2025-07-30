@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Container,
@@ -82,7 +82,7 @@ function ProjectEdit() {
     if (autoSaveEnabled && hasUnsavedChanges && !isSaving) {
       handleAutoSave();
     }
-  }, 30000); // 30초마다 자동 저장
+  }, 120000); // 2분마다 자동 저장 (성능 향상을 위해 주기 증가)
 
   // 현재 프로젝트 찾기
   const project = useMemo(() => {
@@ -93,32 +93,51 @@ function ProjectEdit() {
     }
   }, [projectId]);
 
+  // debounce를 위한 타이머 ref
+  const debounceTimerRef = useRef<number | undefined>();
+
+  // 메모이제이션된 validation 함수들
+  const nameValidator = useCallback((value: string) => {
+    if (!value?.trim()) return "프로젝트 이름을 입력해주세요";
+    if (value.length < 2) return "프로젝트 이름은 최소 2글자 이상이어야 합니다";
+    if (value.length > 50) return "프로젝트 이름은 50글자를 초과할 수 없습니다";
+    return null;
+  }, []);
+
+  const descriptionValidator = useCallback((value: string) => {
+    if (value?.length > 500) return "설명은 500글자를 초과할 수 없습니다";
+    return null;
+  }, []);
+
+  // 변경사항 감지를 debounce 처리
+  const handleValuesChange = useCallback(() => {
+    if (debounceTimerRef.current) {
+      window.clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = window.setTimeout(() => {
+      setHasUnsavedChanges(true);
+    }, 300); // 300ms 후에 변경사항 감지
+  }, []);
+
   // 프로젝트 기본 정보 폼
   const form = useForm({
-    initialValues: {
-      name: project?.name || "",
-      description: project?.description || "",
-    },
+    initialValues: useMemo(
+      () => ({
+        name: project?.name || "",
+        description: project?.description || "",
+      }),
+      [project?.name, project?.description]
+    ),
     validate: {
-      name: (value) => {
-        if (!value.trim()) return "프로젝트 이름을 입력해주세요";
-        if (value.length < 2)
-          return "프로젝트 이름은 최소 2글자 이상이어야 합니다";
-        if (value.length > 50)
-          return "프로젝트 이름은 50글자를 초과할 수 없습니다";
-        return null;
-      },
-      description: (value) => {
-        if (value.length > 500) return "설명은 500글자를 초과할 수 없습니다";
-        return null;
-      },
+      name: nameValidator,
+      description: descriptionValidator,
     },
-    onValuesChange: () => {
-      setHasUnsavedChanges(true);
-    },
+    validateInputOnBlur: true, // 입력 중이 아닌 blur 시에만 검증
+    validateInputOnChange: false, // 입력 중 실시간 검증 비활성화
+    onValuesChange: handleValuesChange,
   });
 
-  // 프로젝트 정보가 로드되면 폼 값 업데이트
+  // 프로젝트 정보가 로드되면 폼 값 업데이트 (form dependency 제거)
   useEffect(() => {
     if (project) {
       form.setValues({
@@ -126,8 +145,18 @@ function ProjectEdit() {
         description: project.description,
       });
       form.resetDirty();
+      setHasUnsavedChanges(false);
     }
-  }, [project]);
+  }, [project?.id, project?.name, project?.description]);
+
+  // cleanup debounce timer
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        window.clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   // 자동 저장 시작/중지
   useEffect(() => {
@@ -219,7 +248,7 @@ function ProjectEdit() {
     });
   }, [strategy]);
 
-  // 자동 저장
+  // 자동 저장 (최적화된 버전)
   const handleAutoSave = useCallback(async () => {
     if (!project || isSaving) return;
 
@@ -227,7 +256,9 @@ function ProjectEdit() {
       setIsSaving(true);
       setSaveProgress(0);
 
-      // 프로젝트 기본 정보 업데이트
+      let hasChanges = false;
+
+      // 프로젝트 기본 정보 업데이트 (변경사항이 있을 때만)
       if (form.isDirty()) {
         setSaveProgress(30);
         await updateProject(
@@ -235,25 +266,25 @@ function ProjectEdit() {
           form.values.name,
           form.values.description
         );
+        hasChanges = true;
       }
 
-      // 전략 데이터 자동 저장
-      const shouldAutoSave = (currentStrategy || strategy).blocks.length > 0;
+      // 전략 데이터 자동 저장 (변경사항이 있을 때만)
+      const currentStrategyToSave = currentStrategy || strategy;
+      const shouldAutoSave =
+        isStrategyModified && currentStrategyToSave.blocks.length > 0;
 
       if (shouldAutoSave) {
         setSaveProgress(60);
-        const currentProject = project;
-        if (!currentProject) {
-          throw new Error("프로젝트를 찾을 수 없습니다.");
-        }
 
-        const strategyBlocks = (currentStrategy || strategy).blocks.map(
-          (block) => ({
-            ...block,
-            position: { x: 0, y: 0 },
-            connections: [],
-          })
-        );
+        // 불필요한 객체 생성 최소화
+        const strategyBlocks = currentStrategyToSave.blocks.map((block) => ({
+          ...block,
+          position: { x: 0, y: 0 },
+          connections: [],
+        }));
+
+        hasChanges = true;
 
         try {
           ProjectStore.updateProjectStrategy(projectId, strategyBlocks);
@@ -273,22 +304,25 @@ function ProjectEdit() {
         }
       }
 
-      setSaveProgress(100);
-      setIsStrategyModified(false);
-      setHasUnsavedChanges(false);
-      setLastSaved(new Date());
-      form.resetDirty();
+      // 변경사항이 있었을 때만 상태 업데이트 및 알림
+      if (hasChanges) {
+        setSaveProgress(100);
+        setIsStrategyModified(false);
+        setHasUnsavedChanges(false);
+        setLastSaved(new Date());
+        form.resetDirty();
 
-      // 자동 저장 후에도 현재 전략 상태 초기화
-      setCurrentStrategy(null);
+        // 자동 저장 후에도 현재 전략 상태 초기화
+        setCurrentStrategy(null);
 
-      notifications.show({
-        title: "자동 저장 완료",
-        message: "변경사항이 자동으로 저장되었습니다.",
-        color: "green",
-        icon: <IconCloudCheck size={16} />,
-        autoClose: 2000,
-      });
+        notifications.show({
+          title: "자동 저장 완료",
+          message: "변경사항이 자동으로 저장되었습니다.",
+          color: "green",
+          icon: <IconCloudCheck size={16} />,
+          autoClose: 2000,
+        });
+      }
     } catch (error) {
       console.error("자동 저장 실패:", error);
       notifications.show({
@@ -301,7 +335,14 @@ function ProjectEdit() {
       setIsSaving(false);
       setSaveProgress(0);
     }
-  }, [form, project, updateProject, isStrategyModified, strategy, projectId]);
+  }, [
+    project?.id,
+    updateProject,
+    isStrategyModified,
+    currentStrategy,
+    strategy,
+    projectId,
+  ]);
 
   // 수동 저장
   const handleSaveAll = useCallback(async () => {

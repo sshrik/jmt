@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Modal,
   TextInput,
@@ -36,36 +36,45 @@ export const EditProjectModal = ({
 }: EditProjectModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 메모이제이션된 validation 함수들
+  const nameValidator = useCallback((value: string) => {
+    if (!value?.trim()) return "프로젝트 이름을 입력해주세요";
+    if (value.length < 2) return "프로젝트 이름은 최소 2글자 이상이어야 합니다";
+    if (value.length > 50) return "프로젝트 이름은 50글자를 초과할 수 없습니다";
+    return null;
+  }, []);
+
+  const descriptionValidator = useCallback((value: string) => {
+    if (value?.length > 200) return "설명은 200글자를 초과할 수 없습니다";
+    return null;
+  }, []);
+
   const form = useForm<ProjectForm>({
-    initialValues: {
-      name: "",
-      description: "",
-    },
+    initialValues: useMemo(
+      () => ({
+        name: project?.name || "",
+        description: project?.description || "",
+      }),
+      [project?.name, project?.description]
+    ),
     validate: {
-      name: (value) => {
-        if (!value.trim()) return "프로젝트 이름을 입력해주세요";
-        if (value.length < 2)
-          return "프로젝트 이름은 최소 2글자 이상이어야 합니다";
-        if (value.length > 50)
-          return "프로젝트 이름은 50글자를 초과할 수 없습니다";
-        return null;
-      },
-      description: (value) => {
-        if (value.length > 200) return "설명은 200글자를 초과할 수 없습니다";
-        return null;
-      },
+      name: nameValidator,
+      description: descriptionValidator,
     },
+    validateInputOnBlur: true, // 입력 중이 아닌 blur 시에만 검증
+    validateInputOnChange: false, // 입력 중 실시간 검증 비활성화
   });
 
-  // 프로젝트 정보가 변경되면 폼 값 업데이트
+  // 프로젝트 정보가 변경되면 폼 값 업데이트 (form dependency 제거)
   useEffect(() => {
-    if (project) {
+    if (project && opened) {
       form.setValues({
         name: project.name,
         description: project.description,
       });
+      form.resetDirty();
     }
-  }, [project, form]);
+  }, [project?.id, project?.name, project?.description, opened]);
 
   const handleSubmit = async (values: ProjectForm) => {
     try {
