@@ -233,6 +233,7 @@ export const BacktestConfig = ({
               maxDate={config.endDate ? new Date(config.endDate) : undefined}
               dropdownType="popover"
               popoverProps={{ position: "bottom" }}
+              firstDayOfWeek={0}
             />
           </div>
           <div>

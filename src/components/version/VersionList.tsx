@@ -163,8 +163,13 @@ export const VersionList = ({
                     </Group>
 
                     {hasBacktest &&
+                      version.backtestResults &&
+                      Array.isArray(version.backtestResults) &&
+                      version.backtestResults.length > 0 &&
                       formatBacktestReturn(
-                        version.backtestResults?.totalReturn
+                        version.backtestResults[
+                          version.backtestResults.length - 1
+                        ].totalReturn
                       )}
                   </Group>
 
