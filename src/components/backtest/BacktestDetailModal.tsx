@@ -51,14 +51,14 @@ export const BacktestDetailModal = ({
 }: BacktestDetailModalProps) => {
   const [activeTab, setActiveTab] = useState<string | null>("overview");
 
-  // 백테스트 설정 추출 (현재 BacktestResult에 없는 정보들은 기본값 사용)
+  // 백테스트 설정 추출 (실제 백테스트 결과에서 가져옴)
   const config = {
-    symbol: stockInfo?.symbol || "UNKNOWN",
+    symbol: result.config?.symbol || stockInfo?.symbol || "005930", // 백테스트 결과에서 종목 정보 가져오기
     startDate: result.backtestPeriod.startDate.toISOString().split("T")[0],
     endDate: result.backtestPeriod.endDate.toISOString().split("T")[0],
     initialCash: result.initialCash,
-    commission: 0.001, // 기본값 0.1% (추후 result에서 가져올 예정)
-    slippage: 0.001, // 기본값 0.1% (추후 result에서 가져올 예정)
+    commission: result.config?.commission || 0.001,
+    slippage: result.config?.slippage || 0.001,
   };
 
   const handleRetest = () => {

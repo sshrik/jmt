@@ -113,6 +113,7 @@ function ProjectDetail() {
     commission: number;
     slippage: number;
   }) => {
+    console.log("재테스트 설정:", config);
     // 백테스트 탭으로 이동하고 설정 자동 적용
     setActiveTab("backtest");
     setRetestConfig(config);
