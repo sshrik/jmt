@@ -1,7 +1,6 @@
 import {
   Modal,
   Stack,
-  TextInput,
   Textarea,
   Group,
   Button,
@@ -26,7 +25,7 @@ interface CreateVersionModalProps {
   onClose: () => void;
   project: Project;
   strategy: Strategy;
-  onVersionCreated: (version: Version) => void;
+  onVersionCreated: (version: Version, shouldRunBacktest?: boolean) => void;
   initialDescription?: string;
 }
 
@@ -43,7 +42,6 @@ export const CreateVersionModal = ({
   const form = useForm<VersionCreationOptions>({
     initialValues: {
       description: initialDescription,
-      isAutoSaved: false,
       shouldRunBacktest: false,
     },
     validate: {
@@ -79,7 +77,7 @@ export const CreateVersionModal = ({
 
     try {
       const newVersion = VersionStore.createVersion(project, strategy, values);
-      onVersionCreated(newVersion);
+      onVersionCreated(newVersion, values.shouldRunBacktest);
       onClose();
       form.reset();
     } catch (error) {
@@ -131,42 +129,20 @@ export const CreateVersionModal = ({
           )}
 
           {/* 설명 입력 */}
-          <TextInput
+          <Textarea
             label="버전 설명"
-            placeholder="이 버전의 주요 변경사항을 설명해주세요"
+            placeholder="이 버전의 주요 변경사항이나 개선 내용을 설명해주세요"
             required
+            rows={4}
             {...form.getInputProps("description")}
           />
 
-          {/* 수정 사유 (선택사항) */}
-          <TextInput
-            label="수정 사유 (선택사항)"
-            placeholder="버그 수정, 기능 개선, 성능 최적화 등"
-            {...form.getInputProps("reason")}
-          />
-
-          {/* 상세 설명 (선택사항) */}
-          <Textarea
-            label="상세 설명 (선택사항)"
-            placeholder="더 자세한 설명이나 변경사항을 기록하세요"
-            rows={3}
-            {...form.getInputProps("detailedDescription")}
-          />
-
           {/* 옵션들 */}
-          <Stack gap="sm">
-            <Switch
-              label="자동 저장으로 표시"
-              description="이 버전을 자동 저장된 버전으로 표시합니다"
-              {...form.getInputProps("isAutoSaved", { type: "checkbox" })}
-            />
-
-            <Switch
-              label="버전 생성 후 백테스트 실행"
-              description="새 버전이 생성된 후 자동으로 백테스트를 실행합니다"
-              {...form.getInputProps("shouldRunBacktest", { type: "checkbox" })}
-            />
-          </Stack>
+          <Switch
+            label="버전 생성 후 백테스트 실행"
+            description="새 버전이 생성된 후 자동으로 백테스트를 실행합니다"
+            {...form.getInputProps("shouldRunBacktest", { type: "checkbox" })}
+          />
 
           {/* 전략 정보 */}
           <Alert color="blue" title="현재 전략 정보">

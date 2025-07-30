@@ -26,7 +26,6 @@ import {
 import {
   IconInfoCircle,
   IconChartLine,
-  IconDeviceFloppy,
   IconCloudCheck,
   IconCloudX,
   IconKeyboard,
@@ -373,14 +372,8 @@ function ProjectEdit() {
       // 저장 후 현재 전략 상태 초기화하여 새로 로드되도록 함
       setCurrentStrategy(null);
 
-      notifications.show({
-        title: "저장 완료",
-        message: "모든 변경사항이 성공적으로 저장되었습니다.",
-        color: "green",
-        icon: <IconCheck size={16} />,
-      });
-
-      navigate({ to: `/projects/${projectId}/` });
+      // 저장 완료 후 버전 생성 모달 열기
+      openCreateVersion();
     } catch (error) {
       console.error("저장 실패:", error);
       notifications.show({
@@ -407,34 +400,30 @@ function ProjectEdit() {
     navigate,
   ]);
 
-  // 새 버전으로 저장
-  const handleCreateVersionSave = useCallback(() => {
-    // 저장되지 않은 변경사항이 있으면 먼저 저장 요청
-    if (hasUnsavedChanges) {
-      notifications.show({
-        title: "저장 필요",
-        message: "먼저 현재 변경사항을 저장한 후 새 버전을 생성할 수 있습니다.",
-        color: "orange",
-        icon: <IconAlertTriangle size={16} />,
-      });
-      return;
-    }
-    openCreateVersion();
-  }, [hasUnsavedChanges, openCreateVersion]);
-
   // 버전 생성 완료 핸들러
   const handleVersionCreated = useCallback(
-    (newVersion: Version) => {
+    (newVersion: Version, shouldRunBacktest?: boolean) => {
+      const message = shouldRunBacktest
+        ? `${newVersion.versionName} 버전이 생성되었습니다. 백테스트를 시작합니다.`
+        : `${newVersion.versionName} 버전이 생성되었습니다.`;
+
       notifications.show({
-        title: "버전 생성 완료",
-        message: `${newVersion.versionName} 버전이 생성되었습니다.`,
+        title: "저장 및 버전 생성 완료",
+        message,
         color: "green",
         icon: <IconCheck size={16} />,
       });
       closeCreateVersion();
-      // 새 버전 페이지로 이동하지 않고 현재 페이지에 유지
+
+      // 프로젝트 상세 페이지로 이동 (백테스트 자동 실행 여부를 state로 전달)
+      navigate({
+        to: `/projects/${projectId}/`,
+        search: shouldRunBacktest
+          ? { autoBacktest: "true", versionId: newVersion.id }
+          : undefined,
+      });
     },
-    [closeCreateVersion]
+    [closeCreateVersion, navigate, projectId]
   );
 
   // 키보드 단축키
@@ -558,7 +547,7 @@ function ProjectEdit() {
       <Group justify="space-between" mb="xl">
         <div>
           <Group>
-            <Title order={1}>프로젝트 저장</Title>
+            <Title order={1}>{project.name} 수정</Title>
             {hasUnsavedChanges && (
               <Badge color="orange" variant="light" size="sm">
                 저장되지 않음
@@ -567,7 +556,7 @@ function ProjectEdit() {
           </Group>
           <Group mt="xs">
             <Text c="dimmed" size="sm">
-              {project.versions[0]?.versionName || "v1.0"} 버전 편집 중
+              다음 저장 시 새 버전으로 생성됩니다
             </Text>
             {lastSaved && (
               <Text c="dimmed" size="sm">
@@ -624,18 +613,9 @@ function ProjectEdit() {
           </Menu>
 
           <Button
-            leftSection={<IconDeviceFloppy size={16} />}
+            leftSection={<IconGitBranch size={16} />}
             onClick={handleSaveAll}
             loading={isSaving}
-          >
-            저장하기
-          </Button>
-
-          <Button
-            leftSection={<IconGitBranch size={16} />}
-            onClick={handleCreateVersionSave}
-            variant="light"
-            disabled={hasUnsavedChanges || isSaving}
           >
             새 버전으로 저장
           </Button>
@@ -812,7 +792,7 @@ function ProjectEdit() {
           project={project}
           strategy={strategy}
           onVersionCreated={handleVersionCreated}
-          initialDescription="새로운 버전"
+          initialDescription="프로젝트 수정 사항 반영"
         />
       )}
     </Container>

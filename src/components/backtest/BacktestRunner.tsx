@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Stack, Alert } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { BacktestConfig } from "./BacktestConfig";
@@ -18,12 +18,14 @@ interface BacktestRunnerProps {
   strategy: Strategy;
   projectId?: string;
   versionId?: string;
+  autoStart?: boolean;
 }
 
 export const BacktestRunner = ({
   strategy,
   projectId,
   versionId,
+  autoStart = false,
 }: BacktestRunnerProps) => {
   const [result, setResult] = useState<BacktestResult | null>(null);
   const [progress, setProgress] = useState<BacktestProgressType | null>(null);
@@ -144,6 +146,23 @@ export const BacktestRunner = ({
     },
     [strategy, projectId, versionId]
   );
+
+  // 자동 시작 처리
+  useEffect(() => {
+    if (autoStart && !isRunning && !result) {
+      // 기본 백테스트 설정으로 자동 시작
+      const defaultConfig: BacktestConfigType = {
+        symbol: "005930", // 삼성전자
+        startDate: "2024-01-01",
+        endDate: new Date().toISOString().split("T")[0], // 오늘 날짜
+        initialCash: 10000000, // 1천만원
+        commission: 0.00015, // 0.015%
+        slippage: 0.0001, // 0.01%
+      };
+
+      handleRunBacktest(defaultConfig);
+    }
+  }, [autoStart, isRunning, result, handleRunBacktest]);
 
   // 백테스트 취소
   const handleCancelBacktest = useCallback(() => {

@@ -18,6 +18,7 @@ import {
   Stack,
   Badge,
   SimpleGrid,
+  Paper,
 } from "@mantine/core";
 import {
   IconArrowLeft,
@@ -45,11 +46,13 @@ export const Route = createFileRoute("/projects/$projectId/")({
 function ProjectDetail() {
   const { projectId } = Route.useParams();
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const { loading, error } = useProjectStore();
   const [activeTab, setActiveTab] = useState("strategy");
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
     null
   );
+  const [shouldAutoStartBacktest, setShouldAutoStartBacktest] = useState(false);
 
   // 버전 관리 핸들러들 (읽기 전용)
   const handleVersionSelect = (version: Version) => {
@@ -126,6 +129,62 @@ function ProjectDetail() {
       }
     }
   }, [project, selectedVersionId, setSelectedVersionId]);
+
+  // 자동 백테스트 처리
+  useEffect(() => {
+    if (
+      search &&
+      typeof search === "object" &&
+      "autoBacktest" in search &&
+      "versionId" in search &&
+      search.autoBacktest === "true" &&
+      search.versionId &&
+      project?.versions
+    ) {
+      const targetVersion = project.versions.find(
+        (v) => v.id === search.versionId
+      );
+      if (targetVersion) {
+        // 해당 버전 선택
+        setSelectedVersionId(targetVersion.id);
+        // 백테스트 탭으로 이동
+        setActiveTab("backtest");
+        // 자동 백테스트 시작 플래그 설정
+        setShouldAutoStartBacktest(true);
+
+        // URL에서 search params 제거 (한 번만 실행되도록)
+        navigate({
+          to: `/projects/${projectId}/`,
+          replace: true,
+        });
+
+        notifications.show({
+          title: "자동 백테스트 시작",
+          message: `${targetVersion.versionName} 버전의 백테스트를 시작합니다.`,
+          color: "blue",
+        });
+      }
+    }
+  }, [
+    search,
+    project,
+    navigate,
+    projectId,
+    setSelectedVersionId,
+    setActiveTab,
+  ]);
+
+  // 자동 백테스트 플래그 리셋
+  useEffect(() => {
+    if (shouldAutoStartBacktest) {
+      // 다음 렌더링에서 자동 시작 플래그를 리셋
+      const timer = setTimeout(() => {
+        setShouldAutoStartBacktest(false);
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAutoStartBacktest]);
 
   // 선택된 버전 찾기
   const selectedVersion = useMemo(() => {
@@ -374,6 +433,7 @@ function ProjectDetail() {
             strategy={strategy}
             projectId={projectId}
             versionId={selectedVersionId || undefined}
+            autoStart={shouldAutoStartBacktest}
           />
         </Tabs.Panel>
 
@@ -567,10 +627,9 @@ function ProjectDetail() {
                   </Text>
                   {(() => {
                     const totalVersions = project.versions?.length || 0;
-                    const autoSavedVersions =
-                      project.versions?.filter((v) => v.isAutoSaved).length ||
-                      0;
-                    const manualVersions = totalVersions - autoSavedVersions;
+                    const versionsWithBacktest =
+                      project.versions?.filter((v) => v.backtestResults)
+                        .length || 0;
 
                     return (
                       <Stack gap="xs">
@@ -579,23 +638,9 @@ function ProjectDetail() {
                           <Badge variant="light">{totalVersions}개</Badge>
                         </Group>
                         <Group justify="space-between">
-                          <Text size="sm">수동 생성</Text>
-                          <Badge variant="light" color="blue">
-                            {manualVersions}개
-                          </Badge>
-                        </Group>
-                        <Group justify="space-between">
-                          <Text size="sm">자동 저장</Text>
-                          <Badge variant="light" color="gray">
-                            {autoSavedVersions}개
-                          </Badge>
-                        </Group>
-                        <Group justify="space-between">
                           <Text size="sm">백테스트 완료</Text>
                           <Badge variant="light" color="green">
-                            {project.versions?.filter((v) => v.backtestResults)
-                              .length || 0}
-                            개
+                            {versionsWithBacktest}개
                           </Badge>
                         </Group>
                       </Stack>
@@ -630,60 +675,55 @@ function ProjectDetail() {
                 return (
                   <Stack gap="md">
                     {recentVersions.map((version) => (
-                      <Group
+                      <Paper
                         key={version.id}
-                        justify="space-between"
                         p="sm"
+                        withBorder
                         className="version-card-recent-activity"
-                        style={{
-                          borderRadius: "8px",
-                        }}
                       >
-                        <div>
-                          <Group gap="xs" mb="xs">
-                            <Text fw={500} size="sm">
-                              {version.versionName}
+                        <Group justify="space-between">
+                          <div>
+                            <Group gap="xs" mb="xs">
+                              <Text fw={500} size="sm">
+                                {version.versionName}
+                              </Text>
+
+                              {version.backtestResults && (
+                                <Badge size="xs" color="green" variant="light">
+                                  백테스트
+                                </Badge>
+                              )}
+                            </Group>
+                            <Text size="xs" c="dimmed">
+                              {version.description || "설명 없음"}
                             </Text>
-                            {version.isAutoSaved && (
-                              <Badge size="xs" color="gray" variant="light">
-                                자동저장
-                              </Badge>
-                            )}
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <Text size="xs" c="dimmed">
+                              {new Date(version.createdAt).toLocaleDateString(
+                                "ko-KR"
+                              )}
+                            </Text>
                             {version.backtestResults && (
-                              <Badge size="xs" color="green" variant="light">
-                                백테스트
-                              </Badge>
+                              <Text
+                                size="sm"
+                                fw={500}
+                                c={
+                                  version.backtestResults.totalReturn > 0
+                                    ? "green"
+                                    : "red"
+                                }
+                              >
+                                {version.backtestResults.totalReturn > 0
+                                  ? "+"
+                                  : ""}
+                                {version.backtestResults.totalReturn.toFixed(1)}
+                                %
+                              </Text>
                             )}
-                          </Group>
-                          <Text size="xs" c="dimmed">
-                            {version.description || "설명 없음"}
-                            {version.reason && ` • ${version.reason}`}
-                          </Text>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          <Text size="xs" c="dimmed">
-                            {new Date(version.createdAt).toLocaleDateString(
-                              "ko-KR"
-                            )}
-                          </Text>
-                          {version.backtestResults && (
-                            <Text
-                              size="sm"
-                              fw={500}
-                              c={
-                                version.backtestResults.totalReturn > 0
-                                  ? "green"
-                                  : "red"
-                              }
-                            >
-                              {version.backtestResults.totalReturn > 0
-                                ? "+"
-                                : ""}
-                              {version.backtestResults.totalReturn.toFixed(1)}%
-                            </Text>
-                          )}
-                        </div>
-                      </Group>
+                          </div>
+                        </Group>
+                      </Paper>
                     ))}
                   </Stack>
                 );
@@ -702,6 +742,7 @@ function ProjectDetail() {
               onVersionDuplicate={handleVersionDuplicate}
               onVersionDelete={handleVersionDelete}
               showActions={false}
+              allowVersionSelection={false}
             />
           )}
         </Tabs.Panel>
@@ -730,7 +771,7 @@ function ProjectDetail() {
                     new Date(a.createdAt).getTime()
                 );
               })().map((version, index) => (
-                <Card
+                <Paper
                   key={version.id}
                   withBorder
                   p="md"
@@ -749,11 +790,6 @@ function ProjectDetail() {
                         {index === 0 && (
                           <Badge size="xs" color="blue">
                             최신
-                          </Badge>
-                        )}
-                        {version.isAutoSaved && (
-                          <Badge size="xs" color="gray" variant="light">
-                            자동저장
                           </Badge>
                         )}
                       </Group>
@@ -814,7 +850,7 @@ function ProjectDetail() {
                         )}
                     </div>
                   </Group>
-                </Card>
+                </Paper>
               ))}
 
               {project.versions.filter((v) => v.backtestResults).length ===

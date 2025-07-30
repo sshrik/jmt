@@ -170,9 +170,7 @@ export class VersionStore {
       projectId: project.id,
       versionName: generateVersionName(project.versions),
       description: options.description,
-      reason: options.reason,
       createdAt: now,
-      isAutoSaved: options.isAutoSaved || false,
       strategy: {
         ...strategy,
         versionId,
@@ -197,7 +195,6 @@ export class VersionStore {
       // 첫 버전인 경우
       return this.createVersion(project, newStrategy, {
         description: "초기 버전",
-        isAutoSaved: true,
       });
     }
 
@@ -206,7 +203,6 @@ export class VersionStore {
     if (comparison.hasChanges) {
       return this.createVersion(project, newStrategy, {
         description,
-        isAutoSaved: true,
       });
     }
 
@@ -286,7 +282,6 @@ export class VersionStore {
     // 타겟 버전의 전략을 복사해서 새 버전으로 생성
     return this.duplicateVersion(project, targetVersionId, {
       description: `${description} (${targetVersion.versionName}로 되돌리기)`,
-      isAutoSaved: false,
     });
   }
 
@@ -318,24 +313,18 @@ export class VersionStore {
   }
 
   /**
-   * 자동 저장 버전들 정리 (최신 N개만 유지)
+   * 자동 저장 버전들 정리 (더 이상 사용하지 않음)
    */
-  static cleanupAutoSavedVersions(project: Project, keepCount = 10): Version[] {
+  static cleanupAutoSavedVersions(
+    project: Project,
+    _keepCount = 10
+  ): Version[] {
     if (!project.versions || !Array.isArray(project.versions)) {
       return [];
     }
 
-    const autoSavedVersions = project.versions
-      .filter((v) => v.isAutoSaved)
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-    const toDelete = autoSavedVersions.slice(keepCount);
-
-    // 삭제할 버전들을 제외한 버전들 반환
-    return project.versions.filter((v) => !toDelete.some((d) => d.id === v.id));
+    // 자동 저장 기능을 제거했으므로 모든 버전을 그대로 반환
+    return project.versions;
   }
 
   /**

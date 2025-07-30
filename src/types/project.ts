@@ -15,9 +15,7 @@ export interface Version {
   projectId: string;
   versionName: string; // "v1.0", "v1.1" etc.
   description: string;
-  reason?: string; // 버전 수정 사유
   createdAt: Date;
-  isAutoSaved?: boolean; // 자동 저장 여부
   strategy: Strategy; // 현재 Strategy 타입 사용
   backtestResults?: BacktestResult;
 }
@@ -190,7 +188,5 @@ export interface MetadataChange {
 
 export interface VersionCreationOptions {
   description: string;
-  reason?: string; // 버전 수정 사유
-  isAutoSaved?: boolean;
   shouldRunBacktest?: boolean;
 }
