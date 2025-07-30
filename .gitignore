@@ -22,3 +22,16 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright
+playwright-report/
+test-results/
+e2e/screenshots/
+e2e/test-results/
+playwright/.auth/
+*.webm
+*.mp4
+
+# Test reports
+coverage/
+*.lcov

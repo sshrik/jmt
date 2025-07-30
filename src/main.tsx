@@ -47,6 +47,28 @@ const theme = createTheme({
   // 필요한 경우 커스텀 테마 설정 추가
 });
 
+// React Flow 경고만 선택적으로 필터링 (개발 모드에서만)
+if (process.env.NODE_ENV === "development") {
+  const originalWarn = console.warn;
+  const originalError = console.error;
+
+  console.warn = (...args) => {
+    // React Flow 관련 경고만 필터링
+    if (typeof args[0] === "string" && args[0].includes("[React Flow]")) {
+      return;
+    }
+    originalWarn(...args);
+  };
+
+  console.error = (...args) => {
+    // React Flow 관련 에러만 필터링 (필요한 경우)
+    if (typeof args[0] === "string" && args[0].includes("[React Flow]")) {
+      return;
+    }
+    originalError(...args);
+  };
+}
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <MantineProvider theme={theme} defaultColorScheme={getColorScheme()}>

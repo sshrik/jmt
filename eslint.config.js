@@ -31,4 +31,28 @@ export default tseslint.config([
       ],
     },
   },
+  // E2E 테스트 파일들에 대한 별도 설정
+  {
+    files: ["e2e/**/*.{ts,js}"],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: {
+        ...globals.node,
+        test: "readonly",
+        expect: "readonly",
+      },
+    },
+    rules: {
+      // React Hook 규칙들을 E2E 테스트에서는 비활성화
+      "react-hooks/rules-of-hooks": "off",
+      "react-hooks/exhaustive-deps": "off",
+
+      // 테스트 파일에서는 console.log 허용
+      "no-console": "off",
+
+      // 테스트에서는 더 관대한 규칙 적용
+      "@typescript-eslint/no-explicit-any": "off",
+      "prefer-const": "warn",
+    },
+  },
 ]);

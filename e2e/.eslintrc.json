@@ -1,0 +1,36 @@
+{
+  "extends": ["../eslint.config.js"],
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "globals": {
+    "test": "readonly",
+    "expect": "readonly"
+  },
+  "rules": {
+    // React Hook 규칙들을 E2E 테스트에서는 비활성화
+    "react-hooks/rules-of-hooks": "off",
+    "react-hooks/exhaustive-deps": "off",
+
+    // Playwright 테스트 관련 규칙들
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_" }
+    ],
+    "no-console": "off", // 테스트에서는 console.log 허용
+
+    // 함수명 관련 규칙 완화 (fixtures에서 'use' prefix 허용)
+    "react/hook-use-state": "off"
+  },
+  "overrides": [
+    {
+      "files": ["*.spec.ts", "*.test.ts", "fixtures.ts", "types.ts"],
+      "rules": {
+        // 테스트 파일에서는 더 관대한 규칙 적용
+        "@typescript-eslint/no-explicit-any": "off",
+        "prefer-const": "warn"
+      }
+    }
+  ]
+}

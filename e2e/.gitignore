@@ -1,0 +1,11 @@
+# E2E 테스트 결과 파일들
+screenshots/
+videos/
+traces/
+downloads/
+test-results/
+
+# 임시 파일들
+*.tmp
+*.temp
+*.log

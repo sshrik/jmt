@@ -20,7 +20,13 @@ import {
   IconPlayerStop,
 } from "@tabler/icons-react";
 
-import { FLOW_NODE_TYPES } from "./flow-nodes";
+import {
+  StartNode,
+  ScheduleNode,
+  FlowConditionNode,
+  FlowActionNode,
+  EndNode,
+} from "./flow-nodes";
 import type {
   StrategyFlow,
   StrategyFlowNode,
@@ -53,6 +59,15 @@ const MINI_MAP_STYLE = {
   nodeBorderRadius: 8,
   position: "bottom-right" as const,
 };
+
+// NodeTypes를 컴포넌트 외부에서 한 번만 생성하여 재생성 방지
+const STABLE_NODE_TYPES = {
+  start: StartNode,
+  schedule: ScheduleNode,
+  condition: FlowConditionNode,
+  action: FlowActionNode,
+  end: EndNode,
+} as const;
 
 // 기본 플로우 생성 (더 넓은 간격)
 const createDefaultFlow = (): {
@@ -456,28 +471,70 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onKeyDown]);
 
-  // ReactFlow에 전달할 nodes를 메모이제이션하여 재생성 방지
-  const memoizedNodes = useMemo(
-    () =>
-      nodes.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          onUpdate: (data: FlowNodeData) => onNodeUpdate(node.id, data),
-          onDelete: () => deleteNode(node.id),
-        },
-      })),
-    [nodes, onNodeUpdate, deleteNode]
-  );
+  // 각 노드별 핸들러를 개별적으로 메모이제이션
+  const nodeHandlers = useMemo(() => {
+    const handlers: Record<string, { onUpdate: (data: FlowNodeData) => void; onDelete: () => void }> = {};
+    nodes.forEach(node => {
+      handlers[node.id] = {
+        onUpdate: (data: FlowNodeData) => onNodeUpdate(node.id, data),
+        onDelete: () => deleteNode(node.id),
+      };
+    });
+    return handlers;
+  }, [nodes.map(n => n.id).join(','), onNodeUpdate, deleteNode]);
 
-  // nodeTypes도 메모이제이션하여 재생성 방지
-  const memoizedNodeTypes = useMemo(() => FLOW_NODE_TYPES, []);
+  // ReactFlow에 전달할 nodes를 메모이제이션하여 재생성 방지
+  const memoizedNodes = useMemo(() => {
+    return nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        onUpdate: nodeHandlers[node.id]?.onUpdate,
+        onDelete: nodeHandlers[node.id]?.onDelete,
+      },
+    }));
+  }, [nodes, nodeHandlers]);
+
+  // edges도 메모이제이션하여 재생성 방지
+  const memoizedEdges = useMemo(() => edges, [edges]);
+
+  // nodeTypes는 컴포넌트 외부에서 안정적으로 정의되어 메모이제이션 불필요
 
   // onInit 콜백도 메모이제이션
   const handleReactFlowInit = useCallback((rfInstance: ReactFlowInstance) => {
     _reactFlowInstance.current = rfInstance;
     onReactFlowInit();
   }, [onReactFlowInit]);
+
+  // React Flow의 모든 props를 메모이제이션하여 객체 재생성 완전 방지
+  const reactFlowProps = useMemo(() => ({
+    nodes: memoizedNodes,
+    edges: memoizedEdges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    onInit: handleReactFlowInit,
+    nodeTypes: STABLE_NODE_TYPES,
+    fitView: true,
+    fitViewOptions: REACT_FLOW_FIT_VIEW_OPTIONS,
+    minZoom: 0.001,
+    maxZoom: 3,
+    attributionPosition: "bottom-left" as const,
+    deleteKeyCode: REACT_FLOW_DELETE_KEY_CODE,
+    multiSelectionKeyCode: REACT_FLOW_MULTI_SELECTION_KEY_CODE,
+    defaultViewport: REACT_FLOW_DEFAULT_VIEWPORT,
+    style: { 
+      width: "100%", 
+      height: "100%"
+    }
+  }), [
+    memoizedNodes, 
+    memoizedEdges, 
+    onNodesChange, 
+    onEdgesChange, 
+    onConnect, 
+    handleReactFlowInit
+  ]);
 
   useEffect(() => {
     // ReactFlow 컨테이너가 DOM에 마운트되었는지 확인
@@ -736,6 +793,21 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
               0%, 100% { opacity: 0.8; transform: scale(1); }
               50% { opacity: 1; transform: scale(1.2); }
             }
+            
+            .react-flow-container {
+              /* React Flow 컨테이너 크기 확실히 설정 */
+              display: block !important;
+              width: 100% !important;
+              height: 600px !important;
+              min-height: 600px !important;
+              max-height: 600px !important;
+              box-sizing: border-box !important;
+            }
+            
+            .react-flow-container .react-flow {
+              width: 100% !important;
+              height: 100% !important;
+            }
           `}
         </style>
       </div>
@@ -743,8 +815,26 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   };
 
   return (
-    <Card withBorder p="lg" style={{ height: "100%", minHeight: "700px" }}>
-      <Stack gap="lg" style={{ height: "100%", minHeight: "650px" }}>
+    <Card 
+      withBorder 
+      p="lg" 
+      style={{ 
+        height: "100%", 
+        minHeight: "750px",
+        display: "flex",
+        flexDirection: "column"
+      }}
+    >
+      <Stack 
+        gap="lg" 
+        style={{ 
+          height: "100%", 
+          minHeight: "700px",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column"
+        }}
+      >
         {/* 노드 팔레트 - 가로 배치 (편집 모드에서만 표시) */}
         {!readOnly && (
           <div>
@@ -759,34 +849,21 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
         {/* 메인 컨텐츠 - ReactFlow 차트 */}
         <div
           ref={reactFlowWrapper}
+          className="react-flow-container"
           style={{
             width: "100%",
             height: "600px",
             minHeight: "600px",
+            maxHeight: "600px",
             border: "2px dashed #e0e7ff",
             borderRadius: "8px",
             position: "relative",
             flexGrow: 1,
+            overflow: "hidden",
+            boxSizing: "border-box",
           }}
         >
-          <ReactFlow
-            nodes={memoizedNodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onInit={handleReactFlowInit}
-            nodeTypes={memoizedNodeTypes}
-            fitView
-            fitViewOptions={REACT_FLOW_FIT_VIEW_OPTIONS}
-            minZoom={0.001}
-            maxZoom={3}
-            attributionPosition="bottom-left"
-            deleteKeyCode={REACT_FLOW_DELETE_KEY_CODE}
-            multiSelectionKeyCode={REACT_FLOW_MULTI_SELECTION_KEY_CODE}
-            defaultViewport={REACT_FLOW_DEFAULT_VIEWPORT}
-            style={REACT_FLOW_STYLE}
-          >
+          <ReactFlow {...reactFlowProps}>
             <Background />
             <Controls />
             <MiniMap {...MINI_MAP_STYLE} />
