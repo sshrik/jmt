@@ -35,6 +35,18 @@ interface StrategyFlowEditorProps {
   readOnly?: boolean;
 }
 
+// ReactFlow 설정을 컴포넌트 외부에 정의하여 재생성 방지
+const REACT_FLOW_FIT_VIEW_OPTIONS = {
+  padding: 0.1,
+  includeHiddenNodes: false,
+  minZoom: 0.001, // 거의 무제한 축소
+  maxZoom: 1.5,
+} as const;
+
+const REACT_FLOW_DELETE_KEY_CODE = ["Delete", "Backspace"] as const;
+const REACT_FLOW_MULTI_SELECTION_KEY_CODE = ["Meta", "Ctrl"] as const;
+const REACT_FLOW_DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 0.2 } as const;
+
 // 기본 플로우 생성 (더 넓은 간격)
 const createDefaultFlow = (): {
   nodes: StrategyFlowNode[];
@@ -437,6 +449,20 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onKeyDown]);
 
+  // ReactFlow에 전달할 nodes를 메모이제이션하여 재생성 방지
+  const memoizedNodes = useMemo(
+    () =>
+      nodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onUpdate: (data: FlowNodeData) => onNodeUpdate(node.id, data),
+          onDelete: () => deleteNode(node.id),
+        },
+      })),
+    [nodes, onNodeUpdate, deleteNode]
+  );
+
   useEffect(() => {
     // ReactFlow 컨테이너가 DOM에 마운트되었는지 확인
     const checkMount = () => {
@@ -701,8 +727,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   };
 
   return (
-    <Card withBorder p="lg" style={{ height: "100%" }}>
-      <Stack gap="lg" style={{ height: "100%", minHeight: "600px" }}>
+    <Card withBorder p="lg" style={{ height: "100%", minHeight: "700px" }}>
+      <Stack gap="lg" style={{ height: "100%", minHeight: "650px" }}>
         {/* 노드 팔레트 - 가로 배치 (편집 모드에서만 표시) */}
         {!readOnly && (
           <div>
@@ -719,8 +745,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
           ref={reactFlowWrapper}
           style={{
             width: "100%",
-            height: "500px",
-            minHeight: "500px",
+            height: "600px",
+            minHeight: "600px",
             border: "2px dashed #e0e7ff",
             borderRadius: "8px",
             position: "relative",
@@ -728,14 +754,7 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
           }}
         >
           <ReactFlow
-            nodes={nodes.map((node) => ({
-              ...node,
-              data: {
-                ...node.data,
-                onUpdate: (data: FlowNodeData) => onNodeUpdate(node.id, data),
-                onDelete: () => deleteNode(node.id),
-              },
-            }))}
+            nodes={memoizedNodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
@@ -746,18 +765,14 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             }}
             nodeTypes={FLOW_NODE_TYPES}
             fitView
-            fitViewOptions={{
-              padding: 0.1,
-              includeHiddenNodes: false,
-              minZoom: 0.001, // 거의 무제한 축소
-              maxZoom: 1.5,
-            }}
+            fitViewOptions={REACT_FLOW_FIT_VIEW_OPTIONS}
             minZoom={0.001}
             maxZoom={3}
             attributionPosition="bottom-left"
-            deleteKeyCode={["Delete", "Backspace"]}
-            multiSelectionKeyCode={["Meta", "Ctrl"]}
-            defaultViewport={{ x: 0, y: 0, zoom: 0.2 }}
+            deleteKeyCode={REACT_FLOW_DELETE_KEY_CODE}
+            multiSelectionKeyCode={REACT_FLOW_MULTI_SELECTION_KEY_CODE}
+            defaultViewport={REACT_FLOW_DEFAULT_VIEWPORT}
+            style={{ width: "100%", height: "100%" }}
           >
             <Background />
             <Controls />
