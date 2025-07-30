@@ -95,16 +95,15 @@ const getProjectsFromStorage = (): Project[] => {
                     reason: (t.reason as string) || "전략 조건 충족",
                   })
                 ),
-                portfolioHistory: (
-                  (result.portfolioHistory as any[]) || [] // eslint-disable-line @typescript-eslint/no-explicit-any
-                ).map((p: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
-                  date: new Date(p.date as string),
-                  cash: p.cash as number,
-                  stockQuantity: 0, // 기본값 설정
-                  stockValue: 0, // 기본값 설정
-                  totalValue: p.totalValue as number,
-                  dailyReturn: 0, // 기본값 설정
-                })),
+                portfolioHistory: ((result.portfolioHistory as any[]) || []) // eslint-disable-line @typescript-eslint/no-explicit-any
+                  .map((p: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+                    date: new Date(p.date as string),
+                    cash: p.cash as number,
+                    stockQuantity: 0, // 기본값 설정
+                    stockValue: 0, // 기본값 설정
+                    totalValue: p.totalValue as number,
+                    dailyReturn: 0, // 기본값 설정
+                  })),
                 initialCash: result.initialCash as number,
                 backtestPeriod: {
                   startDate: new Date(
