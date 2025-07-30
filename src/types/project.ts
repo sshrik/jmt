@@ -17,7 +17,7 @@ export interface Version {
   description: string;
   createdAt: Date;
   strategy: Strategy; // 현재 Strategy 타입 사용
-  backtestResults?: BacktestResult;
+  backtestResults?: BacktestResult[]; // 여러 백테스트 결과 저장
 }
 
 // 투자 전략 블록 시스템

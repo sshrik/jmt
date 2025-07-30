@@ -64,6 +64,7 @@ export interface Trade {
   price: number;
   commission: number;
   total: number; // 수수료 포함 총액
+  reason?: string; // 거래 사유 (어떤 조건/액션으로 인한 거래인지)
 }
 
 // 포트폴리오 스냅샷 (특정 시점의 상태)

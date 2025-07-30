@@ -331,13 +331,17 @@ export class ProjectStore {
       },
     };
 
-    // 지정된 버전에 백테스트 결과 저장
-    projects[projectIndex].versions[targetVersionIndex].backtestResults =
-      convertedResult;
+    // 지정된 버전에 백테스트 결과 추가 (배열로 저장)
+    const currentResults =
+      projects[projectIndex].versions[targetVersionIndex].backtestResults || [];
+    projects[projectIndex].versions[targetVersionIndex].backtestResults = [
+      ...currentResults,
+      convertedResult,
+    ];
     projects[projectIndex].updatedAt = new Date();
 
     console.log(
-      `백테스트 결과가 버전 "${targetVersion.versionName}" (ID: ${targetVersion.id})에 저장되었습니다.`
+      `백테스트 결과가 버전 "${targetVersion.versionName}" (ID: ${targetVersion.id})에 저장되었습니다. (총 ${projects[projectIndex].versions[targetVersionIndex].backtestResults!.length}개 결과)`
     );
 
     saveProjectsToStorage(projects);

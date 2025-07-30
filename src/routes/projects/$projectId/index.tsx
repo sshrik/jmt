@@ -82,11 +82,16 @@ function ProjectDetail() {
   };
 
   // 백테스트 상세 모달 핸들러
-  const handleBacktestClick = (version: Version) => {
-    if (version.backtestResults) {
+  const handleBacktestClick = (version: Version, result?: BacktestResult) => {
+    // 특정 결과가 제공되지 않으면 가장 최근 결과 사용
+    const backtestResult = result || (version.backtestResults && version.backtestResults.length > 0 
+      ? version.backtestResults[version.backtestResults.length - 1] 
+      : null);
+    
+    if (backtestResult) {
       setSelectedBacktest({
-        result: version.backtestResults,
-        version: version,
+        version,
+        result: backtestResult,
       });
     }
   };
@@ -166,7 +171,7 @@ function ProjectDetail() {
     ) {
       // 백테스트 결과가 있는 버전들을 최신순으로 정렬
       const versionsWithBacktest = project.versions
-        .filter((v) => v.backtestResults)
+        .filter((v) => v.backtestResults && v.backtestResults.length > 0)
         .sort(
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -547,16 +552,25 @@ function ProjectDetail() {
               </Title>
               <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
                 {(() => {
-                  const versionsWithBacktest =
-                    project.versions?.filter((v) => v.backtestResults) || [];
-                  const returns = versionsWithBacktest.map(
-                    (v) => v.backtestResults!.totalReturn
-                  );
+                  // 모든 백테스트 결과들 수집
+                  const allReturns: number[] = [];
+                  project.versions?.forEach((version) => {
+                    if (
+                      version.backtestResults &&
+                      version.backtestResults.length > 0
+                    ) {
+                      version.backtestResults.forEach((result) => {
+                        allReturns.push(result.totalReturn);
+                      });
+                    }
+                  });
+
                   const maxReturn =
-                    returns.length > 0 ? Math.max(...returns) : null;
+                    allReturns.length > 0 ? Math.max(...allReturns) : null;
                   const avgReturn =
-                    returns.length > 0
-                      ? returns.reduce((a, b) => a + b, 0) / returns.length
+                    allReturns.length > 0
+                      ? allReturns.reduce((a, b) => a + b, 0) /
+                        allReturns.length
                       : null;
 
                   return (
@@ -685,8 +699,9 @@ function ProjectDetail() {
                   {(() => {
                     const totalVersions = project.versions?.length || 0;
                     const versionsWithBacktest =
-                      project.versions?.filter((v) => v.backtestResults)
-                        .length || 0;
+                      project.versions?.filter(
+                        (v) => v.backtestResults && v.backtestResults.length > 0
+                      ).length || 0;
 
                     return (
                       <Stack gap="xs">
@@ -810,51 +825,75 @@ function ProjectDetail() {
               <Group justify="space-between" align="center">
                 <Title order={3}>백테스트 이력</Title>
                 <Text size="sm" c="dimmed">
-                  총 {project.versions.filter((v) => v.backtestResults).length}
-                  건의 백테스트 결과
+                  총 {(() => {
+                    let totalResults = 0;
+                    project.versions.forEach((version) => {
+                      if (version.backtestResults && version.backtestResults.length > 0) {
+                        totalResults += version.backtestResults.length;
+                      }
+                    });
+                    return totalResults;
+                  })()} 건의 백테스트 결과
                 </Text>
               </Group>
 
               {(() => {
-                const versionsWithBacktest = project.versions.filter(
-                  (version) => version.backtestResults
-                );
-                console.log("프로젝트 전체 버전:", project.versions);
-                console.log("백테스트 결과가 있는 버전:", versionsWithBacktest);
-
-                return versionsWithBacktest.sort(
+                // 모든 백테스트 결과들을 개별적으로 표시
+                const allBacktestResults: Array<{
+                  version: Version;
+                  result: BacktestResult;
+                  versionName: string;
+                }> = [];
+                
+                project.versions.forEach((version) => {
+                  if (version.backtestResults && version.backtestResults.length > 0) {
+                    version.backtestResults.forEach((result) => {
+                      allBacktestResults.push({
+                        version,
+                        result,
+                        versionName: version.versionName,
+                      });
+                    });
+                  }
+                });
+                
+                // 실행 시간순으로 정렬 (최신부터)
+                return allBacktestResults.sort(
                   (a, b) =>
-                    new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
+                    new Date(b.result.executedAt).getTime() -
+                    new Date(a.result.executedAt).getTime()
                 );
-              })().map((version, index) => (
+              })().map((item, index) => (
                 <Paper
-                  key={version.id}
+                  key={`${item.version.id}-${item.result.id}`}
                   withBorder
                   p="md"
                   style={{ cursor: "pointer" }}
-                  onClick={() => handleBacktestClick(version)}
+                  onClick={() => handleBacktestClick(item.version, item.result)}
                 >
                   <Group justify="space-between" align="flex-start">
                     <div style={{ flex: 1 }}>
                       <Group gap="xs" mb="xs">
                         <Text fw={500} size="sm">
-                          {version.versionName}
+                          {item.versionName}
                         </Text>
                         {index === 0 && (
                           <Badge size="xs" color="blue">
                             최신
                           </Badge>
                         )}
+                        <Badge size="xs" variant="light" color="gray">
+                          #{item.result.id.slice(-4)}
+                        </Badge>
                       </Group>
 
                       <Text size="xs" c="dimmed" mb="sm">
-                        {version.description || "설명 없음"}
+                        {item.version.description || "설명 없음"}
                       </Text>
 
                       <Text size="xs" c="dimmed">
                         실행일:{" "}
-                        {new Date(version.createdAt).toLocaleString("ko-KR")}
+                        {new Date(item.result.executedAt).toLocaleString("ko-KR")}
                       </Text>
                     </div>
 
@@ -863,45 +902,22 @@ function ProjectDetail() {
                         size="lg"
                         fw={600}
                         c={
-                          version.backtestResults!.totalReturn > 0
+                          item.result.totalReturn > 0
                             ? "green"
-                            : "red"
+                            : item.result.totalReturn < 0
+                            ? "red"
+                            : "gray"
                         }
                       >
-                        {version.backtestResults!.totalReturn > 0 ? "+" : ""}
-                        {version.backtestResults!.totalReturn.toFixed(2)}%
+                        {item.result.totalReturn > 0 ? "+" : ""}
+                        {item.result.totalReturn.toFixed(2)}%
                       </Text>
-
-                      {"stats" in version.backtestResults! &&
-                        (
-                          version.backtestResults as {
-                            stats: {
-                              totalTrades?: number;
-                              maxDrawdown?: number;
-                            };
-                          }
-                        ).stats && (
-                          <>
-                            <Text size="xs" c="dimmed">
-                              거래 횟수:{" "}
-                              {(
-                                version.backtestResults as {
-                                  stats: { totalTrades?: number };
-                                }
-                              ).stats.totalTrades || 0}
-                              회
-                            </Text>
-                            <Text size="xs" c="dimmed">
-                              최대 손실:{" "}
-                              {(
-                                version.backtestResults as {
-                                  stats: { maxDrawdown?: number };
-                                }
-                              ).stats.maxDrawdown?.toFixed(2) || "0.00"}
-                              %
-                            </Text>
-                          </>
-                        )}
+                      <Text size="xs" c="dimmed">
+                        거래: {item.result.tradeCount}회
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        MDD: {item.result.maxDrawdown.toFixed(1)}%
+                      </Text>
                     </div>
                   </Group>
                 </Paper>

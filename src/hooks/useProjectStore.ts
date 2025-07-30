@@ -21,14 +21,31 @@ export const useProjectStore = () => {
       }
 
       // Project를 ProjectSummary로 변환
-      const projectSummaries = allProjects.map((project) => ({
-        id: project.id,
-        name: project.name,
-        description: project.description,
-        lastModified: project.updatedAt,
-        totalVersions: project.versions.length,
-        latestReturn: project.versions[0]?.backtestResults?.totalReturn,
-      }));
+      const projectSummaries = allProjects.map((project) => {
+        // 모든 백테스트 결과 중 가장 최근 것 찾기
+        let latestReturn: number | undefined;
+        let latestExecutedAt: Date | undefined;
+
+        project.versions.forEach((version) => {
+          if (version.backtestResults && version.backtestResults.length > 0) {
+            version.backtestResults.forEach((result) => {
+              if (!latestExecutedAt || result.executedAt > latestExecutedAt) {
+                latestExecutedAt = result.executedAt;
+                latestReturn = result.totalReturn;
+              }
+            });
+          }
+        });
+
+        return {
+          id: project.id,
+          name: project.name,
+          description: project.description,
+          lastModified: project.updatedAt,
+          totalVersions: project.versions.length,
+          latestReturn,
+        };
+      });
 
       setProjects(projectSummaries);
     } catch (err) {

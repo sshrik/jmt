@@ -64,8 +64,11 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
     return "gray";
   };
 
-  // 숫자 포맷팅
+  // 숫자 포맷팅 (NaN 값 처리 포함)
   const formatNumber = (value: number, decimals = 2) => {
+    if (value === null || value === undefined || isNaN(value)) {
+      return "0";
+    }
     return new Intl.NumberFormat("ko-KR", {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
@@ -522,6 +525,7 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                         <Table.Th>가격</Table.Th>
                         <Table.Th>수수료</Table.Th>
                         <Table.Th>총액</Table.Th>
+                        <Table.Th>사유</Table.Th>
                       </Table.Tr>
                     </Table.Thead>
                     <Table.Tbody>
@@ -564,6 +568,11 @@ export const BacktestResults = ({ result }: BacktestResultsProps) => {
                             <Table.Td>
                               <Text c={trade.type === "buy" ? "red" : "green"}>
                                 ₩{formatNumber(trade.total)}
+                              </Text>
+                            </Table.Td>
+                            <Table.Td>
+                              <Text size="sm" c="dimmed">
+                                {trade.reason || "수동 거래"}
                               </Text>
                             </Table.Td>
                           </Table.Tr>
