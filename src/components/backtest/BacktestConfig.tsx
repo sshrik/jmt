@@ -66,8 +66,8 @@ export const BacktestConfig = ({
   // initialConfig 변경 시 config 업데이트
   useEffect(() => {
     if (initialConfig) {
-      setConfig(prev => ({ ...prev, ...initialConfig }));
-      
+      setConfig((prev) => ({ ...prev, ...initialConfig }));
+
       // 종목이 설정되어 있으면 해당 종목 선택 및 요약 로드
       if (initialConfig.symbol) {
         const stock = stockList.find((s) => s.symbol === initialConfig.symbol);

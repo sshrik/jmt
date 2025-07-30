@@ -308,7 +308,8 @@ export class ProjectStore {
       id: generateId(),
       versionId: targetVersion.id,
       executedAt: new Date(),
-      totalReturn: result.stats?.totalReturnPct || result.stats?.totalReturn || 0, // 퍼센트 수익률 사용
+      totalReturn:
+        result.stats?.totalReturnPct || result.stats?.totalReturn || 0, // 퍼센트 수익률 사용
       maxDrawdown: result.stats?.maxDrawdown || 0,
       tradeCount: result.stats?.totalTrades || result.trades?.length || 0,
       winRate: result.stats?.winRate || 0,

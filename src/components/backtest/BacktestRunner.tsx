@@ -110,10 +110,16 @@ export const BacktestRunner = ({
               `백테스트 결과 저장 시도: projectId=${projectId}, versionId=${versionId}`
             );
             console.log("백테스트 결과:", backtestResult);
+            
+            // 백테스트 설정 정보도 함께 포함
+            const enrichedResult = {
+              ...backtestResult,
+              config: backtestConfig, // 백테스트 설정 정보 추가
+            };
 
             ProjectStore.saveBacktestResult(
               projectId,
-              backtestResult,
+              enrichedResult,
               versionId
             );
 
