@@ -100,8 +100,6 @@ function ProjectEdit() {
     }
   }, [projectId]);
 
-
-
   // 자동 저장 시작/중지 (전략만 - 프로젝트 정보는 실시간 저장)
   useEffect(() => {
     // 전략 자동 저장만 관리 (프로젝트 정보는 실시간 저장으로 대체)
@@ -655,13 +653,21 @@ function ProjectEdit() {
             <Text fw={500} mb="xs">
               프로젝트 이름
             </Text>
-            <Text>{pendingProjectInfo?.name || project?.name || "프로젝트 이름 없음"}</Text>
+            <Text>
+              {pendingProjectInfo?.name ||
+                project?.name ||
+                "프로젝트 이름 없음"}
+            </Text>
           </div>
           <div>
             <Text fw={500} mb="xs">
               설명
             </Text>
-            <Text>{pendingProjectInfo?.description || project?.description || "설명 없음"}</Text>
+            <Text>
+              {pendingProjectInfo?.description ||
+                project?.description ||
+                "설명 없음"}
+            </Text>
           </div>
           <div>
             <Text fw={500} mb="xs">
