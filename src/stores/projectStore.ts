@@ -408,13 +408,197 @@ export class ProjectStore {
     saveProjectsToStorage(projects);
   }
 
+  // 고속도로 매매법 전략 생성
+  private static createHighwayTradingStrategy(projectId: string, versionId: string): Strategy {
+    const now = new Date();
+    const strategyId = generateId();
+
+    const strategy: Strategy = {
+      id: strategyId,
+      projectId,
+      versionId,
+      name: "고속도로 매매법",
+      description: "단계적 하락/상승에 따른 비례 매매 전략",
+      blocks: [
+        // 🔵 0-5% 하락 시 기본 매수 (현금의 10%)
+        {
+          id: `${strategyId}-condition-1`,
+          type: "condition",
+          name: "0-5% 하락 구간",
+          description: "가격이 0%~5% 하락했을 때",
+          conditionType: "close_price_range",
+          conditionParams: {
+            minPercent: 0,
+            maxPercent: 5,
+            rangeDirection: "down",
+            rangeOperator: "left_inclusive", // 0% 이상 5% 미만
+          },
+        },
+        {
+          id: `${strategyId}-action-1`,
+          type: "action",
+          name: "기본 매수",
+          description: "현금의 10% 매수",
+          actionType: "buy_percent_cash",
+          actionParams: {
+            percentCash: 10,
+          },
+        },
+        
+        // 🔵 5-10% 하락 시 강화 매수 (현금의 20%)
+        {
+          id: `${strategyId}-condition-2`,
+          type: "condition",
+          name: "5-10% 하락 구간",
+          description: "가격이 5%~10% 하락했을 때",
+          conditionType: "close_price_range",
+          conditionParams: {
+            minPercent: 5,
+            maxPercent: 10,
+            rangeDirection: "down",
+            rangeOperator: "left_inclusive", // 5% 이상 10% 미만
+          },
+        },
+        {
+          id: `${strategyId}-action-2`,
+          type: "action",
+          name: "강화 매수",
+          description: "현금의 20% 매수",
+          actionType: "buy_percent_cash",
+          actionParams: {
+            percentCash: 20,
+          },
+        },
+        
+        // 🔵 10-20% 하락 시 폭탄 매수 (현금의 50%)
+        {
+          id: `${strategyId}-condition-3`,
+          type: "condition",
+          name: "10-20% 하락 구간",
+          description: "가격이 10%~20% 하락했을 때",
+          conditionType: "close_price_range",
+          conditionParams: {
+            minPercent: 10,
+            maxPercent: 20,
+            rangeDirection: "down",
+            rangeOperator: "left_inclusive", // 10% 이상 20% 미만
+          },
+        },
+        {
+          id: `${strategyId}-action-3`,
+          type: "action",
+          name: "폭탄 매수",
+          description: "현금의 50% 매수",
+          actionType: "buy_percent_cash",
+          actionParams: {
+            percentCash: 50,
+          },
+        },
+        
+        // 🔴 0-5% 상승 시 기본 매도 (주식의 10%)
+        {
+          id: `${strategyId}-condition-4`,
+          type: "condition",
+          name: "0-5% 상승 구간",
+          description: "가격이 0%~5% 상승했을 때",
+          conditionType: "close_price_range",
+          conditionParams: {
+            minPercent: 0,
+            maxPercent: 5,
+            rangeDirection: "up",
+            rangeOperator: "left_inclusive", // 0% 이상 5% 미만
+          },
+        },
+        {
+          id: `${strategyId}-action-4`,
+          type: "action",
+          name: "기본 매도",
+          description: "주식의 10% 매도",
+          actionType: "sell_percent_stock",
+          actionParams: {
+            percentStock: 10,
+          },
+        },
+        
+        // 🔴 5-10% 상승 시 강화 매도 (주식의 20%)
+        {
+          id: `${strategyId}-condition-5`,
+          type: "condition",
+          name: "5-10% 상승 구간",
+          description: "가격이 5%~10% 상승했을 때",
+          conditionType: "close_price_range",
+          conditionParams: {
+            minPercent: 5,
+            maxPercent: 10,
+            rangeDirection: "up",
+            rangeOperator: "left_inclusive", // 5% 이상 10% 미만
+          },
+        },
+        {
+          id: `${strategyId}-action-5`,
+          type: "action",
+          name: "강화 매도",
+          description: "주식의 20% 매도",
+          actionType: "sell_percent_stock",
+          actionParams: {
+            percentStock: 20,
+          },
+        },
+        
+        // 🔴 10-20% 상승 시 대량 매도 (주식의 50%)
+        {
+          id: `${strategyId}-condition-6`,
+          type: "condition",
+          name: "10-20% 상승 구간",
+          description: "가격이 10%~20% 상승했을 때",
+          conditionType: "close_price_range",
+          conditionParams: {
+            minPercent: 10,
+            maxPercent: 20,
+            rangeDirection: "up",
+            rangeOperator: "left_inclusive", // 10% 이상 20% 미만
+          },
+        },
+        {
+          id: `${strategyId}-action-6`,
+          type: "action",
+          name: "대량 매도",
+          description: "주식의 50% 매도",
+          actionType: "sell_percent_stock",
+          actionParams: {
+            percentStock: 50,
+          },
+        },
+      ],
+      blockOrder: [
+        `${strategyId}-condition-1`,
+        `${strategyId}-action-1`,
+        `${strategyId}-condition-2`,
+        `${strategyId}-action-2`,
+        `${strategyId}-condition-3`,
+        `${strategyId}-action-3`,
+        `${strategyId}-condition-4`,
+        `${strategyId}-action-4`,
+        `${strategyId}-condition-5`,
+        `${strategyId}-action-5`,
+        `${strategyId}-condition-6`,
+        `${strategyId}-action-6`,
+      ],
+      createdAt: now,
+      updatedAt: now,
+      isActive: true,
+    };
+
+    return strategy;
+  }
+
   // 개발용 Mock 데이터 생성
   static generateMockData(): void {
     const mockProjects: Project[] = [
       {
         id: "mock-1",
-        name: "삼성전자 단순매매 전략",
-        description: "가격 상승/하락에 따른 단순 매매 전략",
+        name: "고속도로 매매법",
+        description: "단계적 하락/상승에 따른 비례 매매 전략 - 하락폭이 클수록 더 많이 매수, 상승폭이 클수록 더 많이 매도",
         createdAt: new Date("2024-01-10"),
         updatedAt: new Date("2024-01-15"),
         versions: [
@@ -422,26 +606,26 @@ export class ProjectStore {
             id: "version-1",
             projectId: "mock-1",
             versionName: "v1.0",
-            description: "초기 버전",
+            description: "고속도로 매매법 기본 전략",
             createdAt: new Date("2024-01-10"),
-            strategy: createEmptyStrategy("mock-1", "version-1"),
+            strategy: this.createHighwayTradingStrategy("mock-1", "version-1"),
           },
           {
             id: "version-2",
             projectId: "mock-1",
             versionName: "v1.1",
-            description: "수익률 개선 버전",
+            description: "매매 비율 최적화 버전",
             createdAt: new Date("2024-01-15"),
-            strategy: createEmptyStrategy("mock-1", "version-2"),
+            strategy: this.createHighwayTradingStrategy("mock-1", "version-2"),
             backtestResults: [
               {
                 id: "backtest-1",
                 versionId: "version-2",
                 executedAt: new Date("2024-01-15"),
-                totalReturn: 12.5,
-                maxDrawdown: -8.2,
-                tradeCount: 24,
-                winRate: 62.5,
+                totalReturn: 23.8,
+                maxDrawdown: -12.4,
+                tradeCount: 45,
+                winRate: 68.9,
                 transactions: [],
                 portfolioHistory: [],
                 initialCash: 1000000,
@@ -461,8 +645,8 @@ export class ProjectStore {
       },
       {
         id: "mock-2",
-        name: "비트코인 모멘텀 전략",
-        description: "모멘텀 기반 암호화폐 투자 전략",
+        name: "단순 변동성 돌파 전략",
+        description: "일일 변동성을 활용한 단순 매매 전략",
         createdAt: new Date("2024-01-05"),
         updatedAt: new Date("2024-01-10"),
         versions: [
