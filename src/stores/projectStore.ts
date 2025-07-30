@@ -151,7 +151,9 @@ export class ProjectStore {
   static getAllProjects(): Project[] {
     const projects = getProjectsFromStorage();
     if (projects.length === 0) {
-      console.log("No projects found in storage, generating mock data with highway trading strategy");
+      console.log(
+        "No projects found in storage, generating mock data with highway trading strategy"
+      );
       this.generateMockData();
       return getProjectsFromStorage();
     }

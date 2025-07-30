@@ -430,24 +430,35 @@ function ProjectDetail() {
               maxDropdownHeight={200}
             />
           </div>
-          {selectedVersion?.backtestResults?.totalReturn !== undefined && (
-            <div>
-              <Text size="sm" c="dimmed">
-                {selectedVersion.versionName} 수익률
-              </Text>
-              <Text
-                fw={500}
-                c={
-                  selectedVersion.backtestResults.totalReturn > 0
-                    ? "green"
-                    : "red"
-                }
-              >
-                {selectedVersion.backtestResults.totalReturn > 0 ? "+" : ""}
-                {selectedVersion.backtestResults.totalReturn.toFixed(1)}%
-              </Text>
-            </div>
-          )}
+          {selectedVersion?.backtestResults &&
+            Array.isArray(selectedVersion.backtestResults) &&
+            selectedVersion.backtestResults.length > 0 && (
+              <div>
+                <Text size="sm" c="dimmed">
+                  {selectedVersion.versionName} 수익률
+                </Text>
+                <Text
+                  fw={500}
+                  c={
+                    selectedVersion.backtestResults[
+                      selectedVersion.backtestResults.length - 1
+                    ].totalReturn > 0
+                      ? "green"
+                      : "red"
+                  }
+                >
+                  {selectedVersion.backtestResults[
+                    selectedVersion.backtestResults.length - 1
+                  ].totalReturn > 0
+                    ? "+"
+                    : ""}
+                  {selectedVersion.backtestResults[
+                    selectedVersion.backtestResults.length - 1
+                  ].totalReturn.toFixed(1)}
+                  %
+                </Text>
+              </div>
+            )}
         </Group>
       </Card>
 
@@ -778,23 +789,31 @@ function ProjectDetail() {
                                 "ko-KR"
                               )}
                             </Text>
-                            {version.backtestResults && (
-                              <Text
-                                size="sm"
-                                fw={500}
-                                c={
-                                  version.backtestResults.totalReturn > 0
-                                    ? "green"
-                                    : "red"
-                                }
-                              >
-                                {version.backtestResults.totalReturn > 0
-                                  ? "+"
-                                  : ""}
-                                {version.backtestResults.totalReturn.toFixed(1)}
-                                %
-                              </Text>
-                            )}
+                            {version.backtestResults &&
+                              Array.isArray(version.backtestResults) &&
+                              version.backtestResults.length > 0 && (
+                                <Text
+                                  size="sm"
+                                  fw={500}
+                                  c={
+                                    version.backtestResults[
+                                      version.backtestResults.length - 1
+                                    ].totalReturn > 0
+                                      ? "green"
+                                      : "red"
+                                  }
+                                >
+                                  {version.backtestResults[
+                                    version.backtestResults.length - 1
+                                  ].totalReturn > 0
+                                    ? "+"
+                                    : ""}
+                                  {version.backtestResults[
+                                    version.backtestResults.length - 1
+                                  ].totalReturn.toFixed(1)}
+                                  %
+                                </Text>
+                              )}
                           </div>
                         </Group>
                       </Paper>
@@ -922,13 +941,13 @@ function ProjectDetail() {
                         }
                       >
                         {item.result.totalReturn > 0 ? "+" : ""}
-                        {item.result.totalReturn.toFixed(2)}%
+                        {(item.result.totalReturn || 0).toFixed(2)}%
                       </Text>
                       <Text size="xs" c="dimmed">
-                        거래: {item.result.tradeCount}회
+                        거래: {item.result.tradeCount || 0}회
                       </Text>
                       <Text size="xs" c="dimmed">
-                        MDD: {item.result.maxDrawdown.toFixed(1)}%
+                        MDD: {(item.result.maxDrawdown || 0).toFixed(1)}%
                       </Text>
                     </div>
                   </Group>
