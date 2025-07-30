@@ -19,7 +19,6 @@ import {
   IconTrendingUp,
   IconTrendingDown,
   IconMinus,
-  IconRobot,
   IconEdit,
 } from "@tabler/icons-react";
 import type { Project, Version } from "../../types/project";
@@ -33,6 +32,7 @@ interface VersionListProps {
   onVersionDuplicate: (version: Version) => void;
   onVersionDelete?: (version: Version) => void;
   showActions?: boolean;
+  allowVersionSelection?: boolean;
 }
 
 export const VersionList = ({
@@ -43,6 +43,7 @@ export const VersionList = ({
   onVersionDuplicate,
   onVersionDelete,
   showActions = true,
+  allowVersionSelection = true,
 }: VersionListProps) => {
   const versions = VersionStore.getVersionsOrderedByDate(project) || [];
   const latestVersion = VersionStore.getLatestVersion(project);
@@ -108,9 +109,13 @@ export const VersionList = ({
               withBorder
               className={isCurrent ? "version-card-selected" : ""}
               style={{
-                cursor: "pointer",
+                cursor: allowVersionSelection ? "pointer" : "default",
               }}
-              onClick={() => onVersionSelect(version)}
+              onClick={
+                allowVersionSelection
+                  ? () => onVersionSelect(version)
+                  : undefined
+              }
             >
               <Group justify="space-between" align="flex-start">
                 <Stack gap="xs" style={{ flex: 1 }}>
@@ -134,16 +139,7 @@ export const VersionList = ({
                           현재
                         </Badge>
                       )}
-                      {version.isAutoSaved && (
-                        <Badge
-                          variant="light"
-                          color="gray"
-                          size="xs"
-                          leftSection={<IconRobot size={10} />}
-                        >
-                          자동저장
-                        </Badge>
-                      )}
+
                       {hasBacktest && (
                         <Badge variant="light" color="teal" size="xs">
                           백테스트
@@ -156,13 +152,6 @@ export const VersionList = ({
                   <Text size="sm" c="dimmed">
                     {version.description}
                   </Text>
-
-                  {/* 수정 사유 (있는 경우) */}
-                  {version.reason && (
-                    <Text size="xs" c="dimmed" fs="italic">
-                      사유: {version.reason}
-                    </Text>
-                  )}
 
                   {/* 메타 정보 */}
                   <Group gap="md">
