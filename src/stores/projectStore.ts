@@ -297,6 +297,22 @@ export class ProjectStore {
     saveProjectsToStorage(filteredProjects); // 이 함수가 이벤트를 발생시킴
   }
 
+  static addVersionToProject(projectId: string, version: Version): void {
+    const projects = this.getAllProjects();
+    const projectIndex = projects.findIndex((p) => p.id === projectId);
+
+    if (projectIndex === -1) {
+      throw new Error("프로젝트를 찾을 수 없습니다.");
+    }
+
+    // 새 버전을 배열의 맨 앞에 추가 (최신 버전이 먼저 오도록)
+    projects[projectIndex].versions.unshift(version);
+    projects[projectIndex].updatedAt = new Date();
+
+    saveProjectsToStorage(projects);
+    console.log(`버전 "${version.versionName}"이 프로젝트에 추가되었습니다.`);
+  }
+
   // 개발용: localStorage 초기화 후 고속도로 매매법 생성
   static resetWithHighwayTradingStrategy(): void {
     console.log("🧹 localStorage 초기화 후 고속도로 매매법 생성");

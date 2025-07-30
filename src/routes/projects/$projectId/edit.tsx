@@ -355,25 +355,41 @@ function ProjectEdit() {
   // 버전 생성 완료 핸들러
   const handleVersionCreated = useCallback(
     (newVersion: Version, shouldRunBacktest?: boolean) => {
-      const message = shouldRunBacktest
-        ? `${newVersion.versionName} 버전이 생성되었습니다. 백테스트를 시작합니다.`
-        : `${newVersion.versionName} 버전이 생성되었습니다.`;
+      try {
+        // 🔥 중요: 새 버전을 실제로 프로젝트에 추가!
+        ProjectStore.addVersionToProject(projectId, newVersion);
 
-      notifications.show({
-        title: "저장 및 버전 생성 완료",
-        message,
-        color: "green",
-        icon: <IconCheck size={16} />,
-      });
-      closeCreateVersion();
+        const message = shouldRunBacktest
+          ? `${newVersion.versionName} 버전이 생성되었습니다. 백테스트를 시작합니다.`
+          : `${newVersion.versionName} 버전이 생성되었습니다.`;
 
-      // 프로젝트 상세 페이지로 이동 (백테스트 자동 실행 여부를 state로 전달)
-      navigate({
-        to: `/projects/${projectId}/`,
-        search: shouldRunBacktest
-          ? { autoBacktest: "true", versionId: newVersion.id }
-          : undefined,
-      });
+        notifications.show({
+          title: "저장 및 버전 생성 완료",
+          message,
+          color: "green",
+          icon: <IconCheck size={16} />,
+        });
+        closeCreateVersion();
+
+        // 프로젝트 상세 페이지로 이동 (백테스트 자동 실행 여부를 state로 전달)
+        navigate({
+          to: `/projects/${projectId}/`,
+          search: shouldRunBacktest
+            ? { autoBacktest: "true", versionId: newVersion.id }
+            : undefined,
+        });
+      } catch (error) {
+        console.error("버전 저장 실패:", error);
+        notifications.show({
+          title: "버전 저장 실패",
+          message:
+            error instanceof Error
+              ? error.message
+              : "버전 저장 중 오류가 발생했습니다.",
+          color: "red",
+          icon: <IconAlertTriangle size={16} />,
+        });
+      }
     },
     [closeCreateVersion, navigate, projectId]
   );
