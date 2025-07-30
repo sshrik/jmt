@@ -74,20 +74,20 @@ const getProjectsFromStorage = (): Project[] => {
         return {
           ...version,
           createdAt: new Date(version.createdAt),
-          backtestResults: backtestResults ? backtestResults.map((result: any) => ({
+          backtestResults: backtestResults ? backtestResults.map((result: Record<string, unknown>) => ({
             ...result,
-            executedAt: new Date(result.executedAt),
+            executedAt: new Date(result.executedAt as string),
             backtestPeriod: {
-              startDate: new Date(result.backtestPeriod.startDate),
-              endDate: new Date(result.backtestPeriod.endDate),
+              startDate: new Date((result.backtestPeriod as Record<string, unknown>).startDate as string),
+              endDate: new Date((result.backtestPeriod as Record<string, unknown>).endDate as string),
             },
-            transactions: (result.transactions || []).map((t: any) => ({
+            transactions: ((result.transactions as Record<string, unknown>[]) || []).map((t: Record<string, unknown>) => ({
               ...t,
-              date: new Date(t.date),
+              date: new Date(t.date as string),
             })),
-            portfolioHistory: (result.portfolioHistory || []).map((p: any) => ({
+            portfolioHistory: ((result.portfolioHistory as Record<string, unknown>[]) || []).map((p: Record<string, unknown>) => ({
               ...p,
-              date: new Date(p.date),
+              date: new Date(p.date as string),
             })),
           })) : undefined,
         };
