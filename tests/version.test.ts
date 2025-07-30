@@ -290,7 +290,9 @@ async function testVersionUtilities(): Promise<void> {
     throw new Error("최신 버전 가져오기 실패 - latestVersion이 null입니다");
   }
   if (latestVersion.id !== version2.id) {
-    throw new Error(`최신 버전 가져오기 실패 - 예상: ${version2.id}, 실제: ${latestVersion.id}`);
+    throw new Error(
+      `최신 버전 가져오기 실패 - 예상: ${version2.id}, 실제: ${latestVersion.id}`
+    );
   }
   console.log(`✅ 최신 버전: ${latestVersion.versionName}`);
 

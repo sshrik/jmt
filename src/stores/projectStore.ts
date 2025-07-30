@@ -448,18 +448,18 @@ export class ProjectStore {
       name: "고속도로 매매법",
       description: "단계적 하락/상승에 따른 비례 매매 전략",
       blocks: [
-        // 🔵 0-5% 하락 시 기본 매수 (현금의 10%)
+        // 🔵 0-2% 하락 시 기본 매수 (현금의 10%) - 더 민감하게 조정
         {
           id: `${strategyId}-condition-1`,
           type: "condition",
-          name: "0-5% 하락 구간",
-          description: "가격이 0%~5% 하락했을 때",
+          name: "0-2% 하락 구간",
+          description: "가격이 0%~2% 하락했을 때",
           conditionType: "close_price_range",
           conditionParams: {
             minPercent: 0,
-            maxPercent: 5,
+            maxPercent: 2,
             rangeDirection: "down",
-            rangeOperator: "left_inclusive", // 0% 이상 5% 미만
+            rangeOperator: "left_inclusive", // 0% 이상 2% 미만
           },
           enabled: true,
         },
@@ -475,18 +475,18 @@ export class ProjectStore {
           enabled: true,
         },
 
-        // 🔵 5-10% 하락 시 강화 매수 (현금의 20%)
+        // 🔵 2-4% 하락 시 강화 매수 (현금의 20%) - 더 민감하게 조정
         {
           id: `${strategyId}-condition-2`,
           type: "condition",
-          name: "5-10% 하락 구간",
-          description: "가격이 5%~10% 하락했을 때",
+          name: "2-4% 하락 구간",
+          description: "가격이 2%~4% 하락했을 때",
           conditionType: "close_price_range",
           conditionParams: {
-            minPercent: 5,
-            maxPercent: 10,
+            minPercent: 2,
+            maxPercent: 4,
             rangeDirection: "down",
-            rangeOperator: "left_inclusive", // 5% 이상 10% 미만
+            rangeOperator: "left_inclusive", // 2% 이상 4% 미만
           },
           enabled: true,
         },
@@ -502,18 +502,18 @@ export class ProjectStore {
           enabled: true,
         },
 
-        // 🔵 10-20% 하락 시 폭탄 매수 (현금의 50%)
+        // 🔵 4%+ 하락 시 폭탄 매수 (현금의 50%) - 더 민감하게 조정
         {
           id: `${strategyId}-condition-3`,
           type: "condition",
-          name: "10-20% 하락 구간",
-          description: "가격이 10%~20% 하락했을 때",
+          name: "4%+ 하락 구간",
+          description: "가격이 4% 이상 하락했을 때",
           conditionType: "close_price_range",
           conditionParams: {
-            minPercent: 10,
-            maxPercent: 20,
+            minPercent: 4,
+            maxPercent: 100, // 상한 제거 (4% 이상이면 모두)
             rangeDirection: "down",
-            rangeOperator: "left_inclusive", // 10% 이상 20% 미만
+            rangeOperator: "left_inclusive", // 4% 이상
           },
           enabled: true,
         },
@@ -529,18 +529,18 @@ export class ProjectStore {
           enabled: true,
         },
 
-        // 🔴 0-5% 상승 시 기본 매도 (주식의 10%)
+        // 🔴 0-2% 상승 시 기본 매도 (주식의 10%) - 더 민감하게 조정
         {
           id: `${strategyId}-condition-4`,
           type: "condition",
-          name: "0-5% 상승 구간",
-          description: "가격이 0%~5% 상승했을 때",
+          name: "0-2% 상승 구간",
+          description: "가격이 0%~2% 상승했을 때",
           conditionType: "close_price_range",
           conditionParams: {
             minPercent: 0,
-            maxPercent: 5,
+            maxPercent: 2,
             rangeDirection: "up",
-            rangeOperator: "left_inclusive", // 0% 이상 5% 미만
+            rangeOperator: "left_inclusive", // 0% 이상 2% 미만
           },
           enabled: true,
         },
@@ -556,18 +556,18 @@ export class ProjectStore {
           enabled: true,
         },
 
-        // 🔴 5-10% 상승 시 강화 매도 (주식의 20%)
+        // 🔴 2-4% 상승 시 강화 매도 (주식의 20%) - 더 민감하게 조정
         {
           id: `${strategyId}-condition-5`,
           type: "condition",
-          name: "5-10% 상승 구간",
-          description: "가격이 5%~10% 상승했을 때",
+          name: "2-4% 상승 구간",
+          description: "가격이 2%~4% 상승했을 때",
           conditionType: "close_price_range",
           conditionParams: {
-            minPercent: 5,
-            maxPercent: 10,
+            minPercent: 2,
+            maxPercent: 4,
             rangeDirection: "up",
-            rangeOperator: "left_inclusive", // 5% 이상 10% 미만
+            rangeOperator: "left_inclusive", // 2% 이상 4% 미만
           },
           enabled: true,
         },
@@ -583,18 +583,18 @@ export class ProjectStore {
           enabled: true,
         },
 
-        // 🔴 10-20% 상승 시 대량 매도 (주식의 50%)
+        // 🔴 4%+ 상승 시 대량 매도 (주식의 50%) - 더 민감하게 조정
         {
           id: `${strategyId}-condition-6`,
           type: "condition",
-          name: "10-20% 상승 구간",
-          description: "가격이 10%~20% 상승했을 때",
+          name: "4%+ 상승 구간",
+          description: "가격이 4% 이상 상승했을 때",
           conditionType: "close_price_range",
           conditionParams: {
-            minPercent: 10,
-            maxPercent: 20,
+            minPercent: 4,
+            maxPercent: 100, // 상한 제거 (4% 이상이면 모두)
             rangeDirection: "up",
-            rangeOperator: "left_inclusive", // 10% 이상 20% 미만
+            rangeOperator: "left_inclusive", // 4% 이상
           },
           enabled: true,
         },

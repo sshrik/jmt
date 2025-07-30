@@ -124,6 +124,14 @@ export class BacktestEngine {
   ): Promise<void> {
     if (!prevPrice) return; // 첫날은 건너뛰기
 
+    // 가격 변화율 계산
+    const priceChangePercent = ((currentPrice.close - prevPrice.close) / prevPrice.close) * 100;
+    
+    // 디버깅: 가격 변화 로그 (5%보다 큰 변화만)
+    if (Math.abs(priceChangePercent) > 1) {
+      console.log(`📊 ${currentPrice.date}: ${prevPrice.close}원 → ${currentPrice.close}원 (${priceChangePercent.toFixed(2)}%)`);
+    }
+
     // 룰별 실행
     for (const blockId of this.strategy.blockOrder) {
       const block = this.strategy.blocks.find((b) => b.id === blockId);
@@ -136,10 +144,17 @@ export class BacktestEngine {
           prevPrice
         );
 
+        // 디버깅: 조건 평가 결과 로그
+        if (Math.abs(priceChangePercent) > 1) {
+          console.log(`  🔍 ${block.name}: ${conditionMet ? '✅ 만족' : '❌ 불만족'}`);
+        }
+
         if (conditionMet) {
+          console.log(`🎯 조건 만족! ${block.name} - 액션 실행`);
           // 조건이 만족되면 다음 액션 블록들 실행
           const actionBlocks = this.getNextActionBlocks(blockId);
           for (const actionBlock of actionBlocks) {
+            console.log(`  💰 액션 실행: ${actionBlock.name}`);
             await this.executeAction(actionBlock, currentPrice);
           }
         }
