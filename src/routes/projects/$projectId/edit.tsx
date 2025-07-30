@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Container,
@@ -78,15 +78,15 @@ function ProjectEdit() {
 
   // 자동 저장 상태 (프로젝트 정보와 전략 분리)
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
-  
-  // 프로젝트 기본 정보 자동 저장 (빠른 주기)
-  const projectInfoAutoSave = useInterval(() => {
-    if (autoSaveEnabled && form.isDirty() && !isSaving) {
-      handleSaveProjectInfo();
-    }
-  }, 10000); // 10초마다 프로젝트 정보 자동 저장
 
-  // 전략 자동 저장 (느린 주기)
+  // 실시간 저장으로 대체되었으므로 주석 처리
+  // const projectInfoAutoSave = useInterval(() => {
+  //   if (form.isDirty() && !isSaving) {
+  //     handleSaveProjectInfo();
+  //   }
+  // }, 5000);
+
+  // 전략 자동 저장 (느린 주기, 조건 유지)
   const strategyAutoSave = useInterval(() => {
     if (autoSaveEnabled && isStrategyModified && !isSaving) {
       handleAutoSave();
@@ -102,8 +102,6 @@ function ProjectEdit() {
     }
   }, [projectId]);
 
-
-
   // 메모이제이션된 validation 함수들
   const nameValidator = useCallback((value: string) => {
     if (!value?.trim()) return "프로젝트 이름을 입력해주세요";
@@ -117,80 +115,136 @@ function ProjectEdit() {
     return null;
   }, []);
 
-  // 프로젝트 기본 정보 변경사항 감지 (즉시 반영, 전략과 분리)
-  const handleProjectInfoChange = useCallback(() => {
-    // 프로젝트 정보는 별도로 관리하므로 hasUnsavedChanges를 false로 유지
-    // 자동 저장이 빠르게 처리할 예정
-  }, []);
 
-  // 프로젝트 기본 정보 폼 (전략과 완전 분리)
+
+  // 실시간 저장을 위한 상태 관리
+  const [projectName, setProjectName] = useState(project?.name || "");
+  const [projectDescription, setProjectDescription] = useState(project?.description || "");
+  const [isSavingInfo, setIsSavingInfo] = useState(false);
+
+  // 프로젝트 기본 정보 폼 (최소한의 설정)
   const form = useForm({
-    initialValues: useMemo(
-      () => ({
-        name: project?.name || "",
-        description: project?.description || "",
-      }),
-      [project?.name, project?.description]
-    ),
+    initialValues: {
+      name: project?.name || "",
+      description: project?.description || "",
+    },
     validate: {
       name: nameValidator,
       description: descriptionValidator,
     },
     validateInputOnBlur: true,
     validateInputOnChange: false,
-    onValuesChange: handleProjectInfoChange, // 즉시 변경사항 감지
   });
 
-  // 프로젝트 정보가 로드되면 폼 값 업데이트 (form dependency 제거)
+  // 프로젝트 정보가 로드되면 상태 업데이트
   useEffect(() => {
     if (project) {
+      setProjectName(project.name);
+      setProjectDescription(project.description);
       form.setValues({
         name: project.name,
         description: project.description,
       });
       form.resetDirty();
-      setHasUnsavedChanges(false);
     }
-  }, [project?.id, project?.name, project?.description]);
+  }, [project?.id]);
 
+  // 실시간 프로젝트 정보 저장 (debounced)
+  const saveProjectInfoRealtime = useCallback(async (name: string, description: string) => {
+    if (!project || isSavingInfo) return;
 
+    try {
+      setIsSavingInfo(true);
+      await updateProject(project.id, name, description);
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error("실시간 저장 실패:", error);
+    } finally {
+      setIsSavingInfo(false);
+    }
+  }, [project?.id, updateProject, isSavingInfo]);
 
-  // 프로젝트 기본 정보만 저장하는 함수 (전략과 분리)
+  // 실시간 저장용 타이머들
+  const nameTimerRef = useRef<number>();
+  const descTimerRef = useRef<number>();
+
+  // 프로젝트 이름 변경 처리 (실시간 저장 with debounce)
+  const handleNameChange = useCallback((value: string) => {
+    setProjectName(value);
+    form.setFieldValue('name', value);
+    
+    // 기존 타이머 제거
+    if (nameTimerRef.current) {
+      window.clearTimeout(nameTimerRef.current);
+    }
+    
+    // 1초 후 자동 저장
+    nameTimerRef.current = window.setTimeout(() => {
+      saveProjectInfoRealtime(value, projectDescription);
+    }, 1000);
+  }, [saveProjectInfoRealtime, projectDescription, form]);
+
+  // 프로젝트 설명 변경 처리 (실시간 저장 with debounce)
+  const handleDescriptionChange = useCallback((value: string) => {
+    setProjectDescription(value);
+    form.setFieldValue('description', value);
+    
+    // 기존 타이머 제거
+    if (descTimerRef.current) {
+      window.clearTimeout(descTimerRef.current);
+    }
+    
+    // 1초 후 자동 저장
+    descTimerRef.current = window.setTimeout(() => {
+      saveProjectInfoRealtime(projectName, value);
+    }, 1000);
+  }, [saveProjectInfoRealtime, projectName, form]);
+
+  // 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (nameTimerRef.current) {
+        window.clearTimeout(nameTimerRef.current);
+      }
+      if (descTimerRef.current) {
+        window.clearTimeout(descTimerRef.current);
+      }
+    };
+  }, []);
+
+  // 기존 자동 저장 함수 (폼 기반)
   const handleSaveProjectInfo = useCallback(async () => {
     if (!project || !form.isDirty()) return;
 
     try {
-      await updateProject(project.id, form.values.name, form.values.description);
+      await updateProject(
+        project.id,
+        form.values.name,
+        form.values.description
+      );
       form.resetDirty();
       setLastSaved(new Date());
-      
-      notifications.show({
-        title: "프로젝트 정보 저장",
-        message: "프로젝트 이름과 설명이 저장되었습니다.",
-        color: "green",
-        autoClose: 2000,
-      });
     } catch (error) {
       console.error("프로젝트 정보 저장 실패:", error);
       notifications.show({
         title: "저장 실패",
         message: "프로젝트 정보 저장 중 오류가 발생했습니다.",
         color: "red",
+        autoClose: 3000,
       });
     }
-  }, [project?.id, updateProject, form]);
+  }, [project?.id, updateProject]);
 
-  // 자동 저장 시작/중지 (분리된 타이머들)
+  // 자동 저장 시작/중지 (전략만 - 프로젝트 정보는 실시간 저장)
   useEffect(() => {
+    // 전략 자동 저장만 관리 (프로젝트 정보는 실시간 저장으로 대체)
     if (autoSaveEnabled) {
-      projectInfoAutoSave.start();
       strategyAutoSave.start();
     } else {
-      projectInfoAutoSave.stop();
       strategyAutoSave.stop();
     }
+    
     return () => {
-      projectInfoAutoSave.stop();
       strategyAutoSave.stop();
     };
   }, [autoSaveEnabled]);
@@ -679,16 +733,22 @@ function ProjectEdit() {
                 label="프로젝트 이름"
                 placeholder="예: 삼성전자 단순매매 전략"
                 required
-                {...form.getInputProps("name")}
-                disabled={isSaving}
+                value={projectName}
+                onChange={(event) => handleNameChange(event.currentTarget.value)}
+                onBlur={() => form.validateField('name')}
+                error={form.errors.name}
+                disabled={isSaving || isSavingInfo}
               />
 
               <Textarea
                 label="프로젝트 설명"
                 placeholder="투자 전략에 대한 간단한 설명을 입력하세요"
                 rows={4}
-                {...form.getInputProps("description")}
-                disabled={isSaving}
+                value={projectDescription}
+                onChange={(event) => handleDescriptionChange(event.currentTarget.value)}
+                onBlur={() => form.validateField('description')}
+                error={form.errors.description}
+                disabled={isSaving || isSavingInfo}
               />
 
               {form.errors.name && (
