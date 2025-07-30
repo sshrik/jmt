@@ -831,11 +831,6 @@ function ProjectDetail() {
                   key={version.id}
                   withBorder
                   p="md"
-                  className={
-                    selectedVersionId === version.id
-                      ? "version-card-selected"
-                      : ""
-                  }
                   style={{ cursor: "pointer" }}
                   onClick={() => handleBacktestClick(version)}
                 >
@@ -850,9 +845,6 @@ function ProjectDetail() {
                             최신
                           </Badge>
                         )}
-                        <Badge size="xs" variant="light" color="gray">
-                          클릭하여 상세보기
-                        </Badge>
                       </Group>
 
                       <Text size="xs" c="dimmed" mb="sm">

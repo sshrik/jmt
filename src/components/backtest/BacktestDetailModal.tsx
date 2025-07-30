@@ -113,20 +113,9 @@ export const BacktestDetailModal = ({
       <Stack gap="lg">
         {/* 기본 정보 */}
         <Card withBorder p="md">
-          <Group justify="space-between" mb="md">
-            <Group gap="sm">
-              <IconInfoCircle size={16} />
-              <Text fw={500}>테스트 정보</Text>
-            </Group>
-            <Button
-              variant="light"
-              size="xs"
-              leftSection={<IconRefresh size={14} />}
-              onClick={handleRetest}
-              disabled={!onRetest}
-            >
-              동일 조건으로 다시 테스트
-            </Button>
+          <Group gap="sm" mb="md">
+            <IconInfoCircle size={16} />
+            <Text fw={500}>테스트 정보</Text>
           </Group>
 
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">

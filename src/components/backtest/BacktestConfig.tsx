@@ -63,6 +63,22 @@ export const BacktestConfig = ({
     ...initialConfig,
   });
 
+  // initialConfig 변경 시 config 업데이트
+  useEffect(() => {
+    if (initialConfig) {
+      setConfig(prev => ({ ...prev, ...initialConfig }));
+      
+      // 종목이 설정되어 있으면 해당 종목 선택 및 요약 로드
+      if (initialConfig.symbol) {
+        const stock = stockList.find((s) => s.symbol === initialConfig.symbol);
+        if (stock) {
+          setSelectedStock(stock);
+          loadStockSummary(initialConfig.symbol);
+        }
+      }
+    }
+  }, [initialConfig, stockList]);
+
   // 주식 목록 로드
   useEffect(() => {
     const loadStockList = async () => {
