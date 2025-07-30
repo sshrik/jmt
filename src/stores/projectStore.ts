@@ -151,10 +151,9 @@ export class ProjectStore {
   static getAllProjects(): Project[] {
     const projects = getProjectsFromStorage();
     if (projects.length === 0) {
-      console.log("No projects found in storage, creating sample project");
-      const sampleProject = this.createSampleProject();
-      saveProjectsToStorage([sampleProject]);
-      return [sampleProject];
+      console.log("No projects found in storage, generating mock data with highway trading strategy");
+      this.generateMockData();
+      return getProjectsFromStorage();
     }
     return projects;
   }
@@ -296,6 +295,14 @@ export class ProjectStore {
     saveProjectsToStorage(filteredProjects); // 이 함수가 이벤트를 발생시킴
   }
 
+  // 개발용: localStorage 초기화 후 고속도로 매매법 생성
+  static resetWithHighwayTradingStrategy(): void {
+    console.log("🧹 localStorage 초기화 후 고속도로 매매법 생성");
+    localStorage.removeItem(STORAGE_KEY);
+    this.generateMockData();
+    console.log("✅ 고속도로 매매법 생성 완료!");
+  }
+
   static saveBacktestResult(
     projectId: string,
     backtestResult: unknown,
@@ -409,7 +416,10 @@ export class ProjectStore {
   }
 
   // 고속도로 매매법 전략 생성
-  private static createHighwayTradingStrategy(projectId: string, versionId: string): Strategy {
+  private static createHighwayTradingStrategy(
+    projectId: string,
+    versionId: string
+  ): Strategy {
     const now = new Date();
     const strategyId = generateId();
 
@@ -444,7 +454,7 @@ export class ProjectStore {
             percentCash: 10,
           },
         },
-        
+
         // 🔵 5-10% 하락 시 강화 매수 (현금의 20%)
         {
           id: `${strategyId}-condition-2`,
@@ -469,7 +479,7 @@ export class ProjectStore {
             percentCash: 20,
           },
         },
-        
+
         // 🔵 10-20% 하락 시 폭탄 매수 (현금의 50%)
         {
           id: `${strategyId}-condition-3`,
@@ -494,7 +504,7 @@ export class ProjectStore {
             percentCash: 50,
           },
         },
-        
+
         // 🔴 0-5% 상승 시 기본 매도 (주식의 10%)
         {
           id: `${strategyId}-condition-4`,
@@ -519,7 +529,7 @@ export class ProjectStore {
             percentStock: 10,
           },
         },
-        
+
         // 🔴 5-10% 상승 시 강화 매도 (주식의 20%)
         {
           id: `${strategyId}-condition-5`,
@@ -544,7 +554,7 @@ export class ProjectStore {
             percentStock: 20,
           },
         },
-        
+
         // 🔴 10-20% 상승 시 대량 매도 (주식의 50%)
         {
           id: `${strategyId}-condition-6`,
@@ -592,13 +602,14 @@ export class ProjectStore {
     return strategy;
   }
 
-  // 개발용 Mock 데이터 생성
+  // 개발용 Mock 데이터 생성 (고속도로 매매법 포함)
   static generateMockData(): void {
     const mockProjects: Project[] = [
       {
         id: "mock-1",
         name: "고속도로 매매법",
-        description: "단계적 하락/상승에 따른 비례 매매 전략 - 하락폭이 클수록 더 많이 매수, 상승폭이 클수록 더 많이 매도",
+        description:
+          "단계적 하락/상승에 따른 비례 매매 전략 - 하락폭이 클수록 더 많이 매수, 상승폭이 클수록 더 많이 매도",
         createdAt: new Date("2024-01-10"),
         updatedAt: new Date("2024-01-15"),
         versions: [
