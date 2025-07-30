@@ -75,7 +75,8 @@ const getProjectsFromStorage = (): Project[] => {
           ...version,
           createdAt: new Date(version.createdAt),
           backtestResults: backtestResults
-            ? backtestResults.map((result: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+            ? backtestResults.map((result: any) => ({
+                // eslint-disable-line @typescript-eslint/no-explicit-any
                 id: result.id as string,
                 versionId: result.versionId as string,
                 executedAt: new Date(result.executedAt as string),
@@ -83,28 +84,28 @@ const getProjectsFromStorage = (): Project[] => {
                 maxDrawdown: result.maxDrawdown as number,
                 tradeCount: result.tradeCount as number,
                 winRate: result.winRate as number,
-                transactions: (
-                  (result.transactions as any[]) || [] // eslint-disable-line @typescript-eslint/no-explicit-any
-                ).map((t: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
-                  id: t.id as string,
-                  date: new Date(t.date as string),
-                  type: t.type as "buy" | "sell",
-                  price: t.price as number,
-                  quantity: t.quantity as number,
-                  amount: t.total as number, // total -> amount 매핑
-                  fee: t.commission as number, // commission -> fee 매핑
-                  reason: (t.reason as string) || "전략 조건 충족",
-                })),
-                portfolioHistory: (
-                  (result.portfolioHistory as any[]) || [] // eslint-disable-line @typescript-eslint/no-explicit-any
-                ).map((p: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
-                  date: new Date(p.date as string),
-                  cash: p.cash as number,
-                  stockQuantity: 0, // 기본값 설정
-                  stockValue: 0, // 기본값 설정
-                  totalValue: p.totalValue as number,
-                  dailyReturn: 0, // 기본값 설정
-                })),
+                transactions: ((result.transactions as any[]) || []) // eslint-disable-line @typescript-eslint/no-explicit-any
+                  .map((t: any) => ({
+                    // eslint-disable-line @typescript-eslint/no-explicit-any
+                    id: t.id as string,
+                    date: new Date(t.date as string),
+                    type: t.type as "buy" | "sell",
+                    price: t.price as number,
+                    quantity: t.quantity as number,
+                    amount: t.total as number, // total -> amount 매핑
+                    fee: t.commission as number, // commission -> fee 매핑
+                    reason: (t.reason as string) || "전략 조건 충족",
+                  })),
+                portfolioHistory: ((result.portfolioHistory as any[]) || []) // eslint-disable-line @typescript-eslint/no-explicit-any
+                  .map((p: any) => ({
+                    // eslint-disable-line @typescript-eslint/no-explicit-any
+                    date: new Date(p.date as string),
+                    cash: p.cash as number,
+                    stockQuantity: 0, // 기본값 설정
+                    stockValue: 0, // 기본값 설정
+                    totalValue: p.totalValue as number,
+                    dailyReturn: 0, // 기본값 설정
+                  })),
                 initialCash: result.initialCash as number,
                 backtestPeriod: {
                   startDate: new Date(
@@ -174,9 +175,14 @@ export class ProjectStore {
         description: project.description,
         lastModified: project.updatedAt,
         totalVersions: project.versions.length,
-        latestReturn: latestVersion?.backtestResults && Array.isArray(latestVersion.backtestResults) && latestVersion.backtestResults.length > 0 
-          ? latestVersion.backtestResults[latestVersion.backtestResults.length - 1].totalReturn 
-          : undefined,
+        latestReturn:
+          latestVersion?.backtestResults &&
+          Array.isArray(latestVersion.backtestResults) &&
+          latestVersion.backtestResults.length > 0
+            ? latestVersion.backtestResults[
+                latestVersion.backtestResults.length - 1
+              ].totalReturn
+            : undefined,
       };
     });
   }
@@ -185,8 +191,6 @@ export class ProjectStore {
     const projects = this.getAllProjects();
     return projects.find((p) => p.id === projectId) || null;
   }
-
-
 
   static createProject(name: string, description: string): Project {
     const projects = this.getAllProjects();

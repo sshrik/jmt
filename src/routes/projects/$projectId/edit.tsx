@@ -608,7 +608,7 @@ function ProjectEdit() {
           {project && (
             <ProjectInfoForm
               project={project}
-              onChange={(info) => setPendingProjectInfo(info)}
+              onChange={(name, description) => setPendingProjectInfo({ name, description })}
               disabled={isSaving}
             />
           )}
