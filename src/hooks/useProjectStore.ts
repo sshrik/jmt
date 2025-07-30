@@ -26,14 +26,9 @@ export const useProjectStore = () => {
         let latestReturn: number | undefined;
         let latestExecutedAt: Date | undefined;
 
-        project.versions.forEach((version) => {
-          if (version.backtestResults) {
-            // 배열인지 확인하고 처리
-            const results = Array.isArray(version.backtestResults) 
-              ? version.backtestResults 
-              : [version.backtestResults];
-            
-            results.forEach((result) => {
+                project.versions.forEach((version) => {
+          if (version.backtestResults && Array.isArray(version.backtestResults)) {
+            version.backtestResults.forEach((result) => {
               if (!latestExecutedAt || result.executedAt > latestExecutedAt) {
                 latestExecutedAt = result.executedAt;
                 latestReturn = result.totalReturn;

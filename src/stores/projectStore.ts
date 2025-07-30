@@ -3,6 +3,8 @@ import type {
   Version,
   ProjectSummary,
   BacktestResult,
+  Transaction,
+  PortfolioSnapshot,
 } from "../types/project";
 import type { Strategy } from "../types/strategy";
 
@@ -70,26 +72,53 @@ const getProjectsFromStorage = (): Project[] => {
           // 단일 객체를 배열로 변환
           backtestResults = [backtestResults as BacktestResult];
         }
-        
+
         return {
           ...version,
           createdAt: new Date(version.createdAt),
-          backtestResults: backtestResults ? backtestResults.map((result: Record<string, unknown>) => ({
-            ...result,
-            executedAt: new Date(result.executedAt as string),
-            backtestPeriod: {
-              startDate: new Date((result.backtestPeriod as Record<string, unknown>).startDate as string),
-              endDate: new Date((result.backtestPeriod as Record<string, unknown>).endDate as string),
-            },
-            transactions: ((result.transactions as Record<string, unknown>[]) || []).map((t: Record<string, unknown>) => ({
-              ...t,
-              date: new Date(t.date as string),
-            })),
-            portfolioHistory: ((result.portfolioHistory as Record<string, unknown>[]) || []).map((p: Record<string, unknown>) => ({
-              ...p,
-              date: new Date(p.date as string),
-            })),
-          })) : undefined,
+          backtestResults: backtestResults
+            ? backtestResults.map((result: Record<string, unknown>) => ({
+                id: result.id as string,
+                versionId: result.versionId as string,
+                executedAt: new Date(result.executedAt as string),
+                totalReturn: result.totalReturn as number,
+                maxDrawdown: result.maxDrawdown as number,
+                tradeCount: result.tradeCount as number,
+                winRate: result.winRate as number,
+                transactions: ((result.transactions as Record<string, unknown>[]) || []).map((t: Record<string, unknown>) => ({
+                  id: t.id as string,
+                  date: new Date(t.date as string),
+                  type: t.type as "buy" | "sell",
+                  price: t.price as number,
+                  quantity: t.quantity as number,
+                  amount: t.total as number, // total -> amount 매핑
+                  fee: t.commission as number, // commission -> fee 매핑
+                  reason: (t.reason as string) || "전략 조건 충족",
+                })),
+                portfolioHistory: ((result.portfolioHistory as Record<string, unknown>[]) || []).map((p: Record<string, unknown>) => ({
+                  date: new Date(p.date as string),
+                  cash: p.cash as number,
+                  stockQuantity: 0, // 기본값 설정
+                  stockValue: 0, // 기본값 설정
+                  totalValue: p.totalValue as number,
+                  dailyReturn: 0, // 기본값 설정
+                })),
+                initialCash: result.initialCash as number,
+                backtestPeriod: {
+                  startDate: new Date(
+                    (result.backtestPeriod as Record<string, unknown>).startDate as string
+                  ),
+                  endDate: new Date(
+                    (result.backtestPeriod as Record<string, unknown>).endDate as string
+                  ),
+                },
+                config: result.config as {
+                  symbol: string;
+                  commission: number;
+                  slippage: number;
+                } | undefined,
+              }))
+            : undefined,
         };
       }),
     }));
@@ -303,9 +332,9 @@ export class ProjectStore {
       };
       trades?: Array<Record<string, unknown>>;
       portfolioHistory?: Array<Record<string, unknown>>;
-      config?: { 
-        initialCash?: number; 
-        startDate?: string; 
+      config?: {
+        initialCash?: number;
+        startDate?: string;
         endDate?: string;
         symbol?: string;
         commission?: number;
@@ -362,7 +391,7 @@ export class ProjectStore {
 
     projects[projectIndex].versions[targetVersionIndex].backtestResults = [
       ...currentResults,
-      convertedResult,
+      convertedResult as BacktestResult,
     ];
     projects[projectIndex].updatedAt = new Date();
 
