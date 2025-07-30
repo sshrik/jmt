@@ -123,3 +123,59 @@ body {
   background-color: var(--mantine-color-dark-6) !important;
   border-color: var(--mantine-color-dark-4) !important;
 }
+
+/* Return text colors */
+
+/* Light mode */
+[data-mantine-color-scheme="light"] .return-text-positive {
+  color: var(--mantine-color-green-7) !important;
+}
+
+[data-mantine-color-scheme="light"] .return-text-negative {
+  color: var(--mantine-color-red-7) !important;
+}
+
+[data-mantine-color-scheme="light"] .return-text-neutral {
+  color: var(--mantine-color-gray-6) !important;
+}
+
+/* Dark mode */
+[data-mantine-color-scheme="dark"] .return-text-positive {
+  color: var(--mantine-color-green-4) !important;
+}
+
+[data-mantine-color-scheme="dark"] .return-text-negative {
+  color: var(--mantine-color-red-4) !important;
+}
+
+[data-mantine-color-scheme="dark"] .return-text-neutral {
+  color: var(--mantine-color-gray-4) !important;
+}
+
+/* Return icon colors */
+
+/* Light mode */
+[data-mantine-color-scheme="light"] .return-icon-positive {
+  color: var(--mantine-color-green-6) !important;
+}
+
+[data-mantine-color-scheme="light"] .return-icon-negative {
+  color: var(--mantine-color-red-6) !important;
+}
+
+[data-mantine-color-scheme="light"] .return-icon-neutral {
+  color: var(--mantine-color-gray-6) !important;
+}
+
+/* Dark mode */
+[data-mantine-color-scheme="dark"] .return-icon-positive {
+  color: var(--mantine-color-green-4) !important;
+}
+
+[data-mantine-color-scheme="dark"] .return-icon-negative {
+  color: var(--mantine-color-red-4) !important;
+}
+
+[data-mantine-color-scheme="dark"] .return-icon-neutral {
+  color: var(--mantine-color-gray-4) !important;
+}

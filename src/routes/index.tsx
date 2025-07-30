@@ -74,11 +74,18 @@ function DashboardPage() {
     navigate({ to: `/projects/${newProject.id}/edit` });
   };
 
-  const getReturnColor = (returnValue?: number) => {
-    if (!returnValue) return "gray";
-    if (returnValue > 0) return "green";
-    if (returnValue < 0) return "red";
-    return "gray";
+  const getReturnClass = (returnValue?: number) => {
+    if (!returnValue) return "return-text-neutral";
+    if (returnValue > 0) return "return-text-positive";
+    if (returnValue < 0) return "return-text-negative";
+    return "return-text-neutral";
+  };
+
+  const getReturnIconClass = (returnValue?: number) => {
+    if (!returnValue) return "return-icon-neutral";
+    if (returnValue > 0) return "return-icon-positive";
+    if (returnValue < 0) return "return-icon-negative";
+    return "return-icon-neutral";
   };
 
   const formatReturn = (returnValue?: number) => {
@@ -133,7 +140,7 @@ function DashboardPage() {
             <Text
               size="xl"
               fw={700}
-              c={getReturnColor(
+              className={getReturnClass(
                 Math.max(...projects.map((p) => p.latestReturn || 0))
               )}
             >
@@ -149,7 +156,7 @@ function DashboardPage() {
             <Text
               size="xl"
               fw={700}
-              c={getReturnColor(
+              className={getReturnClass(
                 projects.reduce((sum, p) => sum + (p.latestReturn || 0), 0) /
                   projects.length
               )}
@@ -291,20 +298,15 @@ function DashboardPage() {
                       <Text
                         fw={700}
                         size="lg"
-                        c={getReturnColor(project.latestReturn)}
+                        className={getReturnClass(project.latestReturn)}
                       >
                         {formatReturn(project.latestReturn)}
                       </Text>
                     </div>
                     {project.latestReturn && (
-                      <IconChartLine
-                        size={24}
-                        color={
-                          getReturnColor(project.latestReturn) === "green"
-                            ? "green"
-                            : "red"
-                        }
-                      />
+                      <div className={getReturnIconClass(project.latestReturn)}>
+                        <IconChartLine size={24} />
+                      </div>
                     )}
                   </Group>
                 </Card>
