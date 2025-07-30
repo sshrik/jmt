@@ -9,7 +9,7 @@ import type { Strategy } from "../types/strategy";
 
 // 유틸리티 함수들
 const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
 const generateVersionName = (existingVersions: Version[]): string => {

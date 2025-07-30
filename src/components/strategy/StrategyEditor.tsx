@@ -47,7 +47,7 @@ interface StrategyRule {
 // 새 블록 생성 헬퍼 함수
 const createBlock = (type: "condition" | "action"): StrategyBlock => {
   const timestamp = Date.now();
-  const randomId = Math.random().toString(36).substr(2, 9);
+  const randomId = Math.random().toString(36).substring(2, 11);
   const blockId = `block_${timestamp}_${randomId}`;
 
   const baseBlock = {

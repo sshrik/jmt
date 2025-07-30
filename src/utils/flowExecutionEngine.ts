@@ -21,7 +21,7 @@ export class FlowExecutionEngine {
     this.flow = flow;
     this.context = context;
     this.executionResult = {
-      executionId: `exec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      executionId: `exec_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       flowId: flow.id,
       startTime: new Date(),
       status: "running",

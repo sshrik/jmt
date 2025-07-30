@@ -17,7 +17,7 @@ const dispatchProjectsChanged = () => {
 
 // 유틸리티 함수들
 const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
 // 빈 Strategy 객체 생성 헬퍼 함수
@@ -75,7 +75,7 @@ const getProjectsFromStorage = (): Project[] => {
           ...version,
           createdAt: new Date(version.createdAt),
           backtestResults: backtestResults
-            ? backtestResults.map((result: Record<string, unknown>) => ({
+            ? backtestResults.map((result: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                 id: result.id as string,
                 versionId: result.versionId as string,
                 executedAt: new Date(result.executedAt as string),
@@ -84,8 +84,8 @@ const getProjectsFromStorage = (): Project[] => {
                 tradeCount: result.tradeCount as number,
                 winRate: result.winRate as number,
                 transactions: (
-                  (result.transactions as Record<string, unknown>[]) || []
-                ).map((t: Record<string, unknown>) => ({
+                  (result.transactions as any[]) || [] // eslint-disable-line @typescript-eslint/no-explicit-any
+                ).map((t: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                   id: t.id as string,
                   date: new Date(t.date as string),
                   type: t.type as "buy" | "sell",
@@ -96,8 +96,8 @@ const getProjectsFromStorage = (): Project[] => {
                   reason: (t.reason as string) || "전략 조건 충족",
                 })),
                 portfolioHistory: (
-                  (result.portfolioHistory as Record<string, unknown>[]) || []
-                ).map((p: Record<string, unknown>) => ({
+                  (result.portfolioHistory as any[]) || [] // eslint-disable-line @typescript-eslint/no-explicit-any
+                ).map((p: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
                   date: new Date(p.date as string),
                   cash: p.cash as number,
                   stockQuantity: 0, // 기본값 설정
@@ -174,7 +174,9 @@ export class ProjectStore {
         description: project.description,
         lastModified: project.updatedAt,
         totalVersions: project.versions.length,
-        latestReturn: latestVersion?.backtestResults?.totalReturn,
+        latestReturn: latestVersion?.backtestResults && Array.isArray(latestVersion.backtestResults) && latestVersion.backtestResults.length > 0 
+          ? latestVersion.backtestResults[latestVersion.backtestResults.length - 1].totalReturn 
+          : undefined,
       };
     });
   }
@@ -184,28 +186,7 @@ export class ProjectStore {
     return projects.find((p) => p.id === projectId) || null;
   }
 
-  private static createSampleProject(): Project {
-    const now = new Date();
-    const sampleProject: Project = {
-      id: "sample-project",
-      name: "샘플 프로젝트",
-      description:
-        "시연용 샘플 프로젝트입니다. 자유롭게 수정하거나 삭제하세요.",
-      createdAt: now,
-      updatedAt: now,
-      versions: [
-        {
-          id: "sample-version-1",
-          projectId: "sample-project",
-          versionName: "v1.0",
-          description: "샘플 버전 1",
-          createdAt: now,
-          strategy: createEmptyStrategy("sample-project", "sample-version-1"),
-        },
-      ],
-    };
-    return sampleProject;
-  }
+
 
   static createProject(name: string, description: string): Project {
     const projects = this.getAllProjects();
@@ -422,7 +403,7 @@ export class ProjectStore {
 
     projects[projectIndex].versions[targetVersionIndex].backtestResults = [
       ...currentResults,
-      convertedResult as BacktestResult,
+      convertedResult as unknown as BacktestResult,
     ];
     projects[projectIndex].updatedAt = new Date();
 
@@ -462,6 +443,8 @@ export class ProjectStore {
             rangeOperator: "left_inclusive", // 0% 이상 2% 미만
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
         {
           id: `${strategyId}-action-1`,
@@ -473,6 +456,8 @@ export class ProjectStore {
             percentCash: 10,
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
 
         // 🔵 2-4% 하락 시 강화 매수 (현금의 20%) - 더 민감하게 조정
@@ -489,6 +474,8 @@ export class ProjectStore {
             rangeOperator: "left_inclusive", // 2% 이상 4% 미만
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
         {
           id: `${strategyId}-action-2`,
@@ -500,6 +487,8 @@ export class ProjectStore {
             percentCash: 20,
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
 
         // 🔵 4%+ 하락 시 폭탄 매수 (현금의 50%) - 더 민감하게 조정
@@ -516,6 +505,8 @@ export class ProjectStore {
             rangeOperator: "left_inclusive", // 4% 이상
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
         {
           id: `${strategyId}-action-3`,
@@ -527,6 +518,8 @@ export class ProjectStore {
             percentCash: 50,
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
 
         // 🔴 0-2% 상승 시 기본 매도 (주식의 10%) - 더 민감하게 조정
@@ -543,6 +536,8 @@ export class ProjectStore {
             rangeOperator: "left_inclusive", // 0% 이상 2% 미만
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
         {
           id: `${strategyId}-action-4`,
@@ -554,6 +549,8 @@ export class ProjectStore {
             percentStock: 10,
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
 
         // 🔴 2-4% 상승 시 강화 매도 (주식의 20%) - 더 민감하게 조정
@@ -570,6 +567,8 @@ export class ProjectStore {
             rangeOperator: "left_inclusive", // 2% 이상 4% 미만
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
         {
           id: `${strategyId}-action-5`,
@@ -581,6 +580,8 @@ export class ProjectStore {
             percentStock: 20,
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
 
         // 🔴 4%+ 상승 시 대량 매도 (주식의 50%) - 더 민감하게 조정
@@ -597,6 +598,8 @@ export class ProjectStore {
             rangeOperator: "left_inclusive", // 4% 이상
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
         {
           id: `${strategyId}-action-6`,
@@ -608,6 +611,8 @@ export class ProjectStore {
             percentStock: 50,
           },
           enabled: true,
+          createdAt: now,
+          updatedAt: now,
         },
       ],
       blockOrder: [

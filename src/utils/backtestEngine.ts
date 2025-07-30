@@ -125,11 +125,14 @@ export class BacktestEngine {
     if (!prevPrice) return; // 첫날은 건너뛰기
 
     // 가격 변화율 계산
-    const priceChangePercent = ((currentPrice.close - prevPrice.close) / prevPrice.close) * 100;
-    
+    const priceChangePercent =
+      ((currentPrice.close - prevPrice.close) / prevPrice.close) * 100;
+
     // 디버깅: 가격 변화 로그 (5%보다 큰 변화만)
     if (Math.abs(priceChangePercent) > 1) {
-      console.log(`📊 ${currentPrice.date}: ${prevPrice.close}원 → ${currentPrice.close}원 (${priceChangePercent.toFixed(2)}%)`);
+      console.log(
+        `📊 ${currentPrice.date}: ${prevPrice.close}원 → ${currentPrice.close}원 (${priceChangePercent.toFixed(2)}%)`
+      );
     }
 
     // 룰별 실행
@@ -146,7 +149,9 @@ export class BacktestEngine {
 
         // 디버깅: 조건 평가 결과 로그
         if (Math.abs(priceChangePercent) > 1) {
-          console.log(`  🔍 ${block.name}: ${conditionMet ? '✅ 만족' : '❌ 불만족'}`);
+          console.log(
+            `  🔍 ${block.name}: ${conditionMet ? "✅ 만족" : "❌ 불만족"}`
+          );
         }
 
         if (conditionMet) {
@@ -582,7 +587,7 @@ export class BacktestEngine {
 
     // 거래 기록
     const trade: Trade = {
-      id: `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `trade_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       date,
       type: "buy",
       symbol: this.config.symbol,
@@ -627,7 +632,7 @@ export class BacktestEngine {
 
     // 거래 기록
     const trade: Trade = {
-      id: `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `trade_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
       date,
       type: "sell",
       symbol: this.config.symbol,
