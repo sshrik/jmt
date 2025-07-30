@@ -76,6 +76,12 @@ function ProjectEdit() {
 
   // 자동 저장 상태 (프로젝트 정보와 전략 분리)
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  
+  // 프로젝트 정보 변경사항 (새 버전 저장 시에만 적용)
+  const [pendingProjectInfo, setPendingProjectInfo] = useState<{
+    name: string;
+    description: string;
+  } | null>(null);
 
   // 실시간 저장으로 대체되었으므로 주석 처리
   // const projectInfoAutoSave = useInterval(() => {

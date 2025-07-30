@@ -1,4 +1,9 @@
-import type { Project, Version, ProjectSummary, BacktestResult } from "../types/project";
+import type {
+  Project,
+  Version,
+  ProjectSummary,
+  BacktestResult,
+} from "../types/project";
 import type { Strategy } from "../types/strategy";
 
 const STORAGE_KEY = "jmt_projects";
@@ -333,9 +338,10 @@ export class ProjectStore {
 
     // 지정된 버전에 백테스트 결과 추가 (배열로 저장)
     // 기존 데이터 호환성 처리: 단일 객체를 배열로 변환
-    const existingResults = projects[projectIndex].versions[targetVersionIndex].backtestResults;
+    const existingResults =
+      projects[projectIndex].versions[targetVersionIndex].backtestResults;
     let currentResults: BacktestResult[] = [];
-    
+
     if (existingResults) {
       if (Array.isArray(existingResults)) {
         // 이미 배열인 경우
@@ -345,7 +351,7 @@ export class ProjectStore {
         currentResults = [existingResults as BacktestResult];
       }
     }
-    
+
     projects[projectIndex].versions[targetVersionIndex].backtestResults = [
       ...currentResults,
       convertedResult,
@@ -384,7 +390,7 @@ export class ProjectStore {
             description: "수익률 개선 버전",
             createdAt: new Date("2024-01-15"),
             strategy: createEmptyStrategy("mock-1", "version-2"),
-            backtestResults: {
+            backtestResults: [{
               id: "backtest-1",
               versionId: "version-2",
               executedAt: new Date("2024-01-15"),
@@ -399,7 +405,12 @@ export class ProjectStore {
                 startDate: new Date("2023-01-01"),
                 endDate: new Date("2023-12-31"),
               },
-            },
+              config: {
+                symbol: "005930",
+                commission: 0.0015,
+                slippage: 0.001,
+              },
+            }],
           },
         ],
       },
@@ -428,7 +439,7 @@ export class ProjectStore {
               updatedAt: new Date("2024-01-10"),
               isActive: true,
             },
-            backtestResults: {
+            backtestResults: [{
               id: "backtest-2",
               versionId: "version-3",
               executedAt: new Date("2024-01-10"),
@@ -443,7 +454,12 @@ export class ProjectStore {
                 startDate: new Date("2023-01-01"),
                 endDate: new Date("2023-12-31"),
               },
-            },
+              config: {
+                symbol: "BTC-USD",
+                commission: 0.0015,
+                slippage: 0.001,
+              },
+            }],
           },
         ],
       },
