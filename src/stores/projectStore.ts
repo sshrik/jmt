@@ -1,8 +1,5 @@
-import type {
-  Project,
-  Version,
-  ProjectSummary,
-} from "../types/project";
+import type { Project, Version, ProjectSummary } from "../types/project";
+import type { Strategy } from "../types/strategy";
 
 const STORAGE_KEY = "jmt_projects";
 
@@ -17,6 +14,23 @@ const dispatchProjectsChanged = () => {
 const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 };
+
+// 빈 Strategy 객체 생성 헬퍼 함수
+const createEmptyStrategy = (
+  projectId: string,
+  versionId: string
+): Strategy => ({
+  id: generateId(),
+  projectId,
+  versionId,
+  name: "기본 전략",
+  description: "초기 전략",
+  blocks: [],
+  blockOrder: [],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  isActive: true,
+});
 
 /*
 const generateVersionName = (existingVersions: Version[]): string => {
@@ -144,7 +158,7 @@ export class ProjectStore {
           versionName: "v1.0",
           description: "샘플 버전 1",
           createdAt: now,
-          strategy: [],
+          strategy: createEmptyStrategy("sample-project", "sample-version-1"),
         },
       ],
     };
@@ -171,7 +185,7 @@ export class ProjectStore {
       versionName: "v1.0",
       description: "초기 버전",
       createdAt: now,
-      strategy: [], // 빈 전략으로 시작
+      strategy: createEmptyStrategy(newProject.id, generateId()),
     };
 
     newProject.versions.push(initialVersion);
@@ -222,7 +236,13 @@ export class ProjectStore {
     }
 
     // 전략 데이터를 가장 최신 버전에 저장
-    projects[projectIndex].versions[0].strategy = strategyBlocks;
+    const currentStrategy = projects[projectIndex].versions[0].strategy;
+    const updatedStrategy: Strategy = {
+      ...currentStrategy,
+      blocks: strategyBlocks,
+      updatedAt: new Date(),
+    };
+    projects[projectIndex].versions[0].strategy = updatedStrategy;
     projects[projectIndex].updatedAt = new Date();
 
     saveProjectsToStorage(projects);
@@ -333,7 +353,7 @@ export class ProjectStore {
             versionName: "v1.0",
             description: "초기 버전",
             createdAt: new Date("2024-01-10"),
-            strategy: [],
+            strategy: createEmptyStrategy("mock-1", "version-1"),
           },
           {
             id: "version-2",
@@ -341,7 +361,7 @@ export class ProjectStore {
             versionName: "v1.1",
             description: "수익률 개선 버전",
             createdAt: new Date("2024-01-15"),
-            strategy: [],
+            strategy: createEmptyStrategy("mock-1", "version-2"),
             backtestResults: {
               id: "backtest-1",
               versionId: "version-2",
@@ -382,8 +402,8 @@ export class ProjectStore {
               description: "기본 전략",
               blocks: [],
               blockOrder: [],
-              createdAt: now,
-              updatedAt: now,
+              createdAt: new Date("2024-01-05"),
+              updatedAt: new Date("2024-01-10"),
               isActive: true,
             },
             backtestResults: {
