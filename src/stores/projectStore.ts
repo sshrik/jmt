@@ -332,8 +332,20 @@ export class ProjectStore {
     };
 
     // 지정된 버전에 백테스트 결과 추가 (배열로 저장)
-    const currentResults =
-      projects[projectIndex].versions[targetVersionIndex].backtestResults || [];
+    // 기존 데이터 호환성 처리: 단일 객체를 배열로 변환
+    const existingResults = projects[projectIndex].versions[targetVersionIndex].backtestResults;
+    let currentResults: any[] = [];
+    
+    if (existingResults) {
+      if (Array.isArray(existingResults)) {
+        // 이미 배열인 경우
+        currentResults = existingResults;
+      } else {
+        // 기존 단일 객체인 경우 배열로 변환
+        currentResults = [existingResults];
+      }
+    }
+    
     projects[projectIndex].versions[targetVersionIndex].backtestResults = [
       ...currentResults,
       convertedResult,
