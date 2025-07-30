@@ -417,7 +417,13 @@ export class BacktestEngine {
             const quantity = Math.floor(netAmount / price);
 
             if (quantity > 0 && amount <= this.cash) {
-              this.executeBuy(currentPrice.date, quantity, price, commission, `공식 계산 ₩${formulaResult.value.toLocaleString()} 매수`);
+              this.executeBuy(
+                currentPrice.date,
+                quantity,
+                price,
+                commission,
+                `공식 계산 ₩${formulaResult.value.toLocaleString()} 매수`
+              );
             }
           }
         }
@@ -479,7 +485,13 @@ export class BacktestEngine {
 
             if (position && quantity > 0 && quantity <= position.quantity) {
               const commission = quantity * price * this.config.commission;
-              this.executeSell(currentPrice.date, quantity, price, commission, `공식 계산 ${quantity}주 매도`);
+              this.executeSell(
+                currentPrice.date,
+                quantity,
+                price,
+                commission,
+                `공식 계산 ${quantity}주 매도`
+              );
             }
           }
         }

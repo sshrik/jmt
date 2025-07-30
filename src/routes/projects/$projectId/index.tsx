@@ -84,10 +84,12 @@ function ProjectDetail() {
   // 백테스트 상세 모달 핸들러
   const handleBacktestClick = (version: Version, result?: BacktestResult) => {
     // 특정 결과가 제공되지 않으면 가장 최근 결과 사용
-    const backtestResult = result || (version.backtestResults && version.backtestResults.length > 0 
-      ? version.backtestResults[version.backtestResults.length - 1] 
-      : null);
-    
+    const backtestResult =
+      result ||
+      (version.backtestResults && version.backtestResults.length > 0
+        ? version.backtestResults[version.backtestResults.length - 1]
+        : null);
+
     if (backtestResult) {
       setSelectedBacktest({
         version,
@@ -622,7 +624,7 @@ function ProjectDetail() {
                           백테스트 수행
                         </Text>
                         <Text size="xl" fw={700} c="blue">
-                          {versionsWithBacktest.length}회
+                          {allReturns.length}회
                         </Text>
                       </Card>
                     </>
@@ -825,15 +827,20 @@ function ProjectDetail() {
               <Group justify="space-between" align="center">
                 <Title order={3}>백테스트 이력</Title>
                 <Text size="sm" c="dimmed">
-                  총 {(() => {
+                  총{" "}
+                  {(() => {
                     let totalResults = 0;
                     project.versions.forEach((version) => {
-                      if (version.backtestResults && version.backtestResults.length > 0) {
+                      if (
+                        version.backtestResults &&
+                        version.backtestResults.length > 0
+                      ) {
                         totalResults += version.backtestResults.length;
                       }
                     });
                     return totalResults;
-                  })()} 건의 백테스트 결과
+                  })()}{" "}
+                  건의 백테스트 결과
                 </Text>
               </Group>
 
@@ -844,9 +851,12 @@ function ProjectDetail() {
                   result: BacktestResult;
                   versionName: string;
                 }> = [];
-                
+
                 project.versions.forEach((version) => {
-                  if (version.backtestResults && version.backtestResults.length > 0) {
+                  if (
+                    version.backtestResults &&
+                    version.backtestResults.length > 0
+                  ) {
                     version.backtestResults.forEach((result) => {
                       allBacktestResults.push({
                         version,
@@ -856,7 +866,7 @@ function ProjectDetail() {
                     });
                   }
                 });
-                
+
                 // 실행 시간순으로 정렬 (최신부터)
                 return allBacktestResults.sort(
                   (a, b) =>
@@ -893,7 +903,9 @@ function ProjectDetail() {
 
                       <Text size="xs" c="dimmed">
                         실행일:{" "}
-                        {new Date(item.result.executedAt).toLocaleString("ko-KR")}
+                        {new Date(item.result.executedAt).toLocaleString(
+                          "ko-KR"
+                        )}
                       </Text>
                     </div>
 
@@ -905,8 +917,8 @@ function ProjectDetail() {
                           item.result.totalReturn > 0
                             ? "green"
                             : item.result.totalReturn < 0
-                            ? "red"
-                            : "gray"
+                              ? "red"
+                              : "gray"
                         }
                       >
                         {item.result.totalReturn > 0 ? "+" : ""}
