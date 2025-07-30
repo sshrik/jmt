@@ -199,6 +199,7 @@ export const BacktestRunner = ({
     <Stack gap="xl">
       {/* 백테스트 설정 */}
       <BacktestConfig
+        initialConfig={initialConfig}
         onConfigChange={handleConfigChange}
         onRunBacktest={handleRunBacktest}
         isRunning={isRunning}
