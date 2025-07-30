@@ -12,8 +12,12 @@ export const EndNode = memo(({ data, selected }: NodeProps<FlowNodeData>) => {
       radius="md"
       p="md"
       style={{
-        backgroundColor: selected ? "#fef2f2" : "#f8f9fa",
-        borderColor: selected ? "#ef4444" : "#dee2e6",
+        backgroundColor: selected
+          ? "var(--mantine-color-red-2)"
+          : "var(--mantine-color-red-0)",
+        borderColor: selected
+          ? "var(--mantine-color-red-6)"
+          : "var(--mantine-color-red-3)",
         borderWidth: selected ? 2 : 1,
         minWidth: 200,
       }}

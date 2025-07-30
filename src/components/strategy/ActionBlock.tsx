@@ -139,6 +139,7 @@ export const ActionBlock = ({
   canDelete = false,
 }: ActionBlockProps) => {
   const [showExamples, setShowExamples] = useState(false);
+
   const actionType = block.actionType || "buy_percent_cash";
   const params = block.actionParams || {};
   const config = ACTION_CONFIG[actionType];
@@ -480,11 +481,7 @@ export const ActionBlock = ({
   };
 
   return (
-    <Card
-      withBorder
-      radius="md"
-      style={{ backgroundColor: `var(--mantine-color-${config.color}-0)` }}
-    >
+    <Card withBorder radius="md" className="action-block">
       <Group justify="space-between" mb="md">
         <Group>
           <IconComponent

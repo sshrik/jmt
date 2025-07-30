@@ -168,8 +168,12 @@ export const FlowConditionNode = memo(
         radius="md"
         p="md"
         style={{
-          backgroundColor: selected ? "#e3f2fd" : "#f0f9ff",
-          borderColor: selected ? "#2196f3" : "#bae6fd",
+          backgroundColor: selected
+            ? "var(--mantine-color-blue-2)"
+            : "var(--mantine-color-blue-0)",
+          borderColor: selected
+            ? "var(--mantine-color-blue-6)"
+            : "var(--mantine-color-blue-3)",
           borderWidth: selected ? 2 : 1,
           minWidth: 300,
         }}

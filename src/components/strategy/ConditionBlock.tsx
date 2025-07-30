@@ -311,7 +311,7 @@ export const ConditionBlock = ({
   };
 
   return (
-    <Card withBorder padding="md" style={{ backgroundColor: "#fafafa" }}>
+    <Card withBorder padding="md" className="condition-block">
       <Stack gap="md">
         {/* 헤더 */}
         <Group justify="space-between">

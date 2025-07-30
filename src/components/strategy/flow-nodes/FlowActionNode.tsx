@@ -315,8 +315,12 @@ export const FlowActionNode = memo(
         radius="md"
         p="md"
         style={{
-          backgroundColor: selected ? "#fef3c7" : "#fff7ed",
-          borderColor: selected ? "#f59e0b" : "#fed7aa",
+          backgroundColor: selected
+            ? "var(--mantine-color-green-2)"
+            : "var(--mantine-color-green-0)",
+          borderColor: selected
+            ? "var(--mantine-color-green-6)"
+            : "var(--mantine-color-green-3)",
           borderWidth: selected ? 2 : 1,
           minWidth: 300,
         }}

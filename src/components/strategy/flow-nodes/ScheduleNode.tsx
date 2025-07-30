@@ -97,8 +97,12 @@ export const ScheduleNode = memo(
         radius="md"
         p="md"
         style={{
-          backgroundColor: selected ? "#e3f2fd" : "#ffffff",
-          borderColor: selected ? "#2196f3" : "#dee2e6",
+          backgroundColor: selected
+            ? "var(--mantine-color-indigo-2)"
+            : "var(--mantine-color-indigo-0)",
+          borderColor: selected
+            ? "var(--mantine-color-indigo-6)"
+            : "var(--mantine-color-indigo-3)",
           borderWidth: selected ? 2 : 1,
           minWidth: 280,
         }}

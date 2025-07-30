@@ -65,7 +65,7 @@ export const StrategyRuleEditor = ({
   const canDeleteThisRule = canDeleteRule && totalRules > 1;
 
   return (
-    <Card withBorder p="lg" style={{ backgroundColor: "#f8f9fa" }}>
+    <Card withBorder p="lg" className="rule-block">
       <Stack gap="lg">
         {/* 헤더 */}
         <Group justify="space-between">
