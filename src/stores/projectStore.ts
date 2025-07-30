@@ -5,6 +5,7 @@ import type {
   BacktestResult,
 } from "../types/project";
 import type { Strategy } from "../types/strategy";
+import type { BacktestConfig } from "../types/backtest";
 
 const STORAGE_KEY = "jmt_projects";
 
@@ -75,55 +76,60 @@ const getProjectsFromStorage = (): Project[] => {
           ...version,
           createdAt: new Date(version.createdAt),
           backtestResults: backtestResults
-            ? backtestResults.map((result: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
-                id: result.id as string,
-                versionId: result.versionId as string,
-                executedAt: new Date(result.executedAt as string),
-                totalReturn: result.totalReturn as number,
-                maxDrawdown: result.maxDrawdown as number,
-                tradeCount: result.tradeCount as number,
-                winRate: result.winRate as number,
-                transactions: ((result.transactions as any[]) || []).map( // eslint-disable-line @typescript-eslint/no-explicit-any
-                  (t: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
-                    id: t.id as string,
-                    date: new Date(t.date as string),
-                    type: t.type as "buy" | "sell",
-                    price: t.price as number,
-                    quantity: t.quantity as number,
-                    amount: t.total as number, // total -> amount 매핑
-                    fee: t.commission as number, // commission -> fee 매핑
-                    reason: (t.reason as string) || "전략 조건 충족",
-                  })
-                ),
-                portfolioHistory: ((result.portfolioHistory as any[]) || []) // eslint-disable-line @typescript-eslint/no-explicit-any
-                  .map((p: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
-                    date: new Date(p.date as string),
-                    cash: p.cash as number,
-                    stockQuantity: 0, // 기본값 설정
-                    stockValue: 0, // 기본값 설정
-                    totalValue: p.totalValue as number,
-                    dailyReturn: 0, // 기본값 설정
-                  })),
-                initialCash: result.initialCash as number,
-                backtestPeriod: {
-                  startDate: new Date(
-                    (result.backtestPeriod as Record<string, unknown>)
-                      .startDate as string
-                  ),
-                  endDate: new Date(
-                    (result.backtestPeriod as Record<string, unknown>)
-                      .endDate as string
-                  ),
-                },
-                config: result.config as
-                  | {
-                      symbol: string;
-                      commission: number;
-                      slippage: number;
-                    }
-                  | undefined,
-              }))
-            : undefined,
+            ? backtestResults.map((result: unknown) => {
+                const resultData = result as Record<string, unknown>;
+                return {
+                  id: resultData.id as string,
+                  versionId: resultData.versionId as string,
+                  executedAt: new Date(resultData.executedAt as string),
+                  totalReturn: resultData.totalReturn as number,
+                  maxDrawdown: resultData.maxDrawdown as number,
+                  tradeCount: resultData.tradeCount as number,
+                  winRate: resultData.winRate as number,
+                  transactions: (
+                    (resultData.transactions as unknown[]) || []
+                  ).map((t: unknown) => {
+                    const transactionData = t as Record<string, unknown>;
+                    return {
+                      id: transactionData.id as string,
+                      date: new Date(transactionData.date as string),
+                      type: transactionData.type as "buy" | "sell",
+                      price: transactionData.price as number,
+                      quantity: transactionData.quantity as number,
+                      amount: transactionData.total as number, // total -> amount 매핑
+                      fee: transactionData.commission as number, // commission -> fee 매핑
+                      reason:
+                        (transactionData.reason as string) || "전략 조건 충족",
+                    };
+                  }),
+                  portfolioHistory: (
+                    (resultData.portfolioHistory as unknown[]) || []
+                  ).map((p: unknown) => {
+                    const portfolioData = p as Record<string, unknown>;
+                    return {
+                      date: new Date(portfolioData.date as string),
+                      cash: portfolioData.cash as number,
+                      stockQuantity: 0, // 기본값 설정
+                      stockValue: 0, // 기본값 설정
+                      totalValue: portfolioData.totalValue as number,
+                      dailyReturn: 0, // 기본값 설정
+                    };
+                  }),
+                  initialCash: resultData.initialCash as number,
+                  backtestPeriod: {
+                    startDate: new Date(
+                      (resultData.backtestPeriod as Record<string, unknown>)
+                        .startDate as string
+                    ),
+                    endDate: new Date(
+                      (resultData.backtestPeriod as Record<string, unknown>)
+                        .endDate as string
+                    ),
+                  },
+                  config: resultData.config as BacktestConfig,
+                };
+              })
+            : [],
         };
       }),
     }));
