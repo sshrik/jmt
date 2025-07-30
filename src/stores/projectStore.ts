@@ -1,4 +1,4 @@
-import type { Project, Version, ProjectSummary } from "../types/project";
+import type { Project, Version, ProjectSummary, BacktestResult } from "../types/project";
 import type { Strategy } from "../types/strategy";
 
 const STORAGE_KEY = "jmt_projects";
@@ -334,7 +334,7 @@ export class ProjectStore {
     // 지정된 버전에 백테스트 결과 추가 (배열로 저장)
     // 기존 데이터 호환성 처리: 단일 객체를 배열로 변환
     const existingResults = projects[projectIndex].versions[targetVersionIndex].backtestResults;
-    let currentResults: any[] = [];
+    let currentResults: BacktestResult[] = [];
     
     if (existingResults) {
       if (Array.isArray(existingResults)) {
@@ -342,7 +342,7 @@ export class ProjectStore {
         currentResults = existingResults;
       } else {
         // 기존 단일 객체인 경우 배열로 변환
-        currentResults = [existingResults];
+        currentResults = [existingResults as BacktestResult];
       }
     }
     
