@@ -245,7 +245,7 @@ function testVersionRevert(): void {
   console.log("✅ 버전 되돌리기 테스트 통과");
 }
 
-function testVersionUtilities(): void {
+async function testVersionUtilities(): Promise<void> {
   console.log("\n🛠️  5. 버전 유틸리티 함수 테스트");
   console.log("-".repeat(30));
 
@@ -358,13 +358,13 @@ function testVersionNameGeneration(): void {
 }
 
 // 모든 테스트 실행
-function runAllVersionTests(): void {
+async function runAllVersionTests(): Promise<void> {
   try {
     testVersionCreation();
     testVersionComparison();
     testAutoVersionCreation();
     testVersionRevert();
-    testVersionUtilities();
+    await testVersionUtilities();
     testVersionNameGeneration();
 
     console.log("\n🎉 버전 관리 테스트 완료!");
@@ -385,4 +385,4 @@ function runAllVersionTests(): void {
 }
 
 // 테스트 실행
-runAllVersionTests();
+await runAllVersionTests();
