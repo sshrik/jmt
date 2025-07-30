@@ -63,6 +63,7 @@ export const EditProjectModal = ({
     },
     validateInputOnBlur: true, // 입력 중이 아닌 blur 시에만 검증
     validateInputOnChange: false, // 입력 중 실시간 검증 비활성화
+    // 프로젝트 정보는 가벼우므로 즉시 처리
   });
 
   // 프로젝트 정보가 변경되면 폼 값 업데이트 (form dependency 제거)
