@@ -17,6 +17,7 @@ import {
   IconFolder,
   IconSettings,
   IconHome,
+  IconBook,
 } from "@tabler/icons-react";
 
 interface SidebarItemProps {
@@ -209,6 +210,30 @@ export const Sidebar = () => {
               label="백테스트"
               path="/backtest"
               description="전략 성과를 테스트하세요"
+            />
+          </Stack>
+        </div>
+
+        <Divider my="sm" />
+
+        {/* 도움말 */}
+        <div>
+          <Text
+            size="xs"
+            fw={700}
+            c={isDark ? "dark.2" : "dimmed"}
+            mb="xs"
+            tt="uppercase"
+          >
+            도움말
+          </Text>
+          <Stack gap={4}>
+            <SidebarItem
+              icon={<IconBook size={18} />}
+              label="사용자 메뉴얼"
+              path="/manual"
+              badge="New"
+              description="플랫폼 사용법과 가이드"
             />
           </Stack>
         </div>

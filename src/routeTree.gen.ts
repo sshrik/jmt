@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as ManualRouteImport } from './routes/manual'
 import { Route as FlowchartRouteImport } from './routes/flowchart'
 import { Route as BacktestRouteImport } from './routes/backtest'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,6 +26,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const ProjectsRoute = ProjectsRouteImport.update({
   id: '/projects',
   path: '/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManualRoute = ManualRouteImport.update({
+  id: '/manual',
+  path: '/manual',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FlowchartRoute = FlowchartRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/backtest': typeof BacktestRoute
   '/flowchart': typeof FlowchartRoute
+  '/manual': typeof ManualRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/projects/$projectId/edit': typeof ProjectsProjectIdEditRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/backtest': typeof BacktestRoute
   '/flowchart': typeof FlowchartRoute
+  '/manual': typeof ManualRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/projects/$projectId/edit': typeof ProjectsProjectIdEditRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/backtest': typeof BacktestRoute
   '/flowchart': typeof FlowchartRoute
+  '/manual': typeof ManualRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/settings': typeof SettingsRoute
   '/projects/$projectId/edit': typeof ProjectsProjectIdEditRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backtest'
     | '/flowchart'
+    | '/manual'
     | '/projects'
     | '/settings'
     | '/projects/$projectId/edit'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backtest'
     | '/flowchart'
+    | '/manual'
     | '/projects'
     | '/settings'
     | '/projects/$projectId/edit'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/backtest'
     | '/flowchart'
+    | '/manual'
     | '/projects'
     | '/settings'
     | '/projects/$projectId/edit'
@@ -115,6 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BacktestRoute: typeof BacktestRoute
   FlowchartRoute: typeof FlowchartRoute
+  ManualRoute: typeof ManualRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
   SettingsRoute: typeof SettingsRoute
 }
@@ -133,6 +146,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manual': {
+      id: '/manual'
+      path: '/manual'
+      fullPath: '/manual'
+      preLoaderRoute: typeof ManualRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/flowchart': {
@@ -191,6 +211,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BacktestRoute: BacktestRoute,
   FlowchartRoute: FlowchartRoute,
+  ManualRoute: ManualRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
   SettingsRoute: SettingsRoute,
 }
