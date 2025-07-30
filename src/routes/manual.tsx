@@ -30,7 +30,7 @@ import {
   IconUsers,
   IconArrowRight,
   IconExternalLink,
-  IconLightbulb,
+  IconBulb,
   IconTarget,
   IconTools,
   IconTrophy,
@@ -289,7 +289,7 @@ function ManualPage() {
 
           {/* 팁과 모범 사례 */}
           <Accordion.Item value="tips">
-            <Accordion.Control icon={<IconLightbulb size={20} />}>
+            <Accordion.Control icon={<IconBulb size={20} />}>
               <Title order={3}>팁과 모범 사례</Title>
             </Accordion.Control>
             <Accordion.Panel>
