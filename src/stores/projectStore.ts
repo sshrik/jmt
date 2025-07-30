@@ -2,11 +2,7 @@ import type {
   Project,
   Version,
   ProjectSummary,
-  VersionCreationOptions,
-  VersionComparisonResult,
-  StrategyChange,
 } from "../types/project";
-import type { Strategy } from "../types/strategy";
 
 const STORAGE_KEY = "jmt_projects";
 
