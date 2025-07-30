@@ -32,11 +32,11 @@ import {
   IconKeyboard,
   IconEye,
   IconEdit,
-  IconHistory,
   IconCheck,
   IconAlertTriangle,
   IconTrendingUp,
   IconDots,
+  IconGitBranch,
 } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { useHotkeys, useDisclosure, useInterval } from "@mantine/hooks";
@@ -44,7 +44,9 @@ import { useProjectStore } from "../../../hooks/useProjectStore";
 import { ProjectStore } from "../../../stores/projectStore";
 import { StrategyEditor } from "../../../components/strategy/StrategyEditor";
 import { BacktestRunner } from "../../../components/backtest/BacktestRunner";
+import { CreateVersionModal } from "../../../components/version/CreateVersionModal";
 import type { Strategy } from "../../../types/strategy";
+import type { Version } from "../../../types/project";
 import { notifications } from "@mantine/notifications";
 
 export const Route = createFileRoute("/projects/$projectId/edit")({
@@ -70,6 +72,10 @@ function ProjectEdit() {
     useDisclosure(false);
   const [helpOpened, { open: openHelp, close: closeHelp }] =
     useDisclosure(false);
+  const [
+    createVersionOpened,
+    { open: openCreateVersion, close: closeCreateVersion },
+  ] = useDisclosure(false);
 
   // 자동 저장 상태
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
@@ -152,7 +158,10 @@ function ProjectEdit() {
     }
 
     // 기존 블록 타입 마이그레이션
-    const rawBlocks = project.versions[0]?.strategy || [];
+    const rawStrategy = project.versions[0]?.strategy;
+    const rawBlocks = Array.isArray(rawStrategy)
+      ? rawStrategy
+      : rawStrategy?.blocks || [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const migratedBlocks = rawBlocks.map((block: any) => {
       // 기존 price_change_percent를 close_price_change로 마이그레이션
@@ -252,10 +261,11 @@ function ProjectEdit() {
 
           // 저장 확인
           const savedProject = ProjectStore.getProjectById(projectId);
-          if (
-            !savedProject?.versions[0]?.strategy ||
-            savedProject.versions[0].strategy.length !== strategyBlocks.length
-          ) {
+          const savedStrategy = savedProject?.versions[0]?.strategy;
+          const savedBlocks = Array.isArray(savedStrategy)
+            ? savedStrategy
+            : savedStrategy?.blocks || [];
+          if (!savedStrategy || savedBlocks.length !== strategyBlocks.length) {
             throw new Error("전략 저장에 실패했습니다.");
           }
         } catch (error) {
@@ -341,10 +351,11 @@ function ProjectEdit() {
 
           // 저장 확인
           const savedProject = ProjectStore.getProjectById(projectId);
-          if (
-            !savedProject?.versions[0]?.strategy ||
-            savedProject.versions[0].strategy.length !== strategyBlocks.length
-          ) {
+          const savedStrategy = savedProject?.versions[0]?.strategy;
+          const savedBlocks = Array.isArray(savedStrategy)
+            ? savedStrategy
+            : savedStrategy?.blocks || [];
+          if (!savedStrategy || savedBlocks.length !== strategyBlocks.length) {
             throw new Error("전략 저장에 실패했습니다.");
           }
         } catch (error) {
@@ -395,6 +406,36 @@ function ProjectEdit() {
     projectId,
     navigate,
   ]);
+
+  // 새 버전으로 저장
+  const handleCreateVersionSave = useCallback(() => {
+    // 저장되지 않은 변경사항이 있으면 먼저 저장 요청
+    if (hasUnsavedChanges) {
+      notifications.show({
+        title: "저장 필요",
+        message: "먼저 현재 변경사항을 저장한 후 새 버전을 생성할 수 있습니다.",
+        color: "orange",
+        icon: <IconAlertTriangle size={16} />,
+      });
+      return;
+    }
+    openCreateVersion();
+  }, [hasUnsavedChanges, openCreateVersion]);
+
+  // 버전 생성 완료 핸들러
+  const handleVersionCreated = useCallback(
+    (newVersion: Version) => {
+      notifications.show({
+        title: "버전 생성 완료",
+        message: `${newVersion.versionName} 버전이 생성되었습니다.`,
+        color: "green",
+        icon: <IconCheck size={16} />,
+      });
+      closeCreateVersion();
+      // 새 버전 페이지로 이동하지 않고 현재 페이지에 유지
+    },
+    [closeCreateVersion]
+  );
 
   // 키보드 단축키
   useHotkeys([
@@ -589,6 +630,15 @@ function ProjectEdit() {
           >
             저장하기
           </Button>
+
+          <Button
+            leftSection={<IconGitBranch size={16} />}
+            onClick={handleCreateVersionSave}
+            variant="light"
+            disabled={hasUnsavedChanges || isSaving}
+          >
+            새 버전으로 저장
+          </Button>
         </Group>
       </Group>
 
@@ -603,9 +653,6 @@ function ProjectEdit() {
           </Tabs.Tab>
           <Tabs.Tab value="backtest" leftSection={<IconTrendingUp size={16} />}>
             백테스트
-          </Tabs.Tab>
-          <Tabs.Tab value="history" leftSection={<IconHistory size={16} />}>
-            버전 히스토리
           </Tabs.Tab>
         </Tabs.List>
 
@@ -678,17 +725,12 @@ function ProjectEdit() {
                 분석할 수 있습니다.
               </Text>
             </Alert>
-            <BacktestRunner strategy={strategy} projectId={projectId} />
+            <BacktestRunner
+              strategy={strategy}
+              projectId={projectId}
+              versionId={project?.versions?.[0]?.id}
+            />
           </Stack>
-        </Tabs.Panel>
-
-        <Tabs.Panel value="history" pt="lg">
-          <Card withBorder p="lg">
-            <Title order={4} mb="md">
-              버전 히스토리
-            </Title>
-            <Text c="dimmed">버전 관리 기능은 곧 구현 예정입니다.</Text>
-          </Card>
         </Tabs.Panel>
       </Tabs>
 
@@ -761,6 +803,18 @@ function ProjectEdit() {
           </Group>
         </Stack>
       </Modal>
+
+      {/* 새 버전 생성 모달 */}
+      {project && strategy && (
+        <CreateVersionModal
+          opened={createVersionOpened}
+          onClose={closeCreateVersion}
+          project={project}
+          strategy={strategy}
+          onVersionCreated={handleVersionCreated}
+          initialDescription="새로운 버전"
+        />
+      )}
     </Container>
   );
 }

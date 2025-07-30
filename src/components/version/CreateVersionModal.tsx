@@ -11,7 +11,7 @@ import {
   Badge,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { IconGitBranch, IconAlertCircle } from "@tabler/icons-react";
 import type {
   Project,
@@ -44,14 +44,11 @@ export const CreateVersionModal = ({
     initialValues: {
       description: initialDescription,
       isAutoSaved: false,
-      author: "사용자",
       shouldRunBacktest: false,
     },
     validate: {
       description: (value) =>
         value.trim().length === 0 ? "버전 설명을 입력해주세요" : null,
-      author: (value) =>
-        value && value.trim().length === 0 ? "작성자를 입력해주세요" : null,
     },
   });
 
@@ -59,12 +56,23 @@ export const CreateVersionModal = ({
   const nextVersionName = VersionStore.generateVersionName(project.versions);
 
   // 변경사항 분석
-  const hasChanges = latestVersion
-    ? VersionStore.compareVersions(latestVersion, {
-        ...latestVersion,
-        strategy,
-      }).hasChanges
-    : true;
+  const hasChanges = useMemo(() => {
+    if (!latestVersion || !latestVersion.strategy) {
+      return true; // 최신 버전이 없으면 변경사항이 있다고 간주
+    }
+
+    try {
+      // 전략 객체만 직접 비교
+      const comparison = VersionStore.compareVersions(
+        { ...latestVersion, strategy: latestVersion.strategy },
+        { ...latestVersion, strategy }
+      );
+      return comparison.hasChanges;
+    } catch (error) {
+      console.warn("버전 비교 중 오류:", error);
+      return true; // 에러 발생 시 변경사항이 있다고 간주
+    }
+  }, [latestVersion, strategy]);
 
   const handleSubmit = async (values: VersionCreationOptions) => {
     setLoading(true);
@@ -130,19 +138,19 @@ export const CreateVersionModal = ({
             {...form.getInputProps("description")}
           />
 
+          {/* 수정 사유 (선택사항) */}
+          <TextInput
+            label="수정 사유 (선택사항)"
+            placeholder="버그 수정, 기능 개선, 성능 최적화 등"
+            {...form.getInputProps("reason")}
+          />
+
           {/* 상세 설명 (선택사항) */}
           <Textarea
             label="상세 설명 (선택사항)"
             placeholder="더 자세한 설명이나 변경사항을 기록하세요"
             rows={3}
             {...form.getInputProps("detailedDescription")}
-          />
-
-          {/* 작성자 */}
-          <TextInput
-            label="작성자"
-            placeholder="버전 생성자"
-            {...form.getInputProps("author")}
           />
 
           {/* 옵션들 */}
