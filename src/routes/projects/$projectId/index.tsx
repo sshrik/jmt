@@ -35,8 +35,10 @@ import { ProjectStore } from "../../../stores/projectStore";
 import { StrategyEditor } from "../../../components/strategy/StrategyEditor";
 import { BacktestRunner } from "../../../components/backtest/BacktestRunner";
 import { VersionList } from "../../../components/version/VersionList";
+import { BacktestDetailModal } from "../../../components/backtest/BacktestDetailModal";
 import type { Strategy } from "../../../types/strategy";
-import type { Version } from "../../../types/project";
+import type { Version, BacktestResult } from "../../../types/project";
+import type { StockInfo } from "../../../types/backtest";
 import { notifications } from "@mantine/notifications";
 
 export const Route = createFileRoute("/projects/$projectId/")({
@@ -53,6 +55,12 @@ function ProjectDetail() {
     null
   );
   const [shouldAutoStartBacktest, setShouldAutoStartBacktest] = useState(false);
+
+  // 백테스트 상세 모달 상태
+  const [selectedBacktest, setSelectedBacktest] = useState<{
+    result: BacktestResult;
+    version: Version;
+  } | null>(null);
 
   // 버전 관리 핸들러들 (읽기 전용)
   const handleVersionSelect = (version: Version) => {
@@ -71,6 +79,53 @@ function ProjectDetail() {
         "상세 페이지에서는 버전을 되돌릴 수 없습니다. 편집 페이지를 이용해주세요.",
       color: "orange",
     });
+  };
+
+  // 백테스트 상세 모달 핸들러
+  const handleBacktestClick = (version: Version) => {
+    if (version.backtestResults) {
+      setSelectedBacktest({
+        result: version.backtestResults,
+        version: version,
+      });
+    }
+  };
+
+  const handleBacktestModalClose = () => {
+    setSelectedBacktest(null);
+  };
+
+  // 다시 테스트하기 핸들러
+  const [retestConfig, setRetestConfig] = useState<{
+    symbol: string;
+    startDate: string;
+    endDate: string;
+    initialCash: number;
+    commission: number;
+    slippage: number;
+  } | null>(null);
+
+  const handleRetest = (config: {
+    symbol: string;
+    startDate: string;
+    endDate: string;
+    initialCash: number;
+    commission: number;
+    slippage: number;
+  }) => {
+    // 백테스트 탭으로 이동하고 설정 자동 적용
+    setActiveTab("backtest");
+    setRetestConfig(config);
+    // 모달 닫기
+    setSelectedBacktest(null);
+  };
+
+  // 현재 종목 정보 (임시로 삼성전자 정보 사용)
+  const stockInfo: StockInfo = {
+    symbol: "005930",
+    name: "삼성전자",
+    market: "KOSPI",
+    currency: "KRW",
   };
 
   const handleVersionDuplicate = (_version: Version) => {
@@ -434,6 +489,7 @@ function ProjectDetail() {
             projectId={projectId}
             versionId={selectedVersionId || undefined}
             autoStart={shouldAutoStartBacktest}
+            initialConfig={retestConfig || undefined}
           />
         </Tabs.Panel>
 
@@ -780,6 +836,8 @@ function ProjectDetail() {
                       ? "version-card-selected"
                       : ""
                   }
+                  style={{ cursor: "pointer" }}
+                  onClick={() => handleBacktestClick(version)}
                 >
                   <Group justify="space-between" align="flex-start">
                     <div style={{ flex: 1 }}>
@@ -792,6 +850,9 @@ function ProjectDetail() {
                             최신
                           </Badge>
                         )}
+                        <Badge size="xs" variant="light" color="gray">
+                          클릭하여 상세보기
+                        </Badge>
                       </Group>
 
                       <Text size="xs" c="dimmed" mb="sm">
@@ -872,6 +933,18 @@ function ProjectDetail() {
           )}
         </Tabs.Panel>
       </Tabs>
+
+      {/* 백테스트 상세 모달 */}
+      {selectedBacktest && (
+        <BacktestDetailModal
+          isOpen={true}
+          onClose={handleBacktestModalClose}
+          result={selectedBacktest.result}
+          version={selectedBacktest.version}
+          stockInfo={stockInfo}
+          onRetest={handleRetest}
+        />
+      )}
     </Container>
   );
 }

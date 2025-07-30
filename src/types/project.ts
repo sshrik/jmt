@@ -109,6 +109,11 @@ export interface BacktestResult {
     startDate: Date;
     endDate: Date;
   };
+  config?: {
+    symbol: string;
+    commission: number; // 수수료율
+    slippage: number; // 슬리피지율
+  };
 }
 
 export interface Transaction {

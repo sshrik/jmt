@@ -19,6 +19,7 @@ interface BacktestRunnerProps {
   projectId?: string;
   versionId?: string;
   autoStart?: boolean;
+  initialConfig?: Partial<BacktestConfigType>;
 }
 
 export const BacktestRunner = ({
@@ -26,6 +27,7 @@ export const BacktestRunner = ({
   projectId,
   versionId,
   autoStart = false,
+  initialConfig,
 }: BacktestRunnerProps) => {
   const [result, setResult] = useState<BacktestResult | null>(null);
   const [progress, setProgress] = useState<BacktestProgressType | null>(null);

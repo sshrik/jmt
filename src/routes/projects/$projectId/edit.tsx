@@ -100,13 +100,14 @@ function ProjectEdit() {
     }
   }, [projectId]);
 
-
-
   // 프로젝트 정보 업데이트 핸들러 (분리된 컴포넌트용)
-  const handleProjectInfoUpdate = useCallback(async (id: string, name: string, description: string) => {
-    await updateProject(id, name, description);
-    setLastSaved(new Date());
-  }, [updateProject]);
+  const handleProjectInfoUpdate = useCallback(
+    async (id: string, name: string, description: string) => {
+      await updateProject(id, name, description);
+      setLastSaved(new Date());
+    },
+    [updateProject]
+  );
 
   // 자동 저장 시작/중지 (전략만 - 프로젝트 정보는 실시간 저장)
   useEffect(() => {
