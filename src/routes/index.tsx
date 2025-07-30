@@ -199,6 +199,7 @@ function DashboardPage() {
             {sortedProjects.map((project, index) => (
               <Card
                 key={project.id}
+                data-testid="project-card"
                 withBorder
                 p="lg"
                 style={{
@@ -219,7 +220,7 @@ function DashboardPage() {
                   >
                     {project.name}
                   </Text>
-                  
+
                   {/* 순위 배지와 메뉴 버튼을 함께 배치 */}
                   <Group gap="xs" style={{ flexShrink: 0 }}>
                     {/* 순위 배지 */}
@@ -240,37 +241,34 @@ function DashboardPage() {
                           #{index + 1}
                         </Badge>
                       )}
-                    
+
                     {/* 메뉴 버튼 - 순위 배지 바로 옆에 */}
                     <Menu shadow="md" width={200}>
                       <Menu.Target>
-                        <ActionIcon
-                          variant="subtle"
-                          color="gray"
-                        >
+                        <ActionIcon variant="subtle" color="gray">
                           <IconDots size={16} />
                         </ActionIcon>
                       </Menu.Target>
-                    <Menu.Dropdown>
-                      <Menu.Item
-                        leftSection={<IconEdit size={14} />}
-                        onClick={() =>
-                          navigate({ to: `/projects/${project.id}/edit` })
-                        }
-                      >
-                        프로젝트 수정
-                      </Menu.Item>
-                      <Menu.Divider />
-                      <Menu.Item
-                        leftSection={<IconTrash size={14} />}
-                        color="red"
-                        onClick={() =>
-                          handleDeleteClick(project.id, project.name)
-                        }
-                      >
-                        프로젝트 삭제
-                      </Menu.Item>
-                    </Menu.Dropdown>
+                      <Menu.Dropdown>
+                        <Menu.Item
+                          leftSection={<IconEdit size={14} />}
+                          onClick={() =>
+                            navigate({ to: `/projects/${project.id}/edit` })
+                          }
+                        >
+                          프로젝트 수정
+                        </Menu.Item>
+                        <Menu.Divider />
+                        <Menu.Item
+                          leftSection={<IconTrash size={14} />}
+                          color="red"
+                          onClick={() =>
+                            handleDeleteClick(project.id, project.name)
+                          }
+                        >
+                          프로젝트 삭제
+                        </Menu.Item>
+                      </Menu.Dropdown>
                     </Menu>
                   </Group>
                 </Group>

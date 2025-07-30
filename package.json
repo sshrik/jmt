@@ -11,6 +11,9 @@
     "test": "npx tsx tests/backtest.test.ts && echo '\n========================\n' && npx tsx tests/comprehensive.test.ts && echo '\n========================\n' && npx tsx tests/version.test.ts",
     "test:vitest": "vitest",
     "test:run": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
     "fetch-data": "node scripts/fetchStockData.js"
   },
   "dependencies": {
