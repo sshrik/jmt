@@ -63,34 +63,35 @@ const getProjectsFromStorage = (): Project[] => {
       ...project,
       createdAt: new Date(project.createdAt),
       updatedAt: new Date(project.updatedAt),
-      versions: project.versions.map((version) => ({
-        ...version,
-        createdAt: new Date(version.createdAt),
-        backtestResults: version.backtestResults
-          ? {
-              ...version.backtestResults,
-              executedAt: new Date(version.backtestResults.executedAt),
-              backtestPeriod: {
-                startDate: new Date(
-                  version.backtestResults.backtestPeriod.startDate
-                ),
-                endDate: new Date(
-                  version.backtestResults.backtestPeriod.endDate
-                ),
-              },
-              transactions: version.backtestResults.transactions.map((t) => ({
-                ...t,
-                date: new Date(t.date),
-              })),
-              portfolioHistory: version.backtestResults.portfolioHistory.map(
-                (p) => ({
-                  ...p,
-                  date: new Date(p.date),
-                })
-              ),
-            }
-          : undefined,
-      })),
+      versions: project.versions.map((version) => {
+        // 백테스트 결과 호환성 처리
+        let backtestResults = version.backtestResults;
+        if (backtestResults && !Array.isArray(backtestResults)) {
+          // 단일 객체를 배열로 변환
+          backtestResults = [backtestResults as BacktestResult];
+        }
+        
+        return {
+          ...version,
+          createdAt: new Date(version.createdAt),
+          backtestResults: backtestResults ? backtestResults.map((result: any) => ({
+            ...result,
+            executedAt: new Date(result.executedAt),
+            backtestPeriod: {
+              startDate: new Date(result.backtestPeriod.startDate),
+              endDate: new Date(result.backtestPeriod.endDate),
+            },
+            transactions: (result.transactions || []).map((t: any) => ({
+              ...t,
+              date: new Date(t.date),
+            })),
+            portfolioHistory: (result.portfolioHistory || []).map((p: any) => ({
+              ...p,
+              date: new Date(p.date),
+            })),
+          })) : undefined,
+        };
+      }),
     }));
   } catch (error) {
     console.error("Error loading projects from storage:", error);
@@ -302,7 +303,14 @@ export class ProjectStore {
       };
       trades?: Array<Record<string, unknown>>;
       portfolioHistory?: Array<Record<string, unknown>>;
-      config?: { initialCash?: number; startDate?: string; endDate?: string };
+      config?: { 
+        initialCash?: number; 
+        startDate?: string; 
+        endDate?: string;
+        symbol?: string;
+        commission?: number;
+        slippage?: number;
+      };
       startDate?: string;
       endDate?: string;
     };
@@ -390,27 +398,29 @@ export class ProjectStore {
             description: "수익률 개선 버전",
             createdAt: new Date("2024-01-15"),
             strategy: createEmptyStrategy("mock-1", "version-2"),
-            backtestResults: [{
-              id: "backtest-1",
-              versionId: "version-2",
-              executedAt: new Date("2024-01-15"),
-              totalReturn: 12.5,
-              maxDrawdown: -8.2,
-              tradeCount: 24,
-              winRate: 62.5,
-              transactions: [],
-              portfolioHistory: [],
-              initialCash: 1000000,
-              backtestPeriod: {
-                startDate: new Date("2023-01-01"),
-                endDate: new Date("2023-12-31"),
+            backtestResults: [
+              {
+                id: "backtest-1",
+                versionId: "version-2",
+                executedAt: new Date("2024-01-15"),
+                totalReturn: 12.5,
+                maxDrawdown: -8.2,
+                tradeCount: 24,
+                winRate: 62.5,
+                transactions: [],
+                portfolioHistory: [],
+                initialCash: 1000000,
+                backtestPeriod: {
+                  startDate: new Date("2023-01-01"),
+                  endDate: new Date("2023-12-31"),
+                },
+                config: {
+                  symbol: "005930",
+                  commission: 0.0015,
+                  slippage: 0.001,
+                },
               },
-              config: {
-                symbol: "005930",
-                commission: 0.0015,
-                slippage: 0.001,
-              },
-            }],
+            ],
           },
         ],
       },
@@ -439,27 +449,29 @@ export class ProjectStore {
               updatedAt: new Date("2024-01-10"),
               isActive: true,
             },
-            backtestResults: [{
-              id: "backtest-2",
-              versionId: "version-3",
-              executedAt: new Date("2024-01-10"),
-              totalReturn: -3.2,
-              maxDrawdown: -15.8,
-              tradeCount: 18,
-              winRate: 44.4,
-              transactions: [],
-              portfolioHistory: [],
-              initialCash: 1000000,
-              backtestPeriod: {
-                startDate: new Date("2023-01-01"),
-                endDate: new Date("2023-12-31"),
+            backtestResults: [
+              {
+                id: "backtest-2",
+                versionId: "version-3",
+                executedAt: new Date("2024-01-10"),
+                totalReturn: -3.2,
+                maxDrawdown: -15.8,
+                tradeCount: 18,
+                winRate: 44.4,
+                transactions: [],
+                portfolioHistory: [],
+                initialCash: 1000000,
+                backtestPeriod: {
+                  startDate: new Date("2023-01-01"),
+                  endDate: new Date("2023-12-31"),
+                },
+                config: {
+                  symbol: "BTC-USD",
+                  commission: 0.0015,
+                  slippage: 0.001,
+                },
               },
-              config: {
-                symbol: "BTC-USD",
-                commission: 0.0015,
-                slippage: 0.001,
-              },
-            }],
+            ],
           },
         ],
       },
