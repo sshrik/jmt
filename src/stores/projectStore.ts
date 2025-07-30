@@ -461,6 +461,7 @@ export class ProjectStore {
             rangeDirection: "down",
             rangeOperator: "left_inclusive", // 0% 이상 5% 미만
           },
+          enabled: true,
         },
         {
           id: `${strategyId}-action-1`,
@@ -471,6 +472,7 @@ export class ProjectStore {
           actionParams: {
             percentCash: 10,
           },
+          enabled: true,
         },
 
         // 🔵 5-10% 하락 시 강화 매수 (현금의 20%)
@@ -486,6 +488,7 @@ export class ProjectStore {
             rangeDirection: "down",
             rangeOperator: "left_inclusive", // 5% 이상 10% 미만
           },
+          enabled: true,
         },
         {
           id: `${strategyId}-action-2`,
@@ -496,6 +499,7 @@ export class ProjectStore {
           actionParams: {
             percentCash: 20,
           },
+          enabled: true,
         },
 
         // 🔵 10-20% 하락 시 폭탄 매수 (현금의 50%)
@@ -511,6 +515,7 @@ export class ProjectStore {
             rangeDirection: "down",
             rangeOperator: "left_inclusive", // 10% 이상 20% 미만
           },
+          enabled: true,
         },
         {
           id: `${strategyId}-action-3`,
@@ -521,6 +526,7 @@ export class ProjectStore {
           actionParams: {
             percentCash: 50,
           },
+          enabled: true,
         },
 
         // 🔴 0-5% 상승 시 기본 매도 (주식의 10%)
@@ -536,6 +542,7 @@ export class ProjectStore {
             rangeDirection: "up",
             rangeOperator: "left_inclusive", // 0% 이상 5% 미만
           },
+          enabled: true,
         },
         {
           id: `${strategyId}-action-4`,
@@ -546,6 +553,7 @@ export class ProjectStore {
           actionParams: {
             percentStock: 10,
           },
+          enabled: true,
         },
 
         // 🔴 5-10% 상승 시 강화 매도 (주식의 20%)
@@ -561,6 +569,7 @@ export class ProjectStore {
             rangeDirection: "up",
             rangeOperator: "left_inclusive", // 5% 이상 10% 미만
           },
+          enabled: true,
         },
         {
           id: `${strategyId}-action-5`,
@@ -571,6 +580,7 @@ export class ProjectStore {
           actionParams: {
             percentStock: 20,
           },
+          enabled: true,
         },
 
         // 🔴 10-20% 상승 시 대량 매도 (주식의 50%)
@@ -586,6 +596,7 @@ export class ProjectStore {
             rangeDirection: "up",
             rangeOperator: "left_inclusive", // 10% 이상 20% 미만
           },
+          enabled: true,
         },
         {
           id: `${strategyId}-action-6`,
@@ -596,6 +607,7 @@ export class ProjectStore {
           actionParams: {
             percentStock: 50,
           },
+          enabled: true,
         },
       ],
       blockOrder: [
