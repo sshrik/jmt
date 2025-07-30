@@ -46,6 +46,13 @@ const REACT_FLOW_FIT_VIEW_OPTIONS = {
 const REACT_FLOW_DELETE_KEY_CODE = ["Delete", "Backspace"] as const;
 const REACT_FLOW_MULTI_SELECTION_KEY_CODE = ["Meta", "Ctrl"] as const;
 const REACT_FLOW_DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 0.2 } as const;
+const REACT_FLOW_STYLE = { width: "100%", height: "100%" } as const;
+const MINI_MAP_STYLE = {
+  nodeStrokeColor: "#374151",
+  nodeColor: "#f3f4f6",
+  nodeBorderRadius: 8,
+  position: "bottom-right" as const,
+};
 
 // 기본 플로우 생성 (더 넓은 간격)
 const createDefaultFlow = (): {
@@ -463,6 +470,15 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
     [nodes, onNodeUpdate, deleteNode]
   );
 
+  // nodeTypes도 메모이제이션하여 재생성 방지
+  const memoizedNodeTypes = useMemo(() => FLOW_NODE_TYPES, []);
+
+  // onInit 콜백도 메모이제이션
+  const handleReactFlowInit = useCallback((rfInstance: ReactFlowInstance) => {
+    _reactFlowInstance.current = rfInstance;
+    onReactFlowInit();
+  }, [onReactFlowInit]);
+
   useEffect(() => {
     // ReactFlow 컨테이너가 DOM에 마운트되었는지 확인
     const checkMount = () => {
@@ -759,11 +775,8 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onInit={(rfInstance) => {
-              _reactFlowInstance.current = rfInstance;
-              onReactFlowInit();
-            }}
-            nodeTypes={FLOW_NODE_TYPES}
+            onInit={handleReactFlowInit}
+            nodeTypes={memoizedNodeTypes}
             fitView
             fitViewOptions={REACT_FLOW_FIT_VIEW_OPTIONS}
             minZoom={0.001}
@@ -772,16 +785,11 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
             deleteKeyCode={REACT_FLOW_DELETE_KEY_CODE}
             multiSelectionKeyCode={REACT_FLOW_MULTI_SELECTION_KEY_CODE}
             defaultViewport={REACT_FLOW_DEFAULT_VIEWPORT}
-            style={{ width: "100%", height: "100%" }}
+            style={REACT_FLOW_STYLE}
           >
             <Background />
             <Controls />
-            <MiniMap
-              nodeStrokeColor="#374151"
-              nodeColor="#f3f4f6"
-              nodeBorderRadius={8}
-              position="bottom-right"
-            />
+            <MiniMap {...MINI_MAP_STYLE} />
           </ReactFlow>
           <DragCursor />
         </div>
