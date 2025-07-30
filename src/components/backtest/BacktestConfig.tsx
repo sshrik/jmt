@@ -71,7 +71,13 @@ export const BacktestConfig = ({
 
       // 종목이 설정되어 있으면 해당 종목 선택 및 요약 로드
       if (initialConfig.symbol && stockList.length > 0) {
-        console.log("종목 찾기:", initialConfig.symbol, "in", stockList.length, "stocks");
+        console.log(
+          "종목 찾기:",
+          initialConfig.symbol,
+          "in",
+          stockList.length,
+          "stocks"
+        );
         const stock = stockList.find((s) => s.symbol === initialConfig.symbol);
         console.log("찾은 종목:", stock);
         if (stock) {
