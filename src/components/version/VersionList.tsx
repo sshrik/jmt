@@ -8,12 +8,10 @@ import {
   Menu,
   Alert,
   ScrollArea,
-  Divider,
 } from "@mantine/core";
 import {
   IconGitBranch,
   IconClock,
-  IconUser,
   IconDots,
   IconRestore,
   IconCopy,
@@ -46,7 +44,7 @@ export const VersionList = ({
   onVersionDelete,
   showActions = true,
 }: VersionListProps) => {
-  const versions = VersionStore.getVersionsOrderedByDate(project);
+  const versions = VersionStore.getVersionsOrderedByDate(project) || [];
   const latestVersion = VersionStore.getLatestVersion(project);
 
   // 간단한 상대시간 포매터
@@ -98,7 +96,7 @@ export const VersionList = ({
   return (
     <ScrollArea style={{ height: 400 }}>
       <Stack gap="sm">
-        {versions.map((version, index) => {
+        {versions.map((version, _index) => {
           const isLatest = version.id === latestVersion?.id;
           const isCurrent = version.id === currentVersionId;
           const hasBacktest = !!version.backtestResults;
@@ -108,10 +106,9 @@ export const VersionList = ({
               key={version.id}
               p="md"
               withBorder
+              className={isCurrent ? "version-card-selected" : ""}
               style={{
                 cursor: "pointer",
-                borderColor: isCurrent ? "#228be6" : undefined,
-                backgroundColor: isCurrent ? "#f0f9ff" : undefined,
               }}
               onClick={() => onVersionSelect(version)}
             >
@@ -120,7 +117,7 @@ export const VersionList = ({
                   {/* 버전 헤더 */}
                   <Group gap="sm">
                     <Group gap="xs">
-                      <IconGitBranch size={16} color="#228be6" />
+                      <IconGitBranch size={16} className="version-card-icon" />
                       <Text fw={600} size="sm">
                         {version.versionName}
                       </Text>
@@ -160,6 +157,13 @@ export const VersionList = ({
                     {version.description}
                   </Text>
 
+                  {/* 수정 사유 (있는 경우) */}
+                  {version.reason && (
+                    <Text size="xs" c="dimmed" fs="italic">
+                      사유: {version.reason}
+                    </Text>
+                  )}
+
                   {/* 메타 정보 */}
                   <Group gap="md">
                     <Group gap="xs">
@@ -169,15 +173,6 @@ export const VersionList = ({
                       </Text>
                     </Group>
 
-                    {version.author && (
-                      <Group gap="xs">
-                        <IconUser size={12} color="gray" />
-                        <Text size="xs" c="dimmed">
-                          {version.author}
-                        </Text>
-                      </Group>
-                    )}
-
                     {hasBacktest &&
                       formatBacktestReturn(
                         version.backtestResults?.totalReturn
@@ -186,23 +181,19 @@ export const VersionList = ({
 
                   {/* 전략 정보 */}
                   <Text size="xs" c="dimmed">
-                    블록 {version.strategy.blocks.length}개
-                    {version.strategy.blocks.length > 0 && (
+                    블록 {version.strategy?.blocks?.length || 0}개
+                    {(version.strategy?.blocks?.length || 0) > 0 && (
                       <>
                         {" • "}
                         조건{" "}
-                        {
-                          version.strategy.blocks.filter(
-                            (b) => b.type === "condition"
-                          ).length
-                        }
+                        {version.strategy?.blocks?.filter(
+                          (b) => b.type === "condition"
+                        ).length || 0}
                         개{" • "}
                         액션{" "}
-                        {
-                          version.strategy.blocks.filter(
-                            (b) => b.type === "action"
-                          ).length
-                        }
+                        {version.strategy?.blocks?.filter(
+                          (b) => b.type === "action"
+                        ).length || 0}
                         개
                       </>
                     )}
@@ -272,8 +263,6 @@ export const VersionList = ({
                   </Menu>
                 )}
               </Group>
-
-              {index < versions.length - 1 && <Divider mt="md" />}
             </Paper>
           );
         })}

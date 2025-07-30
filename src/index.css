@@ -24,3 +24,71 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Strategy component styles */
+
+/* Light mode */
+[data-mantine-color-scheme="light"] .condition-block {
+  background-color: var(--mantine-color-gray-0) !important;
+  border-left: 3px solid var(--mantine-color-blue-4) !important;
+  color: var(--mantine-color-text) !important;
+}
+
+[data-mantine-color-scheme="light"] .action-block {
+  background-color: var(--mantine-color-gray-0) !important;
+  border-left: 3px solid var(--mantine-color-green-4) !important;
+  color: var(--mantine-color-text) !important;
+}
+
+[data-mantine-color-scheme="light"] .rule-block {
+  background-color: transparent !important;
+  color: var(--mantine-color-text) !important;
+}
+
+/* Dark mode */
+[data-mantine-color-scheme="dark"] .condition-block {
+  background-color: var(--mantine-color-dark-6) !important;
+  border-left: 3px solid var(--mantine-color-blue-5) !important;
+  color: var(--mantine-color-gray-0) !important;
+}
+
+[data-mantine-color-scheme="dark"] .action-block {
+  background-color: var(--mantine-color-dark-6) !important;
+  border-left: 3px solid var(--mantine-color-green-5) !important;
+  color: var(--mantine-color-gray-0) !important;
+}
+
+[data-mantine-color-scheme="dark"] .rule-block {
+  background-color: transparent !important;
+  color: var(--mantine-color-gray-0) !important;
+}
+
+/* Version card styles */
+
+/* Light mode */
+[data-mantine-color-scheme="light"] .version-card-selected {
+  background-color: var(--mantine-color-blue-0) !important;
+  border-color: var(--mantine-color-blue-3) !important;
+}
+
+[data-mantine-color-scheme="light"] .version-card-recent-activity {
+  background-color: var(--mantine-color-gray-0) !important;
+}
+
+[data-mantine-color-scheme="light"] .version-card-icon {
+  color: var(--mantine-color-blue-6) !important;
+}
+
+/* Dark mode */
+[data-mantine-color-scheme="dark"] .version-card-selected {
+  background-color: var(--mantine-color-dark-5) !important;
+  border-color: var(--mantine-color-blue-4) !important;
+}
+
+[data-mantine-color-scheme="dark"] .version-card-recent-activity {
+  background-color: var(--mantine-color-dark-6) !important;
+}
+
+[data-mantine-color-scheme="dark"] .version-card-icon {
+  color: var(--mantine-color-blue-4) !important;
+}
