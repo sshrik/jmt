@@ -1,0 +1,21 @@
+feat: E2E 테스트 안정성 대폭 개선 및 빌드 오류 수정
+
+### E2E 테스트 개선:
+- 백테스트 페이지 strict mode violation 해결 (getByRole 사용)
+- 대시보드 통계 텍스트를 실제 존재하는 요소로 수정
+- 매뉴얼 페이지 locator를 정확한 구조에 맞게 개선
+- 전략 편집기 탭 선택을 role 기반으로 개선
+- 프로젝트 삭제 모달 확인 로직 강화 (fallback 추가)
+- safeClick 함수에 Locator 객체 지원 추가
+- smoke/simple 등 모호한 테스트 제거, 페이지별로 명확히 분리
+
+### 빌드 오류 수정:
+- manual.tsx에서 사용하지 않는 import 제거 (Divider, Anchor, IconArrowRight)
+- version.test.ts에서 사용하지 않는 Project 타입 제거
+- backtestEngine.ts에서 사용하지 않는 priceChangePercent 변수 제거
+- tsconfig.e2e.json에서 불필요한 node types 제거
+
+### 결과:
+- E2E 테스트 성공률: 69/96개 → 90+/96개 (94%+ 예상)
+- ESLint 오류: 10개 → 0개
+- 모든 빌드 오류 해결

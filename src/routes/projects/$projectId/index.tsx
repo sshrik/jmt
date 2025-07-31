@@ -36,7 +36,7 @@ import { StrategyEditor } from "../../../components/strategy/StrategyEditor";
 import { BacktestRunner } from "../../../components/backtest/BacktestRunner";
 import { VersionList } from "../../../components/version/VersionList";
 import { BacktestDetailModal } from "../../../components/backtest/BacktestDetailModal";
-import type { Strategy } from "../../../types/strategy";
+import type { Strategy, StrategyBlock } from "../../../types/strategy";
 import type { Version, BacktestResult } from "../../../types/project";
 import type { StockInfo } from "../../../types/backtest";
 import { notifications } from "@mantine/notifications";
@@ -290,20 +290,22 @@ function ProjectDetail() {
       ? selectedVersion.strategy
       : [];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const migratedBlocks = rawBlocks.map((block: any) => {
+    const migratedBlocks = rawBlocks.map((block: unknown) => {
+      const blockRecord = block as Record<string, unknown>;
       // 기존 price_change_percent를 close_price_change로 마이그레이션
-      if (block.conditionType === "price_change_percent") {
+      if (blockRecord.conditionType === "price_change_percent") {
         return {
-          ...block,
+          ...blockRecord,
           conditionType: "close_price_change",
         };
       }
-      return block;
+      return blockRecord;
     });
 
     // blockOrder가 없으면 blocks의 id로 자동 생성
-    const blockOrder = migratedBlocks.map((block) => block.id);
+    const blockOrder = migratedBlocks.map(
+      (block) => (block as Record<string, unknown>).id
+    );
 
     return {
       id: `strategy-${project.id}-${selectedVersion.id}`,
@@ -311,8 +313,8 @@ function ProjectDetail() {
       versionId: selectedVersion.versionName || "v1.0",
       name: `${project.name} 전략 (${selectedVersion.versionName})`,
       description: selectedVersion.description || project.description,
-      blocks: migratedBlocks, // 마이그레이션된 전략 데이터
-      blockOrder: blockOrder, // 블록 ID 순서대로 자동 생성
+      blocks: migratedBlocks as unknown as StrategyBlock[], // 마이그레이션된 전략 데이터
+      blockOrder: blockOrder as unknown as string[], // 블록 ID 순서대로 자동 생성
       createdAt: selectedVersion.createdAt,
       updatedAt: selectedVersion.createdAt,
       isActive: true,

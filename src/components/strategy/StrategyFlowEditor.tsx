@@ -52,7 +52,7 @@ const REACT_FLOW_FIT_VIEW_OPTIONS = {
 const REACT_FLOW_DELETE_KEY_CODE = ["Delete", "Backspace"] as const;
 const REACT_FLOW_MULTI_SELECTION_KEY_CODE = ["Meta", "Ctrl"] as const;
 const REACT_FLOW_DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 0.2 } as const;
-const REACT_FLOW_STYLE = { width: "100%", height: "100%" } as const;
+// const _REACT_FLOW_STYLE = { width: "100%", height: "100%" } as const; // 미사용이지만 향후 참고용으로 보관
 const MINI_MAP_STYLE = {
   nodeStrokeColor: "#374151",
   nodeColor: "#f3f4f6",
@@ -473,15 +473,18 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
 
   // 각 노드별 핸들러를 개별적으로 메모이제이션
   const nodeHandlers = useMemo(() => {
-    const handlers: Record<string, { onUpdate: (data: FlowNodeData) => void; onDelete: () => void }> = {};
-    nodes.forEach(node => {
+    const handlers: Record<
+      string,
+      { onUpdate: (data: FlowNodeData) => void; onDelete: () => void }
+    > = {};
+    nodes.forEach((node) => {
       handlers[node.id] = {
         onUpdate: (data: FlowNodeData) => onNodeUpdate(node.id, data),
         onDelete: () => deleteNode(node.id),
       };
     });
     return handlers;
-  }, [nodes.map(n => n.id).join(','), onNodeUpdate, deleteNode]);
+  }, [nodes.map((n) => n.id).join(","), onNodeUpdate, deleteNode]);
 
   // ReactFlow에 전달할 nodes를 메모이제이션하여 재생성 방지
   const memoizedNodes = useMemo(() => {
@@ -501,40 +504,47 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   // nodeTypes는 컴포넌트 외부에서 안정적으로 정의되어 메모이제이션 불필요
 
   // onInit 콜백도 메모이제이션
-  const handleReactFlowInit = useCallback((rfInstance: ReactFlowInstance) => {
-    _reactFlowInstance.current = rfInstance;
-    onReactFlowInit();
-  }, [onReactFlowInit]);
+  const handleReactFlowInit = useCallback(
+    (rfInstance: ReactFlowInstance) => {
+      _reactFlowInstance.current = rfInstance;
+      onReactFlowInit();
+    },
+    [onReactFlowInit]
+  );
 
   // React Flow의 모든 props를 메모이제이션하여 객체 재생성 완전 방지
-  const reactFlowProps = useMemo(() => ({
-    nodes: memoizedNodes,
-    edges: memoizedEdges,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    onInit: handleReactFlowInit,
-    nodeTypes: STABLE_NODE_TYPES,
-    fitView: true,
-    fitViewOptions: REACT_FLOW_FIT_VIEW_OPTIONS,
-    minZoom: 0.001,
-    maxZoom: 3,
-    attributionPosition: "bottom-left" as const,
-    deleteKeyCode: REACT_FLOW_DELETE_KEY_CODE,
-    multiSelectionKeyCode: REACT_FLOW_MULTI_SELECTION_KEY_CODE,
-    defaultViewport: REACT_FLOW_DEFAULT_VIEWPORT,
-    style: { 
-      width: "100%", 
-      height: "100%"
-    }
-  }), [
-    memoizedNodes, 
-    memoizedEdges, 
-    onNodesChange, 
-    onEdgesChange, 
-    onConnect, 
-    handleReactFlowInit
-  ]);
+  const reactFlowProps = useMemo(
+    () => ({
+      nodes: memoizedNodes,
+      edges: memoizedEdges,
+      onNodesChange,
+      onEdgesChange,
+      onConnect,
+      onInit: handleReactFlowInit,
+      nodeTypes: STABLE_NODE_TYPES,
+      fitView: true,
+      fitViewOptions: REACT_FLOW_FIT_VIEW_OPTIONS,
+      minZoom: 0.001,
+      maxZoom: 3,
+      attributionPosition: "bottom-left" as const,
+      deleteKeyCode: REACT_FLOW_DELETE_KEY_CODE as unknown as string[],
+      multiSelectionKeyCode:
+        REACT_FLOW_MULTI_SELECTION_KEY_CODE as unknown as string[],
+      defaultViewport: REACT_FLOW_DEFAULT_VIEWPORT,
+      style: {
+        width: "100%",
+        height: "100%",
+      },
+    }),
+    [
+      memoizedNodes,
+      memoizedEdges,
+      onNodesChange,
+      onEdgesChange,
+      onConnect,
+      handleReactFlowInit,
+    ]
+  );
 
   useEffect(() => {
     // ReactFlow 컨테이너가 DOM에 마운트되었는지 확인
@@ -815,24 +825,24 @@ export const StrategyFlowEditor: React.FC<StrategyFlowEditorProps> = ({
   };
 
   return (
-    <Card 
-      withBorder 
-      p="lg" 
-      style={{ 
-        height: "100%", 
+    <Card
+      withBorder
+      p="lg"
+      style={{
+        height: "100%",
         minHeight: "750px",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
       }}
     >
-      <Stack 
-        gap="lg" 
-        style={{ 
-          height: "100%", 
+      <Stack
+        gap="lg"
+        style={{
+          height: "100%",
           minHeight: "700px",
           flex: 1,
           display: "flex",
-          flexDirection: "column"
+          flexDirection: "column",
         }}
       >
         {/* 노드 팔레트 - 가로 배치 (편집 모드에서만 표시) */}

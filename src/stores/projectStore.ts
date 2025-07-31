@@ -4,7 +4,7 @@ import type {
   ProjectSummary,
   BacktestResult,
 } from "../types/project";
-import type { Strategy } from "../types/strategy";
+import type { Strategy, StrategyBlock } from "../types/strategy";
 import type { BacktestConfig } from "../types/backtest";
 
 const STORAGE_KEY = "jmt_projects";
@@ -249,7 +249,7 @@ export class ProjectStore {
   // TODO: 타입 시스템 재설계 필요 (strategy.ts와 project.ts 타입 통합)
   static updateProjectStrategy(
     projectId: string,
-    strategyBlocks: any[] // eslint-disable-line @typescript-eslint/no-explicit-any
+    strategyBlocks: unknown[]
   ): void {
     const projects = this.getAllProjects();
     const projectIndex = projects.findIndex((p) => p.id === projectId);
@@ -267,7 +267,7 @@ export class ProjectStore {
     const currentStrategy = projects[projectIndex].versions[0].strategy;
     const updatedStrategy: Strategy = {
       ...currentStrategy,
-      blocks: strategyBlocks,
+      blocks: strategyBlocks as unknown as StrategyBlock[],
       updatedAt: new Date(),
     };
     projects[projectIndex].versions[0].strategy = updatedStrategy;

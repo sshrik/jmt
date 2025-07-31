@@ -48,7 +48,7 @@ const theme = createTheme({
 });
 
 // React Flow 경고만 선택적으로 필터링 (개발 모드에서만)
-if (process.env.NODE_ENV === "development") {
+if (import.meta.env.DEV) {
   const originalWarn = console.warn;
   const originalError = console.error;
 
