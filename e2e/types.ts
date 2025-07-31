@@ -1,18 +1,7 @@
 import type { Page, Locator } from "@playwright/test";
 
 // E2E 테스트에서 사용할 커스텀 타입들
-export interface TestData {
-  projectName: string;
-  projectDescription: string;
-  versionName: string;
-}
-
-export interface ProjectCard {
-  name: string;
-  description: string;
-  rank: number;
-  returnRate: number;
-}
+// (현재 사용하지 않는 인터페이스는 제거됨)
 
 // 페이지 객체 모델용 기본 클래스
 export abstract class BasePage {

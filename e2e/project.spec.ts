@@ -3,7 +3,6 @@ import {
   waitForPageLoad,
   checkServerHealth,
   safeClick,
-  safeFill,
 } from "./utils";
 
 test.describe("프로젝트 관리", () => {
