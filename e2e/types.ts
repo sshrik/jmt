@@ -1,4 +1,4 @@
-import type { Page, Locator, BrowserContext } from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
 
 // E2E 테스트에서 사용할 커스텀 타입들
 export interface TestData {
