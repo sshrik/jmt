@@ -114,7 +114,6 @@ export const BacktestRunner = ({
             console.error("백테스트 결과 저장 실패:", saveError);
             // 저장 실패해도 결과는 표시
           }
-        } else {
         }
       } catch (err) {
         const errorMessage =
