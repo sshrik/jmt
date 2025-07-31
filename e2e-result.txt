@@ -1,0 +1,40 @@
+yarn run v1.22.22
+$ playwright test --reporter=list --project=chromium --reporter=list
+
+Running 32 tests using 6 workers
+
+  ✓  3 [chromium] › e2e/dashboard.spec.ts:11:3 › 대시보드 페이지 › 대시보드 로딩 확인 (2.3s)
+  ✓  1 [chromium] › e2e/backtest.spec.ts:69:3 › 백테스트 페이지 › 백테스트 실행 (3.4s)
+  ✓  5 [chromium] › e2e/backtest.spec.ts:53:3 › 백테스트 페이지 › 백테스트 설정 (3.5s)
+  ✓  2 [chromium] › e2e/backtest.spec.ts:88:3 › 백테스트 페이지 › 백테스트 결과 표시 (3.5s)
+  ✓  4 [chromium] › e2e/backtest.spec.ts:33:3 › 백테스트 페이지 › 백테스트 페이지 로딩 (3.5s)
+  ✓  6 [chromium] › e2e/backtest.spec.ts:104:3 › 백테스트 페이지 › 백테스트 히스토리 (3.6s)
+  ✓  7 [chromium] › e2e/dashboard.spec.ts:19:3 › 대시보드 페이지 › 프로젝트 카드 표시 (1.8s)
+  ✓  8 [chromium] › e2e/dashboard.spec.ts:38:3 › 대시보드 페이지 › 성과 통계 표시 (1.6s)
+  ✓  9 [chromium] › e2e/dashboard.spec.ts:52:3 › 대시보드 페이지 › 프로젝트 정렬 (1.7s)
+  ✓  10 [chromium] › e2e/manual.spec.ts:11:3 › 사용자 메뉴얼 페이지 › 메뉴얼 페이지 로딩 (1.7s)
+  ✓  12 [chromium] › e2e/manual.spec.ts:32:3 › 사용자 메뉴얼 페이지 › 전략 설계 섹션 (1.9s)
+  ✓  11 [chromium] › e2e/manual.spec.ts:21:3 › 사용자 메뉴얼 페이지 › 시작하기 섹션 (2.0s)
+  ✓  13 [chromium] › e2e/manual.spec.ts:42:3 › 사용자 메뉴얼 페이지 › 백테스트 분석 섹션 (1.7s)
+  ✓  14 [chromium] › e2e/manual.spec.ts:50:3 › 사용자 메뉴얼 페이지 › FAQ 섹션 (1.6s)
+  ✓  16 [chromium] › e2e/manual.spec.ts:58:3 › 사용자 메뉴얼 페이지 › GitHub 링크 (1.7s)
+  ✓  17 [chromium] › e2e/navigation.spec.ts:29:3 › 네비게이션 › 대시보드 네비게이션 (1.7s)
+  ✓  18 [chromium] › e2e/navigation.spec.ts:11:3 › 네비게이션 › 사이드바 메뉴 표시 (1.7s)
+  ✓  19 [chromium] › e2e/navigation.spec.ts:37:3 › 네비게이션 › 프로젝트 페이지 네비게이션 (1.8s)
+  ✓  15 [chromium] › e2e/manual.spec.ts:70:3 › 사용자 메뉴얼 페이지 › 네비게이션에서 메뉴얼 접근 (2.6s)
+  ✓  20 [chromium] › e2e/navigation.spec.ts:45:3 › 네비게이션 › 주식 추이 확인 페이지 네비게이션 (2.0s)
+  ✓  21 [chromium] › e2e/navigation.spec.ts:53:3 › 네비게이션 › 백테스트 페이지 네비게이션 (1.9s)
+  ✓  22 [chromium] › e2e/navigation.spec.ts:61:3 › 네비게이션 › 사용자 메뉴얼 페이지 네비게이션 (1.9s)
+  ✓  23 [chromium] › e2e/navigation.spec.ts:74:3 › 네비게이션 › 환경설정 페이지 네비게이션 (2.0s)
+  ✓  24 [chromium] › e2e/project.spec.ts:16:3 › 프로젝트 관리 › 프로젝트 생성 (2.0s)
+  ✓  25 [chromium] › e2e/project.spec.ts:35:3 › 프로젝트 관리 › 프로젝트 메뉴 접근 (1.8s)
+  ✓  27 [chromium] › e2e/project.spec.ts:73:3 › 프로젝트 관리 › 프로젝트 삭제 확인 (2.0s)
+  ✓  26 [chromium] › e2e/project.spec.ts:54:3 › 프로젝트 관리 › 프로젝트 편집 페이지 이동 (2.4s)
+  ✓  28 [chromium] › e2e/strategy-editor.spec.ts:26:3 › 전략 편집 페이지 › 전략 편집 페이지 로딩 (2.4s)
+  ✓  29 [chromium] › e2e/strategy-editor.spec.ts:48:3 › 전략 편집 페이지 › 투자 전략 탭으로 이동 (2.4s)
+  ✓  30 [chromium] › e2e/strategy-editor.spec.ts:67:3 › 전략 편집 페이지 › 전략 플로우 편집기 표시 (2.4s)
+  ✓  31 [chromium] › e2e/strategy-editor.spec.ts:95:3 › 전략 편집 페이지 › 노드 추가 기능 (2.4s)
+  ✓  32 [chromium] › e2e/strategy-editor.spec.ts:117:3 › 전략 편집 페이지 › 전략 저장 기능 (2.3s)
+
+  32 passed (14.1s)
+Done in 14.78s.

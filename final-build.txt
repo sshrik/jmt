@@ -1,0 +1,18 @@
+yarn run v1.22.22
+$ tsc -b && vite build
+vite v7.0.6 building for production...
+Generated route tree in 215ms
+transforming...
+✓ 7706 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                     0.90 kB │ gzip:   0.53 kB
+dist/assets/index-ajntWxr4.css    231.43 kB │ gzip:  34.07 kB
+dist/assets/index-qql_hUHn.js   1,286.33 kB │ gzip: 385.08 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 4.89s
+Done in 8.78s.

@@ -1,0 +1,5 @@
+yarn run v1.22.22
+$ tsc -b && vite build
+src/routes/manual.tsx(9,3): error TS6133: 'Badge' is declared but its value is never read.
+error Command failed with exit code 2.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

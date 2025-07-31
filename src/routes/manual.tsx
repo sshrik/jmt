@@ -6,7 +6,6 @@ import {
   Stack,
   Card,
   Group,
-  Badge,
   List,
   Accordion,
   Alert,
