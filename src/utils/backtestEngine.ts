@@ -124,10 +124,6 @@ export class BacktestEngine {
   ): Promise<void> {
     if (!prevPrice) return; // 첫날은 건너뛰기
 
-    // 가격 변화율 계산
-    const priceChangePercent =
-      ((currentPrice.close - prevPrice.close) / prevPrice.close) * 100;
-
     // 룰별 실행
     for (const blockId of this.strategy.blockOrder) {
       const block = this.strategy.blocks.find((b) => b.id === blockId);

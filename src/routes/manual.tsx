@@ -7,7 +7,6 @@ import {
   Card,
   Group,
   Badge,
-  Divider,
   List,
   Accordion,
   Alert,
@@ -16,7 +15,6 @@ import {
   Box,
   Paper,
   ThemeIcon,
-  Anchor,
 } from "@mantine/core";
 import {
   IconBook,
@@ -28,7 +26,6 @@ import {
   IconSettings,
   IconTrendingUp,
   IconUsers,
-  IconArrowRight,
   IconExternalLink,
   IconTarget,
   IconTools,
