@@ -1,48 +1,81 @@
 import { test, expect } from "@playwright/test";
+import { waitForPageLoad, checkServerHealth, safeClick } from "./utils";
 
-test.describe("Navigation Tests", () => {
-  test("should navigate to main dashboard", async ({ page }) => {
+test.describe("네비게이션", () => {
+  test.beforeEach(async ({ page }) => {
+    await checkServerHealth(page);
     await page.goto("/");
-
-    // 대시보드 제목 확인
-    await expect(page.locator("h1")).toContainText("대시보드");
-
-    // 사이드바 메뉴 항목들 확인
-    await expect(page.locator("text=대시보드")).toBeVisible();
-    await expect(page.locator("text=주식 추이 확인")).toBeVisible();
-    await expect(page.locator("text=사용자 메뉴얼")).toBeVisible();
+    await waitForPageLoad(page);
   });
 
-  test("should navigate to stock trends page", async ({ page }) => {
-    await page.goto("/");
+  test("사이드바 메뉴 표시", async ({ page }) => {
+    const sidebar = page.locator(".mantine-AppShell-navbar");
 
-    // 주식 추이 확인 클릭
-    await page.locator("text=주식 추이 확인").click();
+    // 메인 메뉴들 확인
+    await expect(sidebar.locator("text=대시보드")).toBeVisible();
+    await expect(sidebar.locator("text=프로젝트")).toBeVisible();
 
-    // URL 확인
+    // 분석 도구 메뉴들 확인
+    await expect(sidebar.locator("text=주식 추이 확인")).toBeVisible();
+    await expect(sidebar.locator("text=백테스트")).toBeVisible();
+
+    // 도움말 메뉴 확인
+    await expect(sidebar.locator("text=사용자 메뉴얼")).toBeVisible();
+
+    // 설정 메뉴 확인
+    await expect(sidebar.locator("text=환경설정")).toBeVisible();
+  });
+
+  test("대시보드 네비게이션", async ({ page }) => {
+    const sidebar = page.locator(".mantine-AppShell-navbar");
+    await safeClick(page, sidebar.locator("text=대시보드"));
+
+    await waitForPageLoad(page);
+    await expect(page).toHaveURL("/");
+  });
+
+  test("프로젝트 페이지 네비게이션", async ({ page }) => {
+    const sidebar = page.locator(".mantine-AppShell-navbar");
+    await safeClick(page, sidebar.locator("text=프로젝트"));
+
+    await waitForPageLoad(page);
+    await expect(page).toHaveURL("/projects");
+  });
+
+  test("주식 추이 확인 페이지 네비게이션", async ({ page }) => {
+    const sidebar = page.locator(".mantine-AppShell-navbar");
+    await safeClick(page, sidebar.locator("text=주식 추이 확인"));
+
+    await waitForPageLoad(page);
     await expect(page).toHaveURL("/flowchart");
-
-    // 페이지 제목 확인
-    await expect(page.locator("h1")).toContainText("주식 추이 확인");
   });
 
-  test("should navigate to user manual", async ({ page }) => {
-    await page.goto("/");
+  test("백테스트 페이지 네비게이션", async ({ page }) => {
+    const sidebar = page.locator(".mantine-AppShell-navbar");
+    await safeClick(page, sidebar.locator("text=백테스트"));
 
-    // 사용자 메뉴얼 클릭
-    await page.locator("text=사용자 메뉴얼").click();
+    await waitForPageLoad(page);
+    await expect(page).toHaveURL("/backtest");
+  });
 
-    // URL 확인
+  test("사용자 메뉴얼 페이지 네비게이션", async ({ page }) => {
+    const sidebar = page.locator(".mantine-AppShell-navbar");
+    await safeClick(page, sidebar.locator("text=사용자 메뉴얼"));
+
+    await waitForPageLoad(page);
     await expect(page).toHaveURL("/manual");
 
-    // 페이지 제목 확인
-    await expect(page.locator("h1")).toContainText("사용자 메뉴얼");
+    // 메뉴얼 페이지 요소 확인
+    await expect(
+      page.locator("h1").filter({ hasText: /사용자.*메뉴얼/ })
+    ).toBeVisible();
   });
 
-  test("should show create project button", async ({ page }) => {
-    await page.goto("/");
+  test("환경설정 페이지 네비게이션", async ({ page }) => {
+    const sidebar = page.locator(".mantine-AppShell-navbar");
+    await safeClick(page, sidebar.locator("text=환경설정"));
 
-    // 새 프로젝트 생성 버튼 확인
-    await expect(page.locator("text=새 프로젝트 생성")).toBeVisible();
+    await waitForPageLoad(page);
+    await expect(page).toHaveURL("/settings");
   });
 });

@@ -5,7 +5,7 @@
     "lib": ["ES2022", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Node",
-    "types": ["node", "@playwright/test"],
+    "types": ["@playwright/test"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
