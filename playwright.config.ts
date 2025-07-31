@@ -5,31 +5,40 @@ import type { PlaywrightTestConfig } from "@playwright/test";
  * Playwright Test Configuration with TypeScript Support
  * @see https://playwright.dev/docs/test-configuration
  */
+
+// CI 환경 감지
+const isCI =
+  typeof globalThis !== "undefined" &&
+  (globalThis as unknown as { process?: { env?: { CI?: string } } }).process
+    ?.env?.CI === "true";
+
 const config: PlaywrightTestConfig = defineConfig({
   testDir: "./e2e",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
+  forbidOnly: !!isCI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: isCI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: isCI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://127.0.0.1:5177",
+    baseURL: "http://127.0.0.1:5174",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
 
-    /* Take screenshot on failure */
+    /* Screenshots and videos on failure */
     screenshot: "only-on-failure",
-
-    /* Record video on failure */
     video: "retain-on-failure",
+
+    /* Increase timeouts for stability */
+    actionTimeout: 10000,
+    navigationTimeout: 30000,
   },
 
   /* Configure projects for major browsers */
@@ -73,9 +82,11 @@ const config: PlaywrightTestConfig = defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: "yarn dev",
-    url: "http://127.0.0.1:5177",
-    reuseExistingServer: !process.env.CI,
+    url: "http://127.0.0.1:5174",
+    reuseExistingServer: !isCI,
     timeout: 120 * 1000,
+    stdout: "pipe", // 개발 서버 로그 표시
+    stderr: "pipe",
   },
 });
 

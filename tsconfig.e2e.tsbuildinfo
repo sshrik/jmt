@@ -1,0 +1,1 @@
+{"root":["./e2e/backtest.spec.ts","./e2e/dashboard.spec.ts","./e2e/fixtures.ts","./e2e/manual.spec.ts","./e2e/navigation.spec.ts","./e2e/project.spec.ts","./e2e/strategy-editor.spec.ts","./e2e/types.ts","./e2e/utils.ts","./playwright.config.ts"],"version":"5.8.3"}
