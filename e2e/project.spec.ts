@@ -1,9 +1,5 @@
 import { test, expect } from "@playwright/test";
-import {
-  waitForPageLoad,
-  checkServerHealth,
-  safeClick,
-} from "./utils";
+import { waitForPageLoad, checkServerHealth, safeClick } from "./utils";
 
 test.describe("프로젝트 관리", () => {
   test.beforeEach(async ({ page }) => {
@@ -15,7 +11,6 @@ test.describe("프로젝트 관리", () => {
   test("프로젝트 생성", async ({ page }) => {
     // 프로젝트가 없는 경우 프로젝트 만들기 버튼으로 생성
     const emptyButton = page.locator("text=프로젝트 만들기");
-    const projectCards = page.locator('[data-testid="project-card"]');
 
     if (await emptyButton.isVisible()) {
       await safeClick(page, emptyButton);
